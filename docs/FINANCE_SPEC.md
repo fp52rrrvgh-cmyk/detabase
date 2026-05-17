@@ -395,17 +395,25 @@ This section is planning-only documentation. It is not executable SQL, not a mig
 
 - Records should be scoped by `user_id`.
 - The first ownership model should prepare for Supabase Auth.
+- Use `user_id = auth.uid()` as the core RLS ownership baseline.
 - No shared workspace is assumed.
 - No public access is assumed.
 - Exact RLS policy syntax is deferred until implementation planning.
 
+### Accepted Implementation-Planning Baseline
+
+- Derive period-based review from `activity_date`.
+- Handle active category display-name uniqueness through App/API validation first.
+- Use `user_id = auth.uid()` as the core RLS ownership baseline.
+- Use database defaults for timestamps where appropriate.
+- Keep the first MVP indexes limited to `finance_activities.activity_date`, `finance_activities.account_id`, `finance_activities.category_id`, and `finance_activities.movement_type`.
+
 ### Open Questions Before Actual Migration Implementation
 
-- Should period-based review be derived from `activity_date`, or should a separate period field be introduced later?
-- Should category display-name uniqueness among active categories be enforced by database constraint, App/API validation, or both?
-- What exact RLS policy shape should be used for user-owned rows?
-- Should timestamp maintenance be handled by database defaults/triggers, application logic, or both?
-- Are the four first MVP indexes sufficient for the first review queries?
+- Which SQL file naming convention and location should be used if migration implementation is later approved?
+- Which uuid generation approach should be used in the target database?
+- What exact RLS policy syntax should implement the `user_id = auth.uid()` ownership baseline?
+- What rollback expectations apply to the first migration?
 
 ### Required Checks Before Supabase or Migration Work
 
