@@ -7,8 +7,9 @@
 - Schema-blocking Finance MVP decisions are resolved at the documentation level.
 - Finance MVP schema proposal is drafted at the conceptual level.
 - Finance MVP schema proposal is reviewed and accepted for a draft database schema documentation step.
+- Finance MVP draft database schema documentation is drafted for review.
 - No application implementation is defined here.
-- No database schema is defined here.
+- No final database schema implementation is defined here.
 - No deployment configuration is defined here.
 
 ## Known Scope
@@ -23,4 +24,4 @@
 - Deployment target.
 - Dashboard requirements.
 - Migration approach.
-- Finance MVP draft database schema documentation.
+- Whether the Finance MVP draft database schema documentation can proceed to migration planning.

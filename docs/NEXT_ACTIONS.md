@@ -3,13 +3,14 @@
 ## Pending
 
 - Define the initial project goal.
-- Draft a Finance MVP database schema documentation proposal from the accepted conceptual proposal.
+- Review the Finance MVP draft database schema documentation.
+- Decide whether the draft database schema documentation can proceed to migration planning.
 - Identify required checks before any implementation work.
 
 ## Not Started
 
 - Application code.
-- Database schema.
+- Database schema implementation.
 - Supabase configuration.
 - Dashboard work.
 - Legacy Sheets/GAS migration.
