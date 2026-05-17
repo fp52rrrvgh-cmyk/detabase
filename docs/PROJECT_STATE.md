@@ -11,6 +11,7 @@
 - Finance MVP schema decisions are approved for draft SQL migration planning.
 - Finance MVP draft SQL migration plan is documented at planning level.
 - Finance MVP implementation-planning baseline is accepted for period review, active category uniqueness handling, RLS ownership, timestamp defaults, and first MVP indexes.
+- Finance MVP migration implementation readiness is reviewed and approved at the documentation level.
 - No application implementation is defined here.
 - No final database schema implementation is defined here.
 - No deployment configuration is defined here.
@@ -27,4 +28,4 @@
 - Deployment target.
 - Dashboard requirements.
 - Migration approach.
-- Whether migration implementation work may begin in a later issue.
+- First Finance MVP migration implementation issue.

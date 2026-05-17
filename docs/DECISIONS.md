@@ -28,6 +28,13 @@
 - For the Finance MVP, inactive account or category usage for new manual entries should be enforced through App/API validation first, while database-level foreign key integrity preserves historical references.
 - For the Finance MVP, source_indicator allowed values are manual, import_reference, and comparison_reference.
 - For the Finance MVP, the first MVP indexes are finance_activities.activity_date, finance_activities.account_id, finance_activities.category_id, and finance_activities.movement_type.
+- For the Finance MVP, future migration files should live under `supabase/migrations/` only if Supabase CLI is intentionally introduced in the implementation issue.
+- For the Finance MVP, migration file naming should follow Supabase timestamped migration naming: `YYYYMMDDHHMMSS_create_finance_mvp_schema.sql`.
+- For the Finance MVP, UUID generation should use a Postgres/Supabase-supported UUID default, with the exact extension and function confirmed during migration implementation.
+- For the Finance MVP, RLS ownership should use `user_id = auth.uid()` for user-owned finance rows.
+- For the Finance MVP, the first migration is forward-only in normal operation; local or staging rollback may use reset or a corrective migration.
+- For the Finance MVP, destructive production rollback is not allowed without explicit human approval.
+- For the Finance MVP, the next issue may create the first migration file, but must not apply it to production.
 
 ## Pending
 

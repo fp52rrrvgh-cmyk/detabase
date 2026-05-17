@@ -3,9 +3,9 @@
 ## Pending
 
 - Define the initial project goal.
-- Review the Finance MVP draft SQL migration plan.
-- Decide whether migration implementation work may begin in a later issue.
-- Define SQL file naming, uuid generation, exact RLS syntax, rollback expectations, and checks before creating migration files or Supabase configuration.
+- Prepare the first Finance MVP migration implementation issue.
+- Confirm Supabase CLI introduction, UUID default function, and exact RLS policy syntax during implementation planning.
+- Keep production migration application out of scope until explicitly approved.
 
 ## Not Started
 
