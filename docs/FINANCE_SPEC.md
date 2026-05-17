@@ -257,7 +257,7 @@ These table names are proposed for review and may change before implementation.
 | Column | Documentation-level type | Required | Purpose |
 | --- | --- | --- | --- |
 | `id` | identifier | yes | Stable activity identifier. |
-| `activity_date` | date or period marker | yes | Date or period of the activity. |
+| `activity_date` | date | yes | Date of the activity. |
 | `amount` | decimal number | yes | Activity amount. |
 | `currency` | enum-like text | yes | Fixed to TWD for the first implementation. |
 | `movement_type` | enum-like text | yes | One of income, expense, transfer, adjustment. |
@@ -290,6 +290,7 @@ These relationships are draft documentation only and are not final foreign key d
 - `finance_activities.amount` should be present for every activity.
 - `finance_activities.account_id` should be present for every activity.
 - `finance_activities.category_id` should be present for expense and income.
+- `finance_categories.display_name` should be unique among active categories unless a future decision allows duplicates.
 - New manual entries should not use inactive account or category references.
 - Historical records may keep inactive account or category references.
 
@@ -315,7 +316,7 @@ These indexes are proposed for review only and do not define final database inde
 ### Remaining Questions Before Migration Work
 
 - Should identifiers be UUIDs or another identifier type?
-- Should `activity_date` support both exact dates and periods, or should period handling be separate?
+- Should period-based review be derived from `activity_date`, or should a separate period field be introduced later?
 - Should `amount` store signed values, positive values with movement type, or another representation?
 - Should `source_indicator` allowed values be finalized before migration work?
 - Should inactive-reference rules be enforced in database constraints, application logic, or both?
