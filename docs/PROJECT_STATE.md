@@ -8,6 +8,7 @@
 - Finance MVP schema proposal is drafted at the conceptual level.
 - Finance MVP schema proposal is reviewed and accepted for a draft database schema documentation step.
 - Finance MVP draft database schema documentation is drafted for review.
+- Finance MVP schema decisions are approved for draft SQL migration planning.
 - No application implementation is defined here.
 - No final database schema implementation is defined here.
 - No deployment configuration is defined here.
@@ -24,4 +25,4 @@
 - Deployment target.
 - Dashboard requirements.
 - Migration approach.
-- Whether the Finance MVP draft database schema documentation can proceed to migration planning.
+- Draft SQL migration planning.

@@ -234,7 +234,8 @@ These table names are proposed for review and may change before implementation.
 
 | Column | Documentation-level type | Required | Purpose |
 | --- | --- | --- | --- |
-| `id` | identifier | yes | Stable account reference identifier. |
+| `id` | uuid | yes | Stable account reference identifier. |
+| `user_id` | uuid reference | yes | Owning user reference for future Supabase Auth / RLS ownership. |
 | `display_name` | text | yes | User-facing account name. |
 | `account_type` | enum-like text | yes | One of cash, bank, credit_card, stored_value, other. |
 | `is_active` | boolean | yes | Indicates whether the account is available for new manual entries. |
@@ -245,7 +246,8 @@ These table names are proposed for review and may change before implementation.
 
 | Column | Documentation-level type | Required | Purpose |
 | --- | --- | --- | --- |
-| `id` | identifier | yes | Stable category reference identifier. |
+| `id` | uuid | yes | Stable category reference identifier. |
+| `user_id` | uuid reference | yes | Owning user reference for future Supabase Auth / RLS ownership. |
 | `display_name` | text | yes | User-facing category name. |
 | `grouping_purpose` | text | no | Optional note for the single-level grouping purpose. |
 | `is_active` | boolean | yes | Indicates whether the category is available for new manual entries. |
@@ -256,15 +258,16 @@ These table names are proposed for review and may change before implementation.
 
 | Column | Documentation-level type | Required | Purpose |
 | --- | --- | --- | --- |
-| `id` | identifier | yes | Stable activity identifier. |
+| `id` | uuid | yes | Stable activity identifier. |
+| `user_id` | uuid reference | yes | Owning user reference for future Supabase Auth / RLS ownership. |
 | `activity_date` | date | yes | Date of the activity. |
-| `amount` | decimal number | yes | Activity amount. |
+| `amount` | positive decimal number | yes | Activity amount; direction is interpreted through movement type. |
 | `currency` | enum-like text | yes | Fixed to TWD for the first implementation. |
 | `movement_type` | enum-like text | yes | One of income, expense, transfer, adjustment. |
-| `account_id` | identifier reference | yes | References the related account. |
-| `category_id` | identifier reference | conditional | Required for expense and income; optional for transfer and adjustment. |
+| `account_id` | uuid reference | yes | References the related account. |
+| `category_id` | uuid reference | conditional | Required for expense and income; optional for transfer and adjustment. |
 | `description` | text | no | Short description or note. |
-| `source_indicator` | enum-like text | yes | Indicates manual entry, import reference, or comparison reference. |
+| `source_indicator` | enum-like text | yes | One of manual, import_reference, comparison_reference. |
 | `source_system_name` | text | no | Optional source system name for import or comparison material. |
 | `source_record_reference` | text | no | Optional source record reference for import or comparison material. |
 | `merchant_or_payee` | text | no | Merchant or payee when applicable. |
@@ -277,6 +280,7 @@ These table names are proposed for review and may change before implementation.
 
 - `finance_activities.account_id` references `finance_accounts.id`.
 - `finance_activities.category_id` references `finance_categories.id` when a category applies.
+- `finance_activities.user_id`, `finance_accounts.user_id`, and `finance_categories.user_id` prepare for ownership-aware access.
 - `finance_accounts` and `finance_categories` are reference tables and do not depend on `finance_activities`.
 - Transfer remains represented as one `finance_activities` record for the first implementation.
 
@@ -286,13 +290,16 @@ These relationships are draft documentation only and are not final foreign key d
 
 - `finance_accounts.account_type` should be limited to cash, bank, credit_card, stored_value, other.
 - `finance_activities.movement_type` should be limited to income, expense, transfer, adjustment.
+- `finance_activities.source_indicator` should be limited to manual, import_reference, comparison_reference.
 - `finance_activities.currency` should be fixed to TWD for the first implementation.
 - `finance_activities.amount` should be present for every activity.
+- `finance_activities.amount` should be positive-only; movement direction is interpreted through `movement_type`.
 - `finance_activities.account_id` should be present for every activity.
 - `finance_activities.category_id` should be present for expense and income.
 - `finance_categories.display_name` should be unique among active categories unless a future decision allows duplicates.
-- New manual entries should not use inactive account or category references.
+- New manual entries should not use inactive account or category references; enforce this first through App/API validation.
 - Historical records may keep inactive account or category references.
+- Database-level foreign key integrity should still preserve historical references.
 
 These constraints are proposed at documentation level and are not implementation syntax.
 
@@ -309,19 +316,26 @@ These indexes are proposed for review only and do not define final database inde
 ### RLS and Ownership Assumptions
 
 - Finance records are owned by the personal system user.
+- Include `user_id` in the first schema to prepare for Supabase Auth / RLS ownership.
 - Access should be scoped to the owning user if multi-user storage is ever introduced.
 - No shared workspace, team access, or public access is assumed for the Finance MVP.
 - RLS policy details are not defined in this documentation step.
 
 ### Remaining Questions Before Migration Work
 
-- Should identifiers be UUIDs or another identifier type?
 - Should period-based review be derived from `activity_date`, or should a separate period field be introduced later?
-- Should `amount` store signed values, positive values with movement type, or another representation?
-- Should `source_indicator` allowed values be finalized before migration work?
-- Should inactive-reference rules be enforced in database constraints, application logic, or both?
 - Which proposed indexes are actually needed for the first queries?
 - What RLS policy shape is required if Supabase is used later?
+
+### Approved Decisions Before Migration Planning
+
+- Use `uuid` identifiers for primary keys and references.
+- Store `amount` as positive-only and interpret direction through `movement_type`.
+- Include `user_id` in the first schema to prepare for Supabase Auth / RLS ownership.
+- Enforce inactive account or category usage for new manual entries through App/API validation first.
+- Keep database-level foreign key integrity for historical references.
+- Finalize `source_indicator` allowed values as manual, import_reference, comparison_reference.
+- Confirm the first MVP indexes: `finance_activities.activity_date`, `finance_activities.account_id`, `finance_activities.category_id`, `finance_activities.movement_type`.
 
 ## Legacy Material Usage Decision
 
@@ -336,6 +350,5 @@ Legacy formulas, field names, Apps Script logic, report behavior, and sheet stru
 
 ## Next Boundary Work
 
-- Review the Finance MVP draft database schema documentation.
-- Decide whether the draft database schema documentation can proceed to a migration planning step.
+- Prepare a draft SQL migration planning issue from the approved Finance MVP schema decisions.
 - Define implementation checks before any code or configuration work starts.

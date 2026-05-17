@@ -22,6 +22,12 @@
 - For the Finance MVP, transfer pairing note is optional.
 - For the Finance MVP, import identifiers should include source indicator, optional source system name, and optional source record reference.
 - For the Finance MVP, duplicate detection remains an import-review concern and is not a blocking requirement for the first draft schema.
+- For the Finance MVP, primary keys and references should use uuid identifiers.
+- For the Finance MVP, amount should be stored as positive-only and direction should be interpreted through movement_type.
+- For the Finance MVP, user_id should be included in the first schema to prepare for Supabase Auth / RLS ownership.
+- For the Finance MVP, inactive account or category usage for new manual entries should be enforced through App/API validation first, while database-level foreign key integrity preserves historical references.
+- For the Finance MVP, source_indicator allowed values are manual, import_reference, and comparison_reference.
+- For the Finance MVP, the first MVP indexes are finance_activities.activity_date, finance_activities.account_id, finance_activities.category_id, and finance_activities.movement_type.
 
 ## Pending
 
