@@ -12,8 +12,10 @@
 - Finance MVP draft SQL migration plan is documented at planning level.
 - Finance MVP implementation-planning baseline is accepted for period review, active category uniqueness handling, RLS ownership, timestamp defaults, and first MVP indexes.
 - Finance MVP migration implementation readiness is reviewed and approved at the documentation level.
+- First Finance MVP migration file has been created at `supabase/migrations/20260518015307_create_finance_mvp_schema.sql`.
+- The migration has not been applied or tested locally yet.
+- Production database is untouched.
 - No application implementation is defined here.
-- No final database schema implementation is defined here.
 - No deployment configuration is defined here.
 
 ## Known Scope
@@ -27,5 +29,5 @@
 - Data model.
 - Deployment target.
 - Dashboard requirements.
-- Migration approach.
-- First Finance MVP migration implementation issue.
+- Local migration validation result.
+- Supabase project configuration approach.
