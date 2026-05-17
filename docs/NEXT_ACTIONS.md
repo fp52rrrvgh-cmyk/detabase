@@ -3,7 +3,8 @@
 ## Pending
 
 - Define the initial project goal.
-- Define the finance data boundaries.
+- Confirm Finance MVP record types and minimum record details.
+- Confirm the first Finance review summary.
 - Decide the first implementation target.
 - Identify required checks before any implementation work.
 
