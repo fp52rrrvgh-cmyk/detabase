@@ -3,14 +3,13 @@
 ## Pending
 
 - Define the initial project goal.
-- Prepare the first Finance MVP migration implementation issue.
-- Confirm Supabase CLI introduction, UUID default function, and exact RLS policy syntax during implementation planning.
+- Validate Finance MVP initial migration locally.
 - Keep production migration application out of scope until explicitly approved.
 
 ## Not Started
 
 - Application code.
-- Database schema implementation.
+- Production database migration.
 - Supabase configuration.
 - Dashboard work.
 - Legacy Sheets/GAS migration.
