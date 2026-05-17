@@ -16,7 +16,7 @@ The MVP should make it possible to capture basic finance records, review them, a
 
 ## Out of Scope for MVP
 
-- Database schema.
+- Final database schema implementation.
 - Migrations.
 - Supabase configuration.
 - API or Edge Function code.
@@ -216,6 +216,112 @@ The entity names are accepted for now.
 - What final database schema should represent the accepted conceptual entities?
 - Which implementation checks are required before code or configuration work starts?
 
+## Draft Database Schema Documentation
+
+This section is draft documentation for review only. It is not a SQL migration, final database schema, Supabase configuration, API contract, Dashboard model, App UI model, or production-ready implementation.
+
+### Proposed Tables
+
+- `finance_accounts`: stores account reference records.
+- `finance_categories`: stores single-level category reference records.
+- `finance_activities`: stores money movement records.
+
+These table names are proposed for review and may change before implementation.
+
+### Proposed Columns
+
+#### `finance_accounts`
+
+| Column | Documentation-level type | Required | Purpose |
+| --- | --- | --- | --- |
+| `id` | identifier | yes | Stable account reference identifier. |
+| `display_name` | text | yes | User-facing account name. |
+| `account_type` | enum-like text | yes | One of cash, bank, credit_card, stored_value, other. |
+| `is_active` | boolean | yes | Indicates whether the account is available for new manual entries. |
+| `created_at` | timestamp | yes | Record creation time. |
+| `updated_at` | timestamp | yes | Last update time. |
+
+#### `finance_categories`
+
+| Column | Documentation-level type | Required | Purpose |
+| --- | --- | --- | --- |
+| `id` | identifier | yes | Stable category reference identifier. |
+| `display_name` | text | yes | User-facing category name. |
+| `grouping_purpose` | text | no | Optional note for the single-level grouping purpose. |
+| `is_active` | boolean | yes | Indicates whether the category is available for new manual entries. |
+| `created_at` | timestamp | yes | Record creation time. |
+| `updated_at` | timestamp | yes | Last update time. |
+
+#### `finance_activities`
+
+| Column | Documentation-level type | Required | Purpose |
+| --- | --- | --- | --- |
+| `id` | identifier | yes | Stable activity identifier. |
+| `activity_date` | date or period marker | yes | Date or period of the activity. |
+| `amount` | decimal number | yes | Activity amount. |
+| `currency` | enum-like text | yes | Fixed to TWD for the first implementation. |
+| `movement_type` | enum-like text | yes | One of income, expense, transfer, adjustment. |
+| `account_id` | identifier reference | yes | References the related account. |
+| `category_id` | identifier reference | conditional | Required for expense and income; optional for transfer and adjustment. |
+| `description` | text | no | Short description or note. |
+| `source_indicator` | enum-like text | yes | Indicates manual entry, import reference, or comparison reference. |
+| `source_system_name` | text | no | Optional source system name for import or comparison material. |
+| `source_record_reference` | text | no | Optional source record reference for import or comparison material. |
+| `merchant_or_payee` | text | no | Merchant or payee when applicable. |
+| `payment_method` | text | no | Payment method when applicable. |
+| `transfer_pairing_note` | text | no | Optional note for transfer pairing review. |
+| `created_at` | timestamp | yes | Record creation time. |
+| `updated_at` | timestamp | yes | Last update time. |
+
+### Proposed Relationships
+
+- `finance_activities.account_id` references `finance_accounts.id`.
+- `finance_activities.category_id` references `finance_categories.id` when a category applies.
+- `finance_accounts` and `finance_categories` are reference tables and do not depend on `finance_activities`.
+- Transfer remains represented as one `finance_activities` record for the first implementation.
+
+These relationships are draft documentation only and are not final foreign key definitions.
+
+### Proposed Constraints
+
+- `finance_accounts.account_type` should be limited to cash, bank, credit_card, stored_value, other.
+- `finance_activities.movement_type` should be limited to income, expense, transfer, adjustment.
+- `finance_activities.currency` should be fixed to TWD for the first implementation.
+- `finance_activities.amount` should be present for every activity.
+- `finance_activities.account_id` should be present for every activity.
+- `finance_activities.category_id` should be present for expense and income.
+- New manual entries should not use inactive account or category references.
+- Historical records may keep inactive account or category references.
+
+These constraints are proposed at documentation level and are not implementation syntax.
+
+### Proposed Indexes
+
+- Index `finance_activities.activity_date` for time-period review.
+- Index `finance_activities.account_id` for account review.
+- Index `finance_activities.category_id` for category review.
+- Index `finance_activities.movement_type` for movement-type filtering.
+- Consider a composite review index on activity date plus account reference after query patterns are confirmed.
+
+These indexes are proposed for review only and do not define final database indexes.
+
+### RLS and Ownership Assumptions
+
+- Finance records are owned by the personal system user.
+- Access should be scoped to the owning user if multi-user storage is ever introduced.
+- No shared workspace, team access, or public access is assumed for the Finance MVP.
+- RLS policy details are not defined in this documentation step.
+
+### Remaining Questions Before Migration Work
+
+- Should identifiers be UUIDs or another identifier type?
+- Should `activity_date` support both exact dates and periods, or should period handling be separate?
+- Should `amount` store signed values, positive values with movement type, or another representation?
+- Should `source_indicator` allowed values be finalized before migration work?
+- Should inactive-reference rules be enforced in database constraints, application logic, or both?
+- Which proposed indexes are actually needed for the first queries?
+- What RLS policy shape is required if Supabase is used later?
+
 ## Legacy Material Usage Decision
 
 Legacy Sheets + GAS may be used for import reference and comparison checks only.
@@ -229,6 +335,6 @@ Legacy formulas, field names, Apps Script logic, report behavior, and sheet stru
 
 ## Next Boundary Work
 
-- Draft a database schema documentation proposal from the accepted conceptual schema proposal.
-- Keep the draft database schema documentation separate from migrations, SQL implementation, and Supabase configuration.
+- Review the Finance MVP draft database schema documentation.
+- Decide whether the draft database schema documentation can proceed to a migration planning step.
 - Define implementation checks before any code or configuration work starts.
