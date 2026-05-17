@@ -4,6 +4,7 @@
 
 - Keep source of truth documentation in `docs/`.
 - Keep this initial pass limited to documentation skeletons.
+- Legacy Sheets + GAS may be used for import reference and comparison checks only, and is not the formal baseline.
 
 ## Pending
 

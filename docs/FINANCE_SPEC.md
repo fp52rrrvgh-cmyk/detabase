@@ -12,7 +12,7 @@ The MVP should make it possible to capture basic finance records, review them, a
 - Account-like records as labels or references for where money is held or used.
 - Category-like records as labels or references for grouping activity.
 - Basic review views or summaries at the requirements level only.
-- Import reference notes for legacy Sheets + GAS material, without treating legacy structure or logic as the formal baseline.
+- Import reference and comparison notes for legacy Sheets + GAS material, without treating legacy structure or logic as the formal baseline.
 
 ## Out of Scope for MVP
 
@@ -32,7 +32,7 @@ The MVP should make it possible to capture basic finance records, review them, a
 - The first input flow is manual or user-triggered.
 - Input requirements should describe intent and record boundaries before implementation details.
 - Apple Shortcut work may be considered later, but no Shortcut flow is part of this MVP definition.
-- Legacy Sheets + GAS may be reviewed as reference or import material only.
+- Legacy Sheets + GAS may be reviewed as reference or comparison material only.
 
 ## First Review and Reporting Assumptions
 
@@ -40,18 +40,74 @@ The MVP should make it possible to capture basic finance records, review them, a
 - Reporting should remain lightweight until required fields and grouping rules are decided.
 - Any totals, summaries, or charts remain requirements placeholders until the data model is chosen.
 
+## First MVP Record Types
+
+- Money movement record: captures one personal finance activity that changes or describes money movement.
+- Account reference record: names where money is held, spent from, received into, or otherwise associated.
+- Category reference record: groups money movement for review.
+
+These are requirement-level record types only. They are not database tables, schema names, API contracts, or UI models.
+
+## Minimum Details Required
+
+### Money Movement Record
+
+- Date or time period of the activity.
+- Amount.
+- Direction or effect, such as income, expense, transfer, adjustment, or other user-confirmed movement type.
+- Account reference.
+- Category reference when applicable.
+- Short description or note.
+- Source indicator, such as manual entry, import reference, or comparison reference.
+
+### Account Reference Record
+
+- Account display name.
+- Account role or type at a descriptive level.
+- Active or inactive status for review purposes.
+
+### Category Reference Record
+
+- Category display name.
+- Category role or grouping purpose.
+- Active or inactive status for review purposes.
+
+## Candidate Details Not Finalized
+
+- Currency handling.
+- Merchant, payee, or counterparty naming.
+- Payment method.
+- Recurring activity marker.
+- Transfer pairing behavior.
+- Attachments or receipt references.
+- Tags beyond category.
+- Validation rules.
+- Import identifiers.
+- Audit history.
+
+## First Review Summary Requirement
+
+The first review summary should let the user inspect captured money movement by time period, account reference, and category reference.
+
+The summary may include basic totals and groupings, but exact calculations, charts, dashboards, and reporting behavior remain undecided until schema design is ready.
+
+## Legacy Material Usage Decision
+
+Legacy Sheets + GAS may be used for import reference and comparison checks only.
+
+Legacy formulas, field names, Apps Script logic, report behavior, and sheet structure are not the formal baseline.
+
 ## Open Questions Requiring User Decision
 
-- Which money movement types are required first?
-- Which account labels or references are required first?
-- Which category labels or references are required first?
-- What minimum record details are required before implementation can begin?
-- What review summary is most important first?
-- Should legacy Sheets + GAS be used only for import reference, or also for comparison checks?
+- Which money movement types should be accepted first?
+- Which account roles or types are required first?
+- Which category grouping rules are required first?
+- Is single-currency handling enough for the first implementation?
+- Should transfers be represented as one activity or paired activities?
+- Which candidate details should be promoted before schema design?
 
 ## Next Boundary Work
 
-- Confirm the first finance record types.
-- Confirm the minimum record details.
-- Confirm the first review summary.
-- Decide whether legacy material is needed for reference before implementation starts.
+- Resolve the open questions that still block schema design.
+- Decide the first implementation target after schema-blocking questions are answered.
+- Define implementation checks before any code or configuration work starts.

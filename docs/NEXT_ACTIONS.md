@@ -3,8 +3,7 @@
 ## Pending
 
 - Define the initial project goal.
-- Confirm Finance MVP record types and minimum record details.
-- Confirm the first Finance review summary.
+- Resolve schema-blocking Finance MVP questions.
 - Decide the first implementation target.
 - Identify required checks before any implementation work.
 
