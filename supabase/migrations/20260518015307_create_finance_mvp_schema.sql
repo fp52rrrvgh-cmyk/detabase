@@ -13,7 +13,10 @@ create table public.finance_accounts (
   updated_at timestamptz not null default now(),
 
   constraint finance_accounts_account_type_check
-    check (account_type in ('cash', 'bank', 'credit_card', 'stored_value', 'other'))
+    check (account_type in ('cash', 'bank', 'credit_card', 'stored_value', 'other')),
+
+  constraint finance_accounts_user_id_id_key
+    unique (user_id, id)
 );
 
 create table public.finance_categories (
@@ -23,7 +26,10 @@ create table public.finance_categories (
   grouping_purpose text,
   is_active boolean not null default true,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+
+  constraint finance_categories_user_id_id_key
+    unique (user_id, id)
 );
 
 create table public.finance_activities (
@@ -33,8 +39,8 @@ create table public.finance_activities (
   amount numeric not null,
   currency text not null default 'TWD',
   movement_type text not null,
-  account_id uuid not null references public.finance_accounts(id),
-  category_id uuid references public.finance_categories(id),
+  account_id uuid not null,
+  category_id uuid,
   description text,
   source_indicator text not null,
   source_system_name text,
@@ -61,7 +67,15 @@ create table public.finance_activities (
     check (
       (movement_type in ('income', 'expense') and category_id is not null)
       or movement_type in ('transfer', 'adjustment')
-    )
+    ),
+
+  constraint finance_activities_account_owner_fk
+    foreign key (user_id, account_id)
+    references public.finance_accounts(user_id, id),
+
+  constraint finance_activities_category_owner_fk
+    foreign key (user_id, category_id)
+    references public.finance_categories(user_id, id)
 );
 
 create index finance_activities_activity_date_idx
