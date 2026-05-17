@@ -337,6 +337,85 @@ These indexes are proposed for review only and do not define final database inde
 - Finalize `source_indicator` allowed values as manual, import_reference, comparison_reference.
 - Confirm the first MVP indexes: `finance_activities.activity_date`, `finance_activities.account_id`, `finance_activities.category_id`, `finance_activities.movement_type`.
 
+## Draft SQL Migration Plan
+
+This section is planning-only documentation. It is not executable SQL, not a migration file, not Supabase configuration, and not implementation approval.
+
+### Planning-Level Table Definitions
+
+#### `finance_accounts`
+
+- Primary key: `id` as uuid.
+- Ownership: `user_id` as uuid reference for future Supabase Auth / RLS ownership.
+- Required fields: `display_name`, `account_type`, `is_active`, `created_at`, `updated_at`.
+- Account type values: cash, bank, credit_card, stored_value, other.
+- Purpose: account reference table for money movement records.
+
+#### `finance_categories`
+
+- Primary key: `id` as uuid.
+- Ownership: `user_id` as uuid reference for future Supabase Auth / RLS ownership.
+- Required fields: `display_name`, `is_active`, `created_at`, `updated_at`.
+- Optional fields: `grouping_purpose`.
+- Purpose: single-level category reference table for review grouping.
+
+#### `finance_activities`
+
+- Primary key: `id` as uuid.
+- Ownership: `user_id` as uuid reference for future Supabase Auth / RLS ownership.
+- Required fields: `activity_date`, `amount`, `currency`, `movement_type`, `account_id`, `source_indicator`, `created_at`, `updated_at`.
+- Conditional field: `category_id` is required for income and expense, and optional for transfer and adjustment.
+- Optional fields: `description`, `source_system_name`, `source_record_reference`, `merchant_or_payee`, `payment_method`, `transfer_pairing_note`.
+- Purpose: money movement table for income, expense, transfer, and adjustment records.
+
+### Migration Planning Constraints
+
+- Use uuid primary keys for all Finance MVP tables.
+- Include `user_id` on all Finance MVP tables.
+- Store `finance_activities.amount` as positive-only.
+- Interpret money direction through `finance_activities.movement_type`.
+- Fix `finance_activities.currency` to TWD for the first implementation.
+- Limit `finance_activities.movement_type` to income, expense, transfer, adjustment.
+- Limit `finance_accounts.account_type` to cash, bank, credit_card, stored_value, other.
+- Limit `finance_activities.source_indicator` to manual, import_reference, comparison_reference.
+- Require `finance_activities.category_id` for income and expense.
+- Keep `finance_activities.category_id` optional for transfer and adjustment.
+- Preserve database-level FK integrity for account and category references.
+- Enforce inactive account and category usage for new manual entries through App/API validation first.
+- Preserve historical references even when an account or category becomes inactive.
+
+### Migration Planning Indexes
+
+- Plan an index for `finance_activities.activity_date`.
+- Plan an index for `finance_activities.account_id`.
+- Plan an index for `finance_activities.category_id`.
+- Plan an index for `finance_activities.movement_type`.
+
+### RLS Planning Assumptions
+
+- Records should be scoped by `user_id`.
+- The first ownership model should prepare for Supabase Auth.
+- No shared workspace is assumed.
+- No public access is assumed.
+- Exact RLS policy syntax is deferred until implementation planning.
+
+### Open Questions Before Actual Migration Implementation
+
+- Should period-based review be derived from `activity_date`, or should a separate period field be introduced later?
+- Should category display-name uniqueness among active categories be enforced by database constraint, App/API validation, or both?
+- What exact RLS policy shape should be used for user-owned rows?
+- Should timestamp maintenance be handled by database defaults/triggers, application logic, or both?
+- Are the four first MVP indexes sufficient for the first review queries?
+
+### Required Checks Before Supabase or Migration Work
+
+- Confirm migration file naming and location before creating any migration.
+- Confirm whether Supabase CLI and project configuration are intentionally being introduced.
+- Confirm required extensions or database capabilities for uuid generation.
+- Confirm RLS policy approach before writing policy SQL.
+- Confirm rollback expectations for the first migration.
+- Re-check `docs/DO_NOT_DO.md` and this Finance spec before implementation starts.
+
 ## Legacy Material Usage Decision
 
 Legacy Sheets + GAS may be used for import reference and comparison checks only.
@@ -350,5 +429,6 @@ Legacy formulas, field names, Apps Script logic, report behavior, and sheet stru
 
 ## Next Boundary Work
 
-- Prepare a draft SQL migration planning issue from the approved Finance MVP schema decisions.
-- Define implementation checks before any code or configuration work starts.
+- Review the Finance MVP draft SQL migration plan.
+- Decide whether migration implementation work may begin in a later issue.
+- Define exact implementation checks before creating migration files or Supabase configuration.

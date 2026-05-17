@@ -3,8 +3,9 @@
 ## Pending
 
 - Define the initial project goal.
-- Prepare a draft SQL migration planning issue from the approved Finance MVP schema decisions.
-- Identify required checks before any implementation work.
+- Review the Finance MVP draft SQL migration plan.
+- Decide whether migration implementation work may begin in a later issue.
+- Define exact checks before creating migration files or Supabase configuration.
 
 ## Not Started
 
