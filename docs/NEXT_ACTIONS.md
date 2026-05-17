@@ -3,8 +3,8 @@
 ## Pending
 
 - Define the initial project goal.
-- Resolve schema-blocking Finance MVP questions.
-- Decide the first implementation target.
+- Draft a Finance MVP schema proposal from the resolved documentation decisions.
+- Decide the first implementation target after schema proposal review.
 - Identify required checks before any implementation work.
 
 ## Not Started
