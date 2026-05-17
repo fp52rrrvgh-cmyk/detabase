@@ -54,36 +54,47 @@ These are requirement-level record types only. They are not database tables, sch
 
 - Date or time period of the activity.
 - Amount.
-- Direction or effect, such as income, expense, transfer, adjustment, or other user-confirmed movement type.
+- Direction or effect: income, expense, transfer, or adjustment.
 - Account reference.
 - Category reference when applicable.
 - Short description or note.
 - Source indicator, such as manual entry, import reference, or comparison reference.
+- Merchant or payee when applicable.
+- Payment method when applicable.
+- Transfer pairing note when applicable.
 
 ### Account Reference Record
 
 - Account display name.
-- Account role or type at a descriptive level.
+- Account role or type: cash, bank, credit_card, stored_value, or other.
 - Active or inactive status for review purposes.
 
 ### Category Reference Record
 
 - Category display name.
-- Category role or grouping purpose.
+- Single-level category role or grouping purpose.
 - Active or inactive status for review purposes.
 
 ## Candidate Details Not Finalized
 
-- Currency handling.
-- Merchant, payee, or counterparty naming.
-- Payment method.
 - Recurring activity marker.
-- Transfer pairing behavior.
 - Attachments or receipt references.
 - Tags beyond category.
 - Validation rules.
 - Import identifiers.
 - Audit history.
+
+## Resolved Schema-Blocking Decisions
+
+- Accepted money movement types: income, expense, transfer, adjustment.
+- Accepted account roles or types: cash, bank, credit_card, stored_value, other.
+- Category grouping: use single-level category only for the first implementation.
+- Category grouping not included yet: multi-level categories.
+- Currency handling: single-currency TWD is enough for the first implementation.
+- Transfer representation: represent transfer as one activity for now.
+- Transfer pairing can be revisited during schema design.
+- Candidate details promoted before schema design: merchant or payee, payment method, transfer pairing note.
+- Candidate details not promoted yet: attachments, audit history, tags beyond category, recurring marker.
 
 ## First Review Summary Requirement
 
@@ -97,17 +108,15 @@ Legacy Sheets + GAS may be used for import reference and comparison checks only.
 
 Legacy formulas, field names, Apps Script logic, report behavior, and sheet structure are not the formal baseline.
 
-## Open Questions Requiring User Decision
+## Remaining Open Questions
 
-- Which money movement types should be accepted first?
-- Which account roles or types are required first?
-- Which category grouping rules are required first?
-- Is single-currency handling enough for the first implementation?
-- Should transfers be represented as one activity or paired activities?
-- Which candidate details should be promoted before schema design?
+- What exact validation rules are required?
+- What import identifiers are needed, if any?
+- What data model should represent these requirements?
+- What checks are required before implementation begins?
 
 ## Next Boundary Work
 
-- Resolve the open questions that still block schema design.
-- Decide the first implementation target after schema-blocking questions are answered.
+- Draft a schema proposal from the resolved Finance MVP decisions.
+- Keep the schema proposal separate from implementation work.
 - Define implementation checks before any code or configuration work starts.
