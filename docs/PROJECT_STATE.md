@@ -5,6 +5,7 @@
 - Repository documentation skeleton has been initialized.
 - Finance MVP record types, minimum details, first review summary, and legacy material usage are documented at the requirements level.
 - Schema-blocking Finance MVP decisions are resolved at the documentation level.
+- Finance MVP schema proposal is drafted at the conceptual level.
 - No application implementation is defined here.
 - No database schema is defined here.
 - No deployment configuration is defined here.
@@ -21,4 +22,4 @@
 - Deployment target.
 - Dashboard requirements.
 - Migration approach.
-- Finance MVP schema proposal.
+- Whether the Finance MVP schema proposal should become a draft database schema.
