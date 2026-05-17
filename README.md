@@ -1,6 +1,6 @@
 # detabase
 
-Personal finance data project.
+Personal operations system, with finance as the first module.
 
 This repository currently contains the minimum source of truth documentation only.
 Implementation details, schema, deployment configuration, dashboard code, and legacy imports are intentionally out of scope for this initial documentation pass.

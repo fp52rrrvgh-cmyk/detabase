@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This repository is maintained for a personal finance data project.
+This repository is maintained for a personal operations system, with finance as the first module.
 
 ## Working Rules
 

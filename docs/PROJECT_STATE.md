@@ -9,7 +9,7 @@
 
 ## Known Scope
 
-- Personal finance data project.
+- Personal operations system, with finance as the first module.
 - Source of truth documents live under `docs/`.
 
 ## Unknowns
