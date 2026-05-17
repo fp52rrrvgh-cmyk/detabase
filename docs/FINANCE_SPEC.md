@@ -410,10 +410,20 @@ This section is planning-only documentation. It is not executable SQL, not a mig
 
 ### Open Questions Before Actual Migration Implementation
 
-- Which SQL file naming convention and location should be used if migration implementation is later approved?
-- Which uuid generation approach should be used in the target database?
+- Which Postgres/Supabase-supported UUID default function should be used during migration implementation?
 - What exact RLS policy syntax should implement the `user_id = auth.uid()` ownership baseline?
-- What rollback expectations apply to the first migration?
+
+### Migration Implementation Readiness Review
+
+- Future migration files should live under `supabase/migrations/` only if Supabase CLI is intentionally introduced in the implementation issue.
+- Migration file naming should follow Supabase timestamped migration naming: `YYYYMMDDHHMMSS_create_finance_mvp_schema.sql`.
+- UUID generation should use a Postgres/Supabase-supported UUID default, with the exact extension and function confirmed during migration implementation.
+- RLS ownership pattern should use `user_id = auth.uid()` for user-owned finance rows.
+- The first migration is forward-only in normal operation.
+- Local or staging rollback may use reset or a corrective migration.
+- Destructive production rollback is not allowed without explicit human approval.
+- This review passes for migration implementation readiness.
+- The next issue may create the first migration file, but must not apply it to production.
 
 ### Required Checks Before Supabase or Migration Work
 
@@ -437,6 +447,6 @@ Legacy formulas, field names, Apps Script logic, report behavior, and sheet stru
 
 ## Next Boundary Work
 
-- Review the Finance MVP draft SQL migration plan.
-- Decide whether migration implementation work may begin in a later issue.
-- Define exact implementation checks before creating migration files or Supabase configuration.
+- Prepare the first Finance MVP migration implementation issue.
+- Keep production migration application out of scope until explicitly approved.
+- Confirm Supabase CLI introduction, UUID default function, and exact RLS policy syntax during implementation.
