@@ -179,6 +179,43 @@ These are proposed attributes only, not final column names, SQL types, constrain
 - Should import identifiers be stored as user-visible notes or internal references?
 - How should duplicate detection be handled during import review?
 
+## Schema Proposal Review Result
+
+The Finance MVP schema proposal is accepted for the next documentation step.
+
+### Accepted Conceptual Entities
+
+- Finance activity is accepted as the primary money movement entity.
+- Finance account is accepted as the account reference entity.
+- Finance category is accepted as the single-level grouping reference entity.
+
+The entity names are accepted for now.
+
+### Accepted Validation Requirements for the Next Step
+
+- Activity date or period is required.
+- Amount is required.
+- Movement type is required.
+- Account reference is required.
+- Category reference is required for expense and income.
+- Category reference is optional for transfer and adjustment.
+- Currency is fixed to TWD for the first implementation.
+- Inactive account or category references should not be used for new manual entries.
+- Historical records may still reference inactive account or category references.
+- Transfer pairing note is optional.
+
+### Accepted Import Identifier Requirements for the Next Step
+
+- Include source indicator.
+- Include optional source system name.
+- Include optional source record reference.
+- Duplicate detection remains an import-review concern, not a blocking requirement for the first draft schema.
+
+### Remaining Review Questions
+
+- What final database schema should represent the accepted conceptual entities?
+- Which implementation checks are required before code or configuration work starts?
+
 ## Legacy Material Usage Decision
 
 Legacy Sheets + GAS may be used for import reference and comparison checks only.
@@ -187,13 +224,11 @@ Legacy formulas, field names, Apps Script logic, report behavior, and sheet stru
 
 ## Remaining Open Questions
 
-- What exact validation rules are required?
-- What import identifiers are needed, if any?
 - What data model should represent these requirements?
 - What checks are required before implementation begins?
 
 ## Next Boundary Work
 
-- Review the Finance MVP schema proposal.
-- Decide whether the proposal can become a draft database schema in a later documentation step.
+- Draft a database schema documentation proposal from the accepted conceptual schema proposal.
+- Keep the draft database schema documentation separate from migrations, SQL implementation, and Supabase configuration.
 - Define implementation checks before any code or configuration work starts.

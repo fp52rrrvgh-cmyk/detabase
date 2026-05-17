@@ -3,8 +3,7 @@
 ## Pending
 
 - Define the initial project goal.
-- Review the Finance MVP schema proposal.
-- Decide whether the proposal can become a draft database schema in a later documentation step.
+- Draft a Finance MVP database schema documentation proposal from the accepted conceptual proposal.
 - Identify required checks before any implementation work.
 
 ## Not Started
