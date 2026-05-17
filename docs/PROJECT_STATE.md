@@ -3,6 +3,7 @@
 ## Current State
 
 - Repository documentation skeleton has been initialized.
+- Finance MVP boundaries are defined at the documentation level.
 - No application implementation is defined here.
 - No database schema is defined here.
 - No deployment configuration is defined here.
@@ -19,3 +20,5 @@
 - Deployment target.
 - Dashboard requirements.
 - Migration approach.
+- First Finance record details.
+- First Finance review summary.
