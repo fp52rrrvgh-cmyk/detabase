@@ -14,8 +14,11 @@
 - Do not add extra governance documents without an explicit request.
 - Do not access or modify the production database.
 - Do not use a `service_role` key.
+- Do not link a remote Supabase project unless explicitly approved.
 - Do not run destructive migrations unless explicitly approved.
 - Local-only migration work is allowed only by a dedicated issue that explicitly permits it.
+- Keep validation and fixes separate.
+- Schema, migration, or Supabase config changes require a dedicated issue.
 
 ## High-Risk Areas
 
