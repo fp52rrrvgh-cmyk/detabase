@@ -24,10 +24,13 @@
 - Constraint validation passed for positive amounts, required category on income and expense, invalid `movement_type`, and invalid `source_indicator`.
 - Same-owner composite foreign key validation passed.
 - RLS policy definitions remain present and use `user_id = auth.uid()`.
+- Issue #29 is closed as completed after local Finance MVP review-query validation passed.
+- Local review queries by date range, account, category, and `movement_type` passed.
+- Basic local totals for income, expense, category, and account in a date range passed.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
-- No repo files, SQL migrations, schema, Supabase config, production database, `service_role` key, App, API, Dashboard, Apple Shortcut, seed files, or legacy Sheets/GAS were changed during validation.
+- No repo files, SQL migrations, schema, Supabase config, production database, `service_role` key, App, API, Dashboard, Apple Shortcut, seed files, reporting tables, views, functions, or legacy Sheets/GAS were changed during validation.
 - No application implementation is defined here.
 - No deployment configuration is defined here.
 - No App, API, Dashboard, Apple Shortcut, or legacy Sheets/GAS implementation exists.
