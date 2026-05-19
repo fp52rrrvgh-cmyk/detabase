@@ -886,6 +886,73 @@ This validation remained local-only. It did not introduce code changes, scripts,
 
 Define persistent local account/category setup method boundary.
 
+## Persistent Local Account/Category Setup Method Boundary
+
+Issue #67 completed recommendation-only boundary work for the persistent local account/category setup method.
+
+### Recommended Persistent Method
+
+The first persistent local account/category setup method boundary is documented runbook manual steps.
+
+This method remains:
+
+- Local-only.
+- UUID-first for execution.
+- Display-name-confirmed for human review only.
+- Local-alias-deferred.
+- Not onboarding.
+- Not production workflow.
+- Not App/API/Dashboard/Shortcut behavior.
+
+### Method Options
+
+- One-off SQL is not the recurring setup method; it remains validation-only or explicitly allowed issue work.
+- Reusable local helper script setup is deferred.
+- Seed-like setup is rejected for now.
+- Schema, migration, and Supabase config changes remain out of scope.
+
+### Minimum Setup Inputs
+
+- Local owner context / `user_id`.
+- Account `display_name`.
+- Account `account_type`.
+- Account `is_active = true`.
+- Category `display_name`.
+- Category `is_active = true`.
+- Optional category `grouping_purpose`.
+
+### Minimum Setup Outputs
+
+- Active account UUID.
+- Active income category UUID.
+- Active expense category UUID.
+- Display names for human confirmation.
+- Evidence that selected account/category references belong to the same local owner context.
+
+### Validation Expectations Before Implementation Or Helper Tooling
+
+- One active account is available.
+- One active income category is available.
+- One active expense category is available.
+- `scripts/local/manual-log.js` can use UUIDs for one income and one expense.
+- Same-owner integrity passes.
+- Inactive and cross-owner references are rejected.
+- Records remain queryable by date, account, category, and `movement_type`.
+- Cleanup removes temporary validation data.
+
+### Deferred Options
+
+- Reusable helper script.
+- Seed-like setup.
+- Local aliases.
+- App/API/Dashboard/Shortcut setup flow.
+- Production or staging workflow.
+- Schema, migration, or Supabase config changes.
+
+### Recommended Next Issue
+
+Validate persistent local account/category setup runbook boundary.
+
 ## Remaining Open Questions
 
 - What data model should represent these requirements?
