@@ -40,10 +40,15 @@
 - Optional field mapping validation passed for description, merchant or payee, payment method, source system name, source record reference, and transfer pairing note.
 - Local query validation for command-shape records passed by date, account, category, and `movement_type`.
 - Rollback-safe temporary validation passed; temporary local records were inserted inside a transaction and rolled back.
+- Issue #43 is closed as completed after one-off local SQL manual logging execution validation passed.
+- One-off local SQL produced one valid income activity and one valid expense activity using the documented manual logging shape.
+- Required and optional field mapping passed during one-off SQL execution validation.
+- Local query validation for one-off SQL records passed by date, account, category, and `movement_type`.
+- Transaction rollback and cleanup evidence passed after one-off SQL execution validation.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
-- No repo files, SQL migrations, schema, Supabase config, seed files, reporting objects, App, API, Dashboard, Apple Shortcut, production database, `service_role` key, remote Supabase linking, AI, Projection, or legacy Sheets/GAS were changed during validation.
+- No repo files, SQL migrations, schema, Supabase config, seed files, reporting objects, reusable command or script implementation, App, API, Dashboard, Apple Shortcut, production database, `service_role` key, remote Supabase linking, AI, Projection, or legacy Sheets/GAS were changed during validation.
 - No application implementation is defined here.
 - No deployment configuration is defined here.
 - No App, API, Dashboard, Apple Shortcut, or legacy Sheets/GAS implementation exists.

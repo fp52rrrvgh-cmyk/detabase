@@ -638,6 +638,16 @@ Required field mapping, optional field mapping, and local query checks by date, 
 
 The validation remained local-only and rollback-safe. Temporary records were inserted inside a local transaction and rolled back. No reusable command, script, API, App, Dashboard, Shortcut, seed data, reporting object, production workflow, AI, Projection, or legacy Sheets/GAS behavior was introduced.
 
+### Local One-Off SQL Execution Validation Result
+
+Issue #43 validated that one-off local SQL can successfully exercise the documented manual logging shape against the existing Finance MVP schema.
+
+The one-off SQL produced one valid local income activity and one valid local expense activity. Required field mapping, optional field mapping, local queries by date, account, category, and `movement_type`, and rollback cleanup evidence passed.
+
+This result does not introduce reusable tooling, a reusable command or script, seed data, formal reporting behavior, App, API, Dashboard, Shortcut, production workflow, AI, Projection, or legacy Sheets/GAS behavior.
+
+Reusable command or script implementation remains out of scope unless explicitly approved.
+
 ## Remaining Open Questions
 
 - What data model should represent these requirements?
