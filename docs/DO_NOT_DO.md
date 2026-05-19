@@ -14,6 +14,7 @@
 - Do not add formal reporting behavior, views, functions, triggers, or reporting tables unless explicitly approved.
 - Do not introduce a daily logging workflow unless explicitly approved.
 - Do not add Projection or AI behavior unless explicitly approved.
+- Do not add transfer or adjustment support to reusable local logging unless explicitly approved by a dedicated issue.
 - Do not add version numbers.
 - Do not declare the project production-ready.
 - Do not add extra governance documents without an explicit request.

@@ -47,10 +47,16 @@
 - Transaction rollback and cleanup evidence passed after one-off SQL execution validation.
 - Issue #46 is closed as completed after defining the first reusable local manual logging command/script boundary at documentation level.
 - The reusable local command/script boundary, Node script recommendation, proposed input contract, future allowed files, validation expectations, not-allowed scope, and stop conditions are documented.
+- PR #52 merged the first reusable local manual logging Node script.
+- `scripts/local/manual-log.js` exists.
+- First reusable local manual logging Node script implementation is completed.
+- The script supports income and expense only.
+- The script does not support transfer or adjustment.
+- Local validation for the script passed.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
-- No repo files, SQL migrations, schema, Supabase config, seed files, reporting objects, reusable command or script implementation, App, API, Dashboard, Apple Shortcut, production database, `service_role` key, remote Supabase linking, AI, Projection, or legacy Sheets/GAS were changed during validation.
+- No SQL migrations, schema, Supabase config, `package.json`, seed files, reporting objects, App, API, Dashboard, Apple Shortcut, production database, `service_role` key, remote Supabase linking, AI, Projection, or legacy Sheets/GAS were changed by the reusable local manual logging script implementation.
 - No application implementation is defined here.
 - No deployment configuration is defined here.
 - No App, API, Dashboard, Apple Shortcut, or legacy Sheets/GAS implementation exists.
