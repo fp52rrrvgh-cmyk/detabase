@@ -64,9 +64,16 @@
 - Local account/category setup is documented as local-only prerequisite reference data for `scripts/local/manual-log.js`.
 - Account/category references for manual logging use UUID as the first execution identifier, with display names as human-readable confirmation only.
 - Local alias support for account/category references is deferred to a future dedicated issue.
+- Issue #64 is closed as completed after local account/category setup workflow validation passed.
+- Temporary active local account/category references supported one income activity and one expense activity through `scripts/local/manual-log.js`.
+- Same-owner account/category reference integrity validation passed.
+- Negative checks passed for inactive account, inactive category, and cross-owner category references.
+- Local query validation passed by date, account, category, and `movement_type` after temporary account/category setup.
+- Cleanup evidence passed after Issue #64 validation; temporary accounts, categories, and activities were removed.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
+- No repo files, SQL migrations, schema, Supabase config, seed files, reporting objects, App, API, Dashboard, Apple Shortcut, production database, `service_role` key, remote Supabase linking, AI, Projection, or legacy Sheets/GAS were changed during Issue #64 validation.
 - No repo files, SQL migrations, schema, Supabase config, `package.json`, seed files, reporting objects, App, API, Dashboard, Apple Shortcut, production database, `service_role` key, remote Supabase linking, AI, Projection, or legacy Sheets/GAS were changed during Issue #55 validation.
 - No application implementation is defined here.
 - No deployment configuration is defined here.

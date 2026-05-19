@@ -3,9 +3,9 @@
 ## Pending
 
 - Define the initial project goal.
-- Validate local account/category setup workflow boundary with temporary local references.
+- Define persistent local account/category setup method boundary.
 - Keep production migration application out of scope until explicitly approved.
-- Keep API, Dashboard, App, Apple Shortcut, transfer or adjustment support, AI, Projection, and legacy Sheets/GAS work out of scope until explicitly approved.
+- Keep reusable setup tooling, seed files, API, Dashboard, App, Apple Shortcut, transfer or adjustment support, AI, Projection, and legacy Sheets/GAS work out of scope until explicitly approved.
 
 ## Not Started
 
