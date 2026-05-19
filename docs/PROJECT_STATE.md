@@ -28,10 +28,15 @@
 - Local review queries by date range, account, category, and `movement_type` passed.
 - Basic local totals for income, expense, category, and account in a date range passed.
 - Issue #31 is closed as completed after defining the minimal local daily finance logging boundary at documentation level.
+- Issue #33 is closed as completed after local daily finance logging boundary validation passed.
+- One usable local daily income record passed validation.
+- One usable local daily expense record passed validation.
+- Optional fields for local daily finance logging passed validation.
+- Local query validation for daily logging records passed by date, account, category, and `movement_type`.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
-- No repo files, SQL migrations, schema, Supabase config, production database, `service_role` key, App, API, Dashboard, Apple Shortcut, seed files, reporting tables, views, functions, or legacy Sheets/GAS were changed during validation.
+- No repo files, SQL migrations, schema, Supabase config, production database, `service_role` key, App, API, Dashboard, Apple Shortcut, reporting objects, seed files, AI, Projection, or legacy Sheets/GAS were changed during validation.
 - No application implementation is defined here.
 - No deployment configuration is defined here.
 - No App, API, Dashboard, Apple Shortcut, or legacy Sheets/GAS implementation exists.
