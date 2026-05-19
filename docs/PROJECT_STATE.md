@@ -27,6 +27,7 @@
 - Issue #29 is closed as completed after local Finance MVP review-query validation passed.
 - Local review queries by date range, account, category, and `movement_type` passed.
 - Basic local totals for income, expense, category, and account in a date range passed.
+- Issue #31 is closed as completed after defining the minimal local daily finance logging boundary at documentation level.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.

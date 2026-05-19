@@ -3,7 +3,7 @@
 ## Pending
 
 - Define the initial project goal.
-- Review the next smallest local-only boundary after review-query validation.
+- Validate local daily finance logging boundary with temporary local records.
 - Keep production migration application out of scope until explicitly approved.
 - Keep API, Dashboard, App, Apple Shortcut, AI, Projection, and legacy Sheets/GAS work out of scope until explicitly approved.
 
