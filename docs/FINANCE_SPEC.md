@@ -440,6 +440,89 @@ Legacy Sheets + GAS may be used for import reference and comparison checks only.
 
 Legacy formulas, field names, Apps Script logic, report behavior, and sheet structure are not the formal baseline.
 
+## Minimal Local Daily Finance Logging Boundary
+
+This boundary defines the smallest local-only daily logging shape for the Finance MVP. It is documentation-only and does not define App, API, Dashboard, Shortcut, seed, reporting, or production behavior.
+
+### Minimum Daily Logging Record Shape
+
+A usable daily logging record is one `finance_activities` record that can be tied to the local owner, one account, and, when required, one category.
+
+The record should be enough to answer when the activity happened, what amount was recorded, what kind of money movement it was, where it belongs, and whether it came from manual local logging.
+
+### Required Fields
+
+- Local owner reference through `user_id`.
+- `activity_date`.
+- Positive `amount`.
+- Fixed `currency` of TWD.
+- `movement_type`: income, expense, transfer, or adjustment.
+- `account_id`.
+- `category_id` for income and expense.
+- `source_indicator`, expected to be `manual` for local daily logging.
+
+### Optional Fields
+
+- `category_id` for transfer and adjustment.
+- `description`.
+- `merchant_or_payee`.
+- `payment_method`.
+- `transfer_pairing_note`.
+- `source_system_name`.
+- `source_record_reference`.
+
+### Local-Only Input Assumptions
+
+- Daily logging remains local-only until production access is explicitly approved.
+- Input is manual or user-triggered.
+- Account and category references already exist locally before logging activity.
+- New manual daily logging should use active account and category references.
+- Period-based review is derived from `activity_date`.
+- No seed data, App, API, Dashboard, Apple Shortcut, AI, Projection, or legacy Sheets/GAS workflow is introduced by this boundary.
+
+### Validation Expectations
+
+- `amount` must be positive.
+- `movement_type` must use the accepted Finance MVP values.
+- `source_indicator` must use an accepted value and should be `manual` for local daily logging.
+- Income and expense records require `category_id`.
+- Activity account and category references must belong to the same `user_id` as the activity.
+- Local review queries should continue to work by date range, account, category, and `movement_type`.
+- RLS policy definitions should continue to use `user_id = auth.uid()`.
+
+### Usable Daily Logging Record Definition
+
+A usable local daily logging record is valid when it can be inserted locally using the existing Finance MVP schema, passes existing constraints and same-owner foreign keys, and can be retrieved by the validated local review-query patterns.
+
+This definition does not make the project production-ready and does not define a final product workflow.
+
+### Explicitly Out of Scope
+
+- SQL migration changes.
+- New migrations.
+- Supabase configuration changes.
+- Seed files or seed data.
+- Logging implementation.
+- App, API, Dashboard, Apple Shortcut, AI, or Projection behavior.
+- Views, functions, triggers, or reporting tables.
+- Formal reporting or dashboard behavior.
+- Production access.
+- `service_role` key usage.
+- Remote Supabase linking.
+- Legacy Sheets/GAS porting.
+- Version labels or production-ready claims.
+
+### Open Questions Before Implementation
+
+- Which local accounts and categories should exist before a daily logging validation can run?
+- Which optional fields should be promoted for the first manual logging workflow?
+- Should transfer and adjustment daily logging require additional local validation beyond the current schema constraints?
+- What is the smallest local-only interface or command shape that can exercise daily logging without starting App, API, Dashboard, or Shortcut work?
+
+### Recommended Next Issue
+
+Validate local daily finance logging boundary with temporary local records.
+
 ## Remaining Open Questions
 
 - What data model should represent these requirements?
