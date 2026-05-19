@@ -33,6 +33,8 @@
 - One usable local daily expense record passed validation.
 - Optional fields for local daily finance logging passed validation.
 - Local query validation for daily logging records passed by date, account, category, and `movement_type`.
+- Issue #36 is closed as completed after defining the minimal local manual finance logging interface boundary at documentation level.
+- The minimum local manual input shape, required inputs, optional inputs, field mapping, validation expectations, usable action definition, and open questions are documented.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.

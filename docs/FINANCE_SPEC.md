@@ -523,6 +523,105 @@ This definition does not make the project production-ready and does not define a
 
 Validate local daily finance logging boundary with temporary local records.
 
+## Minimal Local Manual Finance Logging Interface Boundary
+
+This boundary defines the smallest local-only manual input shape that could produce a valid daily finance logging record. It is documentation-only and does not define a command, script, API, App, Dashboard, Shortcut, seed data, reporting object, AI behavior, Projection behavior, or production workflow.
+
+### Minimum Local Manual Input Shape
+
+A local manual logging action should capture one intended `finance_activities` record from user-entered values, using existing local account and category references.
+
+Minimum shape:
+
+- Date.
+- Amount.
+- Movement type.
+- Account reference.
+- Category reference for income and expense.
+- Optional note or context fields.
+- Manual source indicator.
+
+### Required Input Fields
+
+- `activity_date`.
+- `amount`.
+- `movement_type`.
+- Account reference.
+- Category reference for income and expense.
+- Local owner context, mapped to `user_id`.
+- `source_indicator`, fixed or defaulted to `manual`.
+
+### Optional Input Fields
+
+- Category reference for transfer and adjustment.
+- `description`.
+- `merchant_or_payee`.
+- `payment_method`.
+- `transfer_pairing_note`.
+- `source_system_name`.
+- `source_record_reference`.
+
+### Manual Input Field Mapping
+
+- Local owner context maps to `finance_activities.user_id`.
+- Date input maps to `finance_activities.activity_date`.
+- Amount input maps to `finance_activities.amount`.
+- Currency assumption maps to `finance_activities.currency = TWD`.
+- Movement type input maps to `finance_activities.movement_type`.
+- Account input maps to `finance_activities.account_id`.
+- Category input maps to `finance_activities.category_id`.
+- Note input maps to `finance_activities.description`.
+- Merchant or payee input maps to `finance_activities.merchant_or_payee`.
+- Payment method input maps to `finance_activities.payment_method`.
+- Transfer note input maps to `finance_activities.transfer_pairing_note`.
+- Manual source default maps to `finance_activities.source_indicator = manual`.
+- Optional source labels map to `finance_activities.source_system_name` and `finance_activities.source_record_reference`.
+
+### Validation Expectations Before Implementation
+
+- `amount` must be positive.
+- Currency remains TWD.
+- `movement_type` must be one of income, expense, transfer, adjustment.
+- Income and expense require category.
+- Account and category references must belong to the same `user_id` as the activity.
+- Manual logging should use active account and category references.
+- `source_indicator` should be `manual`.
+- Existing RLS ownership assumption remains `user_id = auth.uid()`.
+
+### Usable Local Manual Logging Action Definition
+
+A usable local manual logging action is one local-only manual input shape that can be mapped to a valid `finance_activities` record, tied to the local owner, one account, and, for income or expense, one category.
+
+The action is usable only if it can stay within the existing Finance MVP schema and documented local-only boundaries without requiring schema, migration, config, App, API, Dashboard, Shortcut, seed, reporting, AI, Projection, or production work.
+
+### Explicitly Out of Scope
+
+- Code or command implementation.
+- SQL migration or schema changes.
+- Supabase configuration changes.
+- Validation runs.
+- Seed files or seed data.
+- App, API, Dashboard, or Apple Shortcut work.
+- Views, functions, triggers, or reporting tables.
+- Production access.
+- `service_role` key usage.
+- Remote Supabase linking.
+- Legacy Sheets/GAS porting.
+- AI or Projection behavior.
+- Version labels or production-ready claims.
+
+### Open Questions Before Implementation
+
+- Should the first manual interface identify accounts and categories by uuid, display name, or local alias?
+- Should `source_indicator = manual` be implicit or explicitly entered?
+- Which optional fields should be included in the first manual interface shape?
+- Should transfer and adjustment be included in the first manual interface, or should implementation start with income and expense only?
+- How should local-only active account and category validation be represented before App/API work exists?
+
+### Recommended Next Issue
+
+Validate local manual finance logging command shape.
+
 ## Remaining Open Questions
 
 - What data model should represent these requirements?
