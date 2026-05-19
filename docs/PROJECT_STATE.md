@@ -70,6 +70,12 @@
 - Negative checks passed for inactive account, inactive category, and cross-owner category references.
 - Local query validation passed by date, account, category, and `movement_type` after temporary account/category setup.
 - Cleanup evidence passed after Issue #64 validation; temporary accounts, categories, and activities were removed.
+- Issue #67 is closed as completed after recommendation-only boundary work for the persistent local account/category setup method.
+- The first persistent local account/category setup method boundary is documented runbook manual steps.
+- One-off SQL is not the recurring setup method; it remains validation-only or explicitly allowed issue work.
+- Reusable local helper script setup is deferred.
+- Seed-like setup is rejected for now.
+- Persistent local setup remains local-only, UUID-first for execution, display-name-confirmed, alias-deferred, and not onboarding, production workflow, or App/API/Dashboard/Shortcut behavior.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.

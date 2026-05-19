@@ -119,6 +119,36 @@ Issue #64 validated this boundary with temporary local references. The validatio
 
 This validation did not introduce seed files, reusable setup tooling, App/API/Dashboard/Shortcut behavior, reporting objects, AI, Projection, production access, remote Supabase linking, `service_role` key usage, migration changes, schema changes, or Supabase config changes.
 
+## Persistent Local Account And Category Setup Method Boundary
+
+The first persistent local account/category setup method boundary is documented runbook manual steps.
+
+This method is local-only and prepares reference data for `scripts/local/manual-log.js`. It is not onboarding, production workflow, App/API/Dashboard/Shortcut behavior, seed data, or reusable setup tooling.
+
+Use UUIDs as execution identifiers for account/category references. Use display names as human-readable confirmation only. Local aliases remain deferred to a future dedicated issue.
+
+One-off SQL is not the recurring setup method; it remains validation-only or explicitly allowed issue work. A reusable local helper script remains deferred. Seed-like setup is rejected for now.
+
+Minimum setup inputs:
+
+- Local owner context / `user_id`.
+- Account `display_name`.
+- Account `account_type`.
+- Account `is_active = true`.
+- Category `display_name`.
+- Category `is_active = true`.
+- Optional category `grouping_purpose`.
+
+Minimum setup outputs:
+
+- Active account UUID.
+- Active income category UUID.
+- Active expense category UUID.
+- Display names for human confirmation.
+- Evidence that selected account/category references belong to the same local owner context.
+
+Before any implementation or helper tooling is considered, validation should confirm that one active account, one active income category, and one active expense category are available; `scripts/local/manual-log.js` can use those UUIDs for one income and one expense; same-owner integrity passes; inactive and cross-owner references are rejected; records remain queryable by date/account/category/`movement_type`; and cleanup removes temporary validation data.
+
 ## Verify Local Records
 
 Use local SQL only when an issue explicitly allows validation or inspection.
