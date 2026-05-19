@@ -60,6 +60,10 @@
 - Query validation passed by date, account, category, and `movement_type` during Issue #55 validation.
 - Cleanup passed after Issue #55 validation, and finance table counts returned to zero.
 - Issue #58 consolidated the current local tooling runbook at documentation level.
+- Issue #61 is closed as completed after defining the local account/category setup workflow boundary at documentation level.
+- Local account/category setup is documented as local-only prerequisite reference data for `scripts/local/manual-log.js`.
+- Account/category references for manual logging use UUID as the first execution identifier, with display names as human-readable confirmation only.
+- Local alias support for account/category references is deferred to a future dedicated issue.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.

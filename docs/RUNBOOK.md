@@ -90,6 +90,30 @@ Current script behavior:
 - Requires active same-owner account and category references.
 - Reports an inserted row summary.
 
+## Account And Category Reference Setup Boundary
+
+Local account/category setup is prerequisite reference data for `scripts/local/manual-log.js`.
+
+This boundary is local-only. It is not formal onboarding, seed data, reusable setup tooling, App/API/Dashboard/Shortcut behavior, production workflow, or remote Supabase workflow.
+
+Local accounts should:
+
+- Use the same local owner context as daily logging.
+- Be active when used for new manual logging.
+- Stay limited to existing Finance MVP schema fields.
+- Include `user_id`, `display_name`, `account_type`, `is_active = true`, and `id` as the stable UUID reference.
+
+Local categories should:
+
+- Use the same local owner context as activities and accounts.
+- Include at least one active income category and one active expense category before stable local daily logging.
+- Stay single-level.
+- Include `user_id`, `display_name`, `is_active = true`, `id` as the stable UUID reference, and optional `grouping_purpose`.
+
+For manual logging execution, use UUIDs as the first account/category identifiers. Display names are human-readable confirmation only. Local alias support is deferred to a future dedicated issue.
+
+Future validation should confirm that selected active account/category UUIDs belong to the same `user_id` as activity records, can be used by `scripts/local/manual-log.js` for one income and one expense record, remain queryable by date/account/category/`movement_type`, and leave no durable temporary validation data unless explicitly approved.
+
 ## Verify Local Records
 
 Use local SQL only when an issue explicitly allows validation or inspection.

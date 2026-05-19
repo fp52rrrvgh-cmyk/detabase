@@ -3,7 +3,7 @@
 ## Pending
 
 - Define the initial project goal.
-- Review the next smallest operational boundary after local runbook consolidation.
+- Validate local account/category setup workflow boundary with temporary local references.
 - Keep production migration application out of scope until explicitly approved.
 - Keep API, Dashboard, App, Apple Shortcut, transfer or adjustment support, AI, Projection, and legacy Sheets/GAS work out of scope until explicitly approved.
 
