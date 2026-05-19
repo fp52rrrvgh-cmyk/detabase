@@ -59,6 +59,7 @@
 - `scripts/local/manual-log.js` inserted one income activity and one expense activity during Issue #55 validation.
 - Query validation passed by date, account, category, and `movement_type` during Issue #55 validation.
 - Cleanup passed after Issue #55 validation, and finance table counts returned to zero.
+- Issue #58 consolidated the current local tooling runbook at documentation level.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
