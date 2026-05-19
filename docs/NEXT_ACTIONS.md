@@ -3,9 +3,9 @@
 ## Pending
 
 - Define the initial project goal.
-- Review the next smallest operational boundary after one-off SQL validation.
+- Validate or implement the first reusable local manual logging Node script only if explicitly approved; otherwise review the next operational boundary.
 - Keep production migration application out of scope until explicitly approved.
-- Keep API, Dashboard, App, Apple Shortcut, reusable script, AI, Projection, and legacy Sheets/GAS work out of scope until explicitly approved.
+- Keep API, Dashboard, App, Apple Shortcut, reusable script implementation, AI, Projection, and legacy Sheets/GAS work out of scope until explicitly approved.
 
 ## Not Started
 

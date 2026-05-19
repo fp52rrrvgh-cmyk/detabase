@@ -648,6 +648,115 @@ This result does not introduce reusable tooling, a reusable command or script, s
 
 Reusable command or script implementation remains out of scope unless explicitly approved.
 
+## First Reusable Local Manual Logging Command/Script Boundary
+
+This boundary defines how a first reusable local manual logging command or script may be considered later. It is documentation-only and does not implement a command, script, API, App, Dashboard, Shortcut, seed, reporting object, production workflow, AI, Projection, or legacy Sheets/GAS behavior.
+
+### Recommended Boundary
+
+A first reusable local manual logging command or script may be considered only as a local-only wrapper around the validated manual logging shape.
+
+Its responsibility should be limited to accepting one manual finance logging input, validating the local input shape before insert, executing against the local Supabase database only, and reporting the inserted activity plus query or cleanup evidence.
+
+The first reusable command or script should support income and expense only unless a later issue explicitly approves transfer or adjustment handling.
+
+### Recommended Implementation Type To Evaluate Next
+
+Evaluate a Node script next.
+
+Node is preferred because it is cross-platform enough for this repository, keeps input parsing and validation in one small local tool, avoids binding the first reusable path to Windows-only PowerShell, and can be checked with `node --check`.
+
+An npm wrapper should not be introduced until the underlying script boundary is implemented and validated.
+
+### Why This Is The Smallest Safe Operational Step
+
+The project has already validated that manual local input can map to valid `finance_activities` rows and that one-off SQL can execute that shape with rollback-safe evidence.
+
+The next smallest step is to define the reusable local command/script boundary before any reusable file exists, so a future implementation issue has narrow, reviewable limits.
+
+### Proposed Command/Input Contract
+
+Proposed local command concept:
+
+```text
+manual-log --date <YYYY-MM-DD> --amount <positive-number> --type <income|expense> --account <local-account-ref> --category <local-category-ref> [--description <text>] [--merchant-or-payee <text>] [--payment-method <text>] [--source-system-name <text>] [--source-record-reference <text>]
+```
+
+Input contract:
+
+- `date`: required; maps to `finance_activities.activity_date`.
+- `amount`: required; must be positive; maps to `finance_activities.amount`.
+- `type`: required; initially income or expense; maps to `finance_activities.movement_type`.
+- `account`: required; resolves to a local `finance_accounts` reference owned by the local user.
+- `category`: required for income and expense; resolves to a local `finance_categories` reference owned by the local user.
+- `currency`: not user-entered in the first boundary; fixed to TWD.
+- `source_indicator`: not user-entered in the first boundary; fixed or defaulted to `manual`.
+- Optional context fields may map to `description`, `merchant_or_payee`, `payment_method`, `source_system_name`, and `source_record_reference`.
+
+Output contract:
+
+- Report whether input validation passed.
+- Report whether insert succeeded.
+- Report inserted activity identifier or selected row summary.
+- Report query evidence by date, account, category, and `movement_type`.
+- Report whether execution was dry-run, rollback, or persistent local insert, depending on the future issue scope.
+
+### Allowed Files For A Future Implementation Issue
+
+Recommended allowed files for a future implementation issue, if explicitly approved:
+
+- One local script file under a clearly local tooling path, such as `scripts/local/manual-log.js`.
+- A minimal documentation update only if the implementation issue explicitly allows it.
+
+Files that should remain out of scope unless explicitly approved later:
+
+- `package.json` or npm script exposure.
+- SQL migration files.
+- Supabase config files.
+- Seed files.
+- App, API, Dashboard, or Shortcut files.
+- Reporting views, functions, triggers, or tables.
+
+### Required Validation Expectations For A Future Implementation Issue
+
+- Confirm the repo is on `origin/main` or the intended implementation branch.
+- Confirm the working tree is clean before validation except for approved implementation files.
+- Start local Supabase DB using existing config.
+- Reset or replay the local database from existing migrations if needed.
+- Run `node --check` for JavaScript.
+- Validate the command or script can produce one valid local income activity.
+- Validate the command or script can produce one valid local expense activity.
+- Validate required field mapping.
+- Validate optional field mapping for included optional inputs.
+- Validate records can be queried by date, account, category, and `movement_type`.
+- Validate same-owner account and category assumptions are preserved.
+- Confirm no production access, `service_role` key, remote linking, migration or config change, seed data, reporting object, or App/API/Dashboard/Shortcut work occurs.
+- Report working tree status after validation.
+
+### Not Allowed Scope
+
+- Reusable command or script implementation in this documentation step.
+- SQL migration or schema changes.
+- Supabase configuration changes.
+- Validation runs.
+- Seed files or seed data.
+- App, API, Dashboard, or Apple Shortcut work.
+- Reporting objects.
+- Production access.
+- `service_role` key usage.
+- Remote Supabase linking.
+- Legacy Sheets/GAS porting.
+- AI or Projection behavior.
+- Version labels or production-ready claims.
+
+### Stop Conditions
+
+Stop with `NEED_HUMAN` if this boundary requires schema changes, migration changes, Supabase config changes, production access, remote Supabase linking, `service_role` key usage, App/API/Dashboard/Shortcut decisions, seed data, reporting objects, reusable command/script implementation in this documentation step, legacy Sheets/GAS behavior, AI, or Projection scope.
+
+### Recommended Next Issue
+
+Validate or implement the first reusable local manual logging Node script only if explicitly approved; otherwise review the next operational boundary.
+
 ## Remaining Open Questions
 
 - What data model should represent these requirements?
