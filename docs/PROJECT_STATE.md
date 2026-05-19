@@ -45,6 +45,8 @@
 - Required and optional field mapping passed during one-off SQL execution validation.
 - Local query validation for one-off SQL records passed by date, account, category, and `movement_type`.
 - Transaction rollback and cleanup evidence passed after one-off SQL execution validation.
+- Issue #46 is closed as completed after defining the first reusable local manual logging command/script boundary at documentation level.
+- The reusable local command/script boundary, Node script recommendation, proposed input contract, future allowed files, validation expectations, not-allowed scope, and stop conditions are documented.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
