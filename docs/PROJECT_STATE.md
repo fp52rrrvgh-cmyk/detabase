@@ -35,10 +35,15 @@
 - Local query validation for daily logging records passed by date, account, category, and `movement_type`.
 - Issue #36 is closed as completed after defining the minimal local manual finance logging interface boundary at documentation level.
 - The minimum local manual input shape, required inputs, optional inputs, field mapping, validation expectations, usable action definition, and open questions are documented.
+- Issue #39 is closed as completed after local manual finance logging command-shape validation passed.
+- Required field mapping validation passed for date, amount, TWD currency, movement type, account, category, and manual source indicator.
+- Optional field mapping validation passed for description, merchant or payee, payment method, source system name, source record reference, and transfer pairing note.
+- Local query validation for command-shape records passed by date, account, category, and `movement_type`.
+- Rollback-safe temporary validation passed; temporary local records were inserted inside a transaction and rolled back.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
-- No repo files, SQL migrations, schema, Supabase config, production database, `service_role` key, App, API, Dashboard, Apple Shortcut, reporting objects, seed files, AI, Projection, or legacy Sheets/GAS were changed during validation.
+- No repo files, SQL migrations, schema, Supabase config, seed files, reporting objects, App, API, Dashboard, Apple Shortcut, production database, `service_role` key, remote Supabase linking, AI, Projection, or legacy Sheets/GAS were changed during validation.
 - No application implementation is defined here.
 - No deployment configuration is defined here.
 - No App, API, Dashboard, Apple Shortcut, or legacy Sheets/GAS implementation exists.

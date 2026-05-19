@@ -622,6 +622,22 @@ The action is usable only if it can stay within the existing Finance MVP schema 
 
 Validate local manual finance logging command shape.
 
+### Local Command-Shape Validation Result
+
+Issue #39 validated a temporary command/input shape locally against the existing Finance MVP schema.
+
+Temporary shape:
+
+```text
+manual-log --date <YYYY-MM-DD> --amount <positive-number> --type <income|expense> --account <local-account-ref> --category <local-category-ref> [--description <text>] [--merchant-or-payee <text>] [--payment-method <text>] [--transfer-pairing-note <text>] [--source-system-name <text>] [--source-record-reference <text>]
+```
+
+The validation produced one valid local income record and one valid local expense record using the documented local manual interface boundary.
+
+Required field mapping, optional field mapping, and local query checks by date, account, category, and `movement_type` passed.
+
+The validation remained local-only and rollback-safe. Temporary records were inserted inside a local transaction and rolled back. No reusable command, script, API, App, Dashboard, Shortcut, seed data, reporting object, production workflow, AI, Projection, or legacy Sheets/GAS behavior was introduced.
+
 ## Remaining Open Questions
 
 - What data model should represent these requirements?
