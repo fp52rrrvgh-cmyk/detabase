@@ -779,6 +779,93 @@ This validation does not define production workflow, App, API, Dashboard, Apple 
 
 Transfer and adjustment support remain out of scope unless explicitly approved by a dedicated issue.
 
+## Local Account/Category Setup Workflow Boundary
+
+This boundary defines the local-only reference data setup expected before stable manual logging with `scripts/local/manual-log.js`.
+
+Account/category setup is prerequisite reference data for local manual logging. It is not formal onboarding, seed data, App/API/Dashboard/Shortcut behavior, production workflow, or reusable setup tooling.
+
+### Local Account Setup Boundary
+
+- Use the same local owner context as daily logging.
+- Use active local accounts only for new manual logging.
+- Keep account setup limited to existing Finance MVP schema fields.
+- Treat account setup as local prerequisite reference data for `scripts/local/manual-log.js`, not as formal onboarding.
+
+### Local Category Setup Boundary
+
+- Use the same local owner context as activities and accounts.
+- Have at least one active income category and one active expense category before stable local daily logging.
+- Keep categories single-level only.
+- Treat category setup as local prerequisite reference data for `scripts/local/manual-log.js`, not as formal onboarding.
+
+### Minimum Required Account Fields
+
+- `user_id`.
+- `display_name`.
+- `account_type`.
+- `is_active = true`.
+- `id` as the stable UUID reference.
+
+### Minimum Required Category Fields
+
+- `user_id`.
+- `display_name`.
+- `is_active = true`.
+- `id` as the stable UUID reference.
+- Optional `grouping_purpose`.
+
+### Account/Category Identification Rule
+
+- UUID is the first execution identifier for account and category references.
+- Display name is human-readable confirmation only.
+- Local alias support is deferred to a future dedicated issue.
+
+This matches the current local manual logging script, which accepts `--account <uuid>` and `--category <uuid>`.
+
+### Future Validation Expectations
+
+A future validation issue should confirm:
+
+- Active local accounts can be created or identified for the local owner.
+- Active local categories can be created or identified for the same local owner.
+- One income category and one expense category are available.
+- `scripts/local/manual-log.js` can use selected account/category UUIDs for one income activity and one expense activity.
+- Account/category references belong to the same `user_id` as activity records.
+- Inactive account/category references are not used for new manual logging.
+- Records remain queryable by date, account, category, and `movement_type`.
+- Cleanup leaves no durable temporary validation data unless explicitly approved.
+
+### Out of Scope
+
+- Code or reusable setup tooling.
+- Seed files or seed data.
+- SQL migration or schema changes.
+- Supabase configuration changes.
+- Validation runs in this documentation step.
+- App, API, Dashboard, or Apple Shortcut work.
+- Production access.
+- `service_role` key usage.
+- Remote Supabase linking.
+- Reporting objects.
+- Legacy Sheets/GAS porting.
+- AI or Projection behavior.
+- Transfer or adjustment support expansion.
+- Version labels or production-ready claims.
+
+### Open Questions
+
+- Should the first local account/category setup remain one-off SQL for validation only, or should it become documented manual runbook steps after validation?
+- Which initial account display names and account types should be used for recurring local work?
+- Which initial category display names and grouping purposes should be used for recurring local work?
+- Should local category display names be unique by convention before App/API validation exists?
+- Should local aliases be introduced later, and where should they live without changing schema?
+- How should inactive accounts/categories be represented in a local setup checklist?
+
+### Recommended Next Issue
+
+Validate local account/category setup workflow boundary with temporary local references.
+
 ## Remaining Open Questions
 
 - What data model should represent these requirements?
