@@ -9,6 +9,8 @@
 - Do not add API or Edge Function code.
 - Do not add Apple Shortcut code.
 - Do not import or port legacy Sheets/GAS logic.
+- Do not add seed data unless explicitly approved.
+- Do not introduce a daily logging workflow unless explicitly approved.
 - Do not add version numbers.
 - Do not declare the project production-ready.
 - Do not add extra governance documents without an explicit request.

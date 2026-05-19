@@ -18,10 +18,16 @@
 - Clean local replay/reset from `origin/main` passed.
 - Migration ordering is stable for `20260518015307_create_finance_mvp_schema.sql`.
 - Finance MVP schema, RLS, and policies remain present after replay.
+- Issue #27 is closed as completed after local Finance MVP insert/query validation passed.
+- Temporary local test account, category, income activity, and expense activity inserts passed.
+- Local queries by account, category, date, and `movement_type` passed.
+- Constraint validation passed for positive amounts, required category on income and expense, invalid `movement_type`, and invalid `source_indicator`.
+- Same-owner composite foreign key validation passed.
+- RLS policy definitions remain present and use `user_id = auth.uid()`.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
-- No SQL migration, schema, or Supabase config changes were made during validation.
+- No repo files, SQL migrations, schema, Supabase config, production database, `service_role` key, App, API, Dashboard, Apple Shortcut, seed files, or legacy Sheets/GAS were changed during validation.
 - No application implementation is defined here.
 - No deployment configuration is defined here.
 - No App, API, Dashboard, Apple Shortcut, or legacy Sheets/GAS implementation exists.
