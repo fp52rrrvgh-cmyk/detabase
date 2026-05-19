@@ -12,6 +12,7 @@ It is local-only operating documentation. It is not production deployment docume
 - Local Finance MVP insert/query and review-query behavior have been validated.
 - `scripts/local/manual-log.js` exists as the first reusable local manual logging Node script.
 - The reusable script has been validated for one income activity, one expense activity, and a minimal local daily logging loop.
+- Local account/category setup workflow has been validated with temporary local references for one income activity and one expense activity.
 - Production remains untouched.
 
 ## Local Environment Prerequisites
@@ -113,6 +114,10 @@ Local categories should:
 For manual logging execution, use UUIDs as the first account/category identifiers. Display names are human-readable confirmation only. Local alias support is deferred to a future dedicated issue.
 
 Future validation should confirm that selected active account/category UUIDs belong to the same `user_id` as activity records, can be used by `scripts/local/manual-log.js` for one income and one expense record, remain queryable by date/account/category/`movement_type`, and leave no durable temporary validation data unless explicitly approved.
+
+Issue #64 validated this boundary with temporary local references. The validation confirmed that one active local account, one active income category, and one active expense category can support one income and one expense through `scripts/local/manual-log.js`; same-owner reference integrity passed; inactive account, inactive category, and cross-owner category checks failed as expected; records remained queryable by date, account, category, and `movement_type`; and cleanup removed temporary accounts, categories, and activities.
+
+This validation did not introduce seed files, reusable setup tooling, App/API/Dashboard/Shortcut behavior, reporting objects, AI, Projection, production access, remote Supabase linking, `service_role` key usage, migration changes, schema changes, or Supabase config changes.
 
 ## Verify Local Records
 

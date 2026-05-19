@@ -866,6 +866,26 @@ A future validation issue should confirm:
 
 Validate local account/category setup workflow boundary with temporary local references.
 
+### Local Account/Category Setup Validation Result
+
+Issue #64 validated the local account/category setup workflow boundary with temporary local references.
+
+The validation confirmed:
+
+- Temporary active local account/category references can support one local income activity through `scripts/local/manual-log.js`.
+- Temporary active local account/category references can support one local expense activity through `scripts/local/manual-log.js`.
+- The active account, active income category, and active expense category belonged to the same local owner context.
+- Same-owner reference integrity passed for inserted activity records.
+- Negative checks passed for inactive account, inactive category, and cross-owner category references.
+- Inserted records remained queryable by date, account, category, and `movement_type`.
+- Cleanup evidence passed; temporary accounts, categories, and activities were removed.
+
+This validation remained local-only. It did not introduce code changes, scripts, reusable setup tooling, seed files, SQL migration changes, schema changes, Supabase config changes, production access, remote Supabase linking, `service_role` key usage, App/API/Dashboard/Shortcut work, reporting objects, AI, Projection, or legacy Sheets/GAS work.
+
+### Recommended Next Issue After Validation
+
+Define persistent local account/category setup method boundary.
+
 ## Remaining Open Questions
 
 - What data model should represent these requirements?
