@@ -3,10 +3,10 @@
 ## Pending
 
 - Define the initial project goal.
-- Implement reusable local account/category setup helper.
+- Define first practical local daily logging operator workflow.
 - Keep production migration application out of scope until explicitly approved.
-- Keep the helper implementation local-only and narrowly scoped to `scripts/local/setup-references.js` unless a future implementation issue explicitly allows a docs update.
-- Keep validation, docs sync, `package.json`, seed files, API, Dashboard, App, Apple Shortcut, transfer or adjustment support, AI, Projection, reporting objects, staging, production, remote Supabase, and legacy Sheets/GAS work out of scope until explicitly approved.
+- Use only the existing local helpers, `scripts/local/setup-references.js` and `scripts/local/manual-log.js`, as the reference point for the next operator-workflow boundary.
+- Keep package wrappers, aliases, seed files, API, Dashboard, App, Apple Shortcut, transfer or adjustment support, AI, Projection, reporting objects, staging, production, remote Supabase, and legacy Sheets/GAS work out of scope until explicitly approved.
 
 ## Not Started
 

@@ -1083,7 +1083,36 @@ A future implementation issue should validate:
 
 ### Recommended Next Issue
 
-Implement reusable local account/category setup helper.
+Implemented by PR #77; after local validation, define first practical local daily logging operator workflow.
+
+### Reusable Local Account/Category Setup Helper Implementation Result
+
+PR #77 implemented the reusable local account/category setup helper at `scripts/local/setup-references.js`.
+
+The helper remains local-only and limited to account/category reference setup for `scripts/local/manual-log.js`. It creates or identifies one active local account, one active income category, and one active expense category for an existing local owner context, then prints UUIDs, display names, created versus already-existing status, same-owner confirmation, active-state confirmation, and command-ready references.
+
+The helper does not insert finance activities, replace `scripts/local/manual-log.js`, add aliases, add seed files, modify migrations, schema, or Supabase config, or add App/API/Dashboard/Shortcut, staging, production, or remote Supabase behavior.
+
+### Reusable Local Account/Category Setup Helper Validation Result
+
+Issue #78 validated `scripts/local/setup-references.js` locally.
+
+The validation confirmed:
+
+- `node --check scripts/local/setup-references.js` passed.
+- Helper create behavior passed: it created one active local account, one active income category, and one active expense category.
+- Helper reuse behavior passed: a second run returned already-existing references.
+- Helper dry-run behavior passed: dry-run reported would-create and made no writes.
+- Helper output UUIDs worked with `scripts/local/manual-log.js` for one income activity and one expense activity.
+- Negative checks passed for invalid UUID, invalid account type, duplicate active account ambiguity, duplicate active category ambiguity, inactive refs not selected, and cross-owner refs not selected.
+- Query evidence passed for same-owner refs, date, account, income category, expense category, and `movement_type`.
+- Cleanup evidence passed; temporary accounts, categories, activities, and local auth users were removed.
+
+This validation remained local-only. It did not modify repo files or introduce code changes, scripts, reusable tooling, seed files, SQL migration changes, schema changes, Supabase config changes, production access, remote Supabase linking, `service_role` key usage, App/API/Dashboard/Shortcut work, reporting objects, AI, Projection, legacy Sheets/GAS work, versioning, or production-ready claims.
+
+### Recommended Next Issue After Helper Validation
+
+Define first practical local daily logging operator workflow.
 
 ## Remaining Open Questions
 
