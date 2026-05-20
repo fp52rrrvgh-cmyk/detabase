@@ -2081,9 +2081,21 @@ The existing WebApp expense submit payload remains unchanged. The WebApp remains
 
 PR #176 introduced no production access, schema change, migration change, Supabase config change, reporting views/functions/triggers/tables, materialized reporting objects, write-capable Dashboard behavior, AI/Projection, transfer/adjustment support, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
 
-### Recommended Next Issue After Boundary Documentation
+### TWD Integer Amount Input And Display Boundary
 
-Define the next bounded post-review-panel step without expanding into production, deployment, schema changes, reporting objects, or write-capable Dashboard behavior.
+Issue #181 implements the accepted TWD integer amount boundary for the current WebApp MVP.
+
+The WebApp expense-entry surface treats TWD amount input as a positive whole-number amount. Decimal, zero, negative, blank, or invalid amount input is rejected before a save request can proceed through the WebApp validation path.
+
+The existing expense request payload shape remains unchanged: `activity_date`, `movement_type = expense`, positive whole TWD amount, `currency = TWD`, configured account/category UUID refs, and description. The WebApp still does not send `source_indicator`.
+
+The review panel displays TWD activity amounts and totals without decimal places.
+
+This boundary keeps the existing database `amount` type unchanged. It does not introduce schema changes, migrations, Supabase config changes, reporting objects, historical data cleanup, production access, deployment, write-capable Dashboard behavior, income/transfer/adjustment input expansion, AI/Projection, aliases, wrappers, package scripts, shortcut automation, legacy Sheets/GAS work, versioning, or production-ready claims.
+
+### Recommended Next Issue After TWD Integer Amount Boundary
+
+Define the next bounded post-TWD-integer-amount step without expanding into production, deployment, schema changes, reporting objects, write-capable Dashboard behavior, income/transfer/adjustment input expansion, or historical data cleanup.
 
 ## Remaining Open Questions
 

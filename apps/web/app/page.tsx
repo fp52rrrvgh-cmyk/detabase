@@ -146,14 +146,14 @@ function runtimeEnvironmentStatus(config: RuntimeConfig): RuntimeStatusItem[] {
   }));
 }
 
-function isPositiveAmount(value: string): boolean {
+function isPositiveIntegerAmount(value: string): boolean {
   const trimmed = value.trim();
-  if (!/^(?:0|[1-9]\d*)(?:\.\d+)?$/.test(trimmed)) {
+  if (!/^[1-9]\d*$/.test(trimmed)) {
     return false;
   }
 
   const parsed = Number(trimmed);
-  return Number.isFinite(parsed) && parsed > 0;
+  return Number.isSafeInteger(parsed) && parsed > 0;
 }
 
 function extractSafeErrorCode(body: unknown): string | null {
@@ -221,7 +221,8 @@ function safeReferenceLabel(
 
 function formatAmount(amount: number, currency: string): string {
   return `${currency} ${amount.toLocaleString(undefined, {
-    maximumFractionDigits: 2,
+    maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
   })}`;
 }
 
@@ -607,10 +608,10 @@ export default function ExpenseEntryPage() {
       return;
     }
 
-    if (!isPositiveAmount(trimmedAmount)) {
+    if (!isPositiveIntegerAmount(trimmedAmount)) {
       setSubmitState({
         status: "failure",
-        message: "Enter a positive amount before submitting.",
+        message: "Enter a positive whole TWD amount before submitting.",
       });
       return;
     }
@@ -704,7 +705,7 @@ export default function ExpenseEntryPage() {
           <p className="eyebrow">Staging expense entry</p>
           <h1 id="page-title">Finance expense entry</h1>
           <p className="summary">
-            Record one TWD expense through the staging ingestion endpoint.
+            Record one whole TWD expense through the staging ingestion endpoint.
           </p>
         </div>
 
@@ -774,13 +775,14 @@ export default function ExpenseEntryPage() {
           <label className="field">
             <span>Amount</span>
             <input
-              inputMode="decimal"
-              min="0.01"
+              inputMode="numeric"
+              min="1"
               name="amount"
               onChange={(event) => handleAmountChange(event.target.value)}
-              placeholder="0"
+              placeholder="100"
               required
-              step="0.01"
+              step="1"
+              title="Enter a positive whole TWD amount."
               type="number"
               value={amount}
             />

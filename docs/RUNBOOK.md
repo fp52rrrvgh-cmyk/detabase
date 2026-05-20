@@ -53,6 +53,8 @@ It is not production deployment documentation and does not implement write-capab
 - The review panel supports recent owned activities, date range filtering, movement type filtering, totals by selected range, totals by `movement_type`, totals by category, and totals by account.
 - Review validation passed with safe evidence and performed no writes.
 - The existing expense submit payload remains unchanged, and `apps/web/.env.local` remains local-only and uncommitted.
+- WebApp TWD amount input is positive whole-number only; decimal, zero, negative, blank, or invalid amounts are rejected.
+- The read-only review panel displays TWD activity amounts and totals without decimal places.
 - Production remains untouched.
 
 ## Local Environment Prerequisites
@@ -1038,7 +1040,7 @@ Validated operator flow:
 3. Open the local WebApp in a browser.
 4. Confirm runtime readiness shows env names and configured/missing state only, not values.
 5. Sign in with an existing staging auth user through the browser UI. Do not record credentials or session values.
-6. Submit one expense with a positive amount and description.
+6. Submit one expense with a positive whole TWD amount and description.
 7. Confirm the safe success message shows only date, TWD amount, description, and ready-for-next-expense status.
 8. Repeat entry if needed. After a successful submit, amount and description reset; stale success or failure messages clear when the next entry starts.
 9. Stop the local WebApp server when finished.
@@ -1047,12 +1049,14 @@ The WebApp request shape remains:
 
 - `activity_date`.
 - `movement_type = expense`.
-- Positive amount.
+- Positive whole TWD amount.
 - `currency = TWD`.
 - Configured account/category UUID refs.
 - Description.
 
 The WebApp remains expense-only and still does not send `source_indicator`.
+
+Decimal, zero, negative, blank, or invalid amount values are rejected by the WebApp input and submit validation path. Do not silently round decimal amount input.
 
 Safe reference troubleshooting:
 
@@ -1175,9 +1179,22 @@ The existing expense submit payload remains unchanged. The WebApp remains expens
 
 This implementation introduced no reporting views, functions, triggers, tables, materialized objects, schema changes, migrations, Supabase config changes, production access, deployment behavior, write-capable Dashboard behavior, edit/delete/cleanup/pending-review management, account/category management, charts, exports, AI/Projection, aliases, wrappers, package scripts, shortcut automation, legacy Sheets/GAS work, versioning, or production-ready claim.
 
+### TWD Integer Amount Input And Display
+
+The current WebApp MVP treats TWD amount entry as positive whole-number input.
+
+- Valid positive integer TWD amount input may proceed to the existing expense save path.
+- Decimal TWD input is rejected and must not be silently rounded.
+- Zero, negative, blank, or invalid amount input remains rejected.
+- The existing request payload shape remains unchanged.
+- The WebApp remains expense-only for input and still does not send `source_indicator`.
+- The read-only review panel displays TWD activity amounts and totals without decimal places.
+
+This boundary changes WebApp validation and display only. It does not change schema, migrations, Supabase config, the existing database `amount` type, historical data, production access, deployment, reporting objects, write-capable Dashboard behavior, or production-ready status.
+
 Next safe issue:
 
-Define the next bounded post-review-panel step without expanding into production, deployment, schema changes, reporting objects, or write-capable Dashboard behavior.
+Define the next bounded post-TWD-integer-amount step without expanding into production, deployment, schema changes, reporting objects, write-capable Dashboard behavior, income/transfer/adjustment input expansion, or historical data cleanup.
 
 ## Verify Local Records
 

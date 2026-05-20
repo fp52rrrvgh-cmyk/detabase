@@ -245,6 +245,11 @@
 - The WebApp remains expense-only for input and still does not send `source_indicator`.
 - `apps/web/.env.local` remains local-only and uncommitted.
 - PR #176 introduced no production access, schema change, migration change, Supabase config change, reporting objects, write-capable Dashboard behavior, AI/Projection, transfer/adjustment support, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
+- Issue #181 implements TWD integer amount input and display validation for the WebApp MVP.
+- WebApp expense amount input is positive whole-number TWD only; decimal, zero, negative, blank, or invalid amount input is rejected without silent rounding.
+- The review panel displays TWD activity amounts and totals without decimal places.
+- The existing WebApp expense submit payload shape remains unchanged, the WebApp remains expense-only for input, and it still does not send `source_indicator`.
+- Issue #181 introduces no schema change, migration change, Supabase config change, reporting objects, write-capable Dashboard behavior, production access, deployment, historical data cleanup, sensitive value disclosure, versioning, or production-ready claim.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
@@ -264,7 +269,7 @@
 
 ## Unknowns
 
-- Next bounded post-review-panel step.
+- Next bounded post-TWD-integer-amount step.
 - Data model.
 - Deployment target.
 - Dashboard follow-up requirements.
