@@ -26,6 +26,10 @@ const ALLOWED_FIELDS = new Set([
 type JsonObject = Record<string, unknown>;
 type MovementType = "income" | "expense";
 type SupabaseClient = ReturnType<typeof createClient>;
+type CallerClient = {
+  accessToken: string;
+  supabase: SupabaseClient;
+};
 
 type ValidatedInput = {
   activityDate: string;
@@ -267,10 +271,8 @@ function enforceStagingRuntime(): Response | null {
   return null;
 }
 
-function createCallerClient(req: Request): SupabaseClient | Response {
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const publishableKey = getPublishableKey();
-  const authorization = req.headers.get("authorization");
+function extractBearerToken(req: Request): string | Response {
+  const authorization = req.headers.get("authorization")?.trim();
 
   if (!authorization) {
     return safeFailure(
@@ -278,6 +280,27 @@ function createCallerClient(req: Request): SupabaseClient | Response {
       "missing_authorization",
       "Authorization bearer token is required.",
     );
+  }
+
+  const [scheme, token, extra] = authorization.split(/\s+/);
+  if (scheme?.toLowerCase() !== "bearer" || !token || extra) {
+    return safeFailure(
+      401,
+      "missing_authorization",
+      "Authorization bearer token is required.",
+    );
+  }
+
+  return token;
+}
+
+function createCallerClient(req: Request): CallerClient | Response {
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const publishableKey = getPublishableKey();
+  const accessToken = extractBearerToken(req);
+
+  if (accessToken instanceof Response) {
+    return accessToken;
   }
 
   if (!supabaseUrl || !publishableKey) {
@@ -288,9 +311,12 @@ function createCallerClient(req: Request): SupabaseClient | Response {
     );
   }
 
-  return createClient(supabaseUrl, publishableKey, {
+  const authorization = `Bearer ${accessToken}`;
+  const supabase = createClient(supabaseUrl, publishableKey, {
+    accessToken: async () => accessToken,
     auth: {
       autoRefreshToken: false,
+      detectSessionInUrl: false,
       persistSession: false,
     },
     global: {
@@ -299,10 +325,15 @@ function createCallerClient(req: Request): SupabaseClient | Response {
       },
     },
   });
+
+  return {
+    accessToken,
+    supabase,
+  };
 }
 
-async function resolveUserId(supabase: SupabaseClient): Promise<string | Response> {
-  const { data, error } = await supabase.auth.getUser();
+async function resolveUserId(caller: CallerClient): Promise<string | Response> {
+  const { data, error } = await caller.supabase.auth.getUser(caller.accessToken);
 
   if (error || !data.user?.id) {
     return safeFailure(
@@ -316,11 +347,11 @@ async function resolveUserId(supabase: SupabaseClient): Promise<string | Respons
 }
 
 async function findActiveAccount(
-  supabase: SupabaseClient,
+  caller: CallerClient,
   userId: string,
   accountId: string,
 ): Promise<FinanceAccount | Response> {
-  const { data, error } = await supabase
+  const { data, error } = await caller.supabase
     .from("finance_accounts")
     .select("id,user_id,display_name,is_active")
     .eq("id", accountId)
@@ -348,11 +379,11 @@ async function findActiveAccount(
 }
 
 async function findActiveCategory(
-  supabase: SupabaseClient,
+  caller: CallerClient,
   userId: string,
   categoryId: string,
 ): Promise<FinanceCategory | Response> {
-  const { data, error } = await supabase
+  const { data, error } = await caller.supabase
     .from("finance_categories")
     .select("id,user_id,display_name,grouping_purpose,is_active")
     .eq("id", categoryId)
@@ -387,11 +418,11 @@ function categoryMatchesMovement(
 }
 
 async function insertActivity(
-  supabase: SupabaseClient,
+  caller: CallerClient,
   userId: string,
   input: ValidatedInput,
 ): Promise<JsonObject | Response> {
-  const { data, error } = await supabase
+  const { data, error } = await caller.supabase
     .from("finance_activities")
     .insert({
       user_id: userId,
@@ -485,22 +516,22 @@ export async function handler(req: Request): Promise<Response> {
       return stagingRuntimeFailure;
     }
 
-    const supabase = createCallerClient(req);
-    if (supabase instanceof Response) {
-      return supabase;
+    const caller = createCallerClient(req);
+    if (caller instanceof Response) {
+      return caller;
     }
 
-    const userId = await resolveUserId(supabase);
+    const userId = await resolveUserId(caller);
     if (userId instanceof Response) {
       return userId;
     }
 
-    const account = await findActiveAccount(supabase, userId, input.accountId);
+    const account = await findActiveAccount(caller, userId, input.accountId);
     if (account instanceof Response) {
       return account;
     }
 
-    const category = await findActiveCategory(supabase, userId, input.categoryId);
+    const category = await findActiveCategory(caller, userId, input.categoryId);
     if (category instanceof Response) {
       return category;
     }
@@ -513,7 +544,7 @@ export async function handler(req: Request): Promise<Response> {
       );
     }
 
-    const inserted = await insertActivity(supabase, userId, input);
+    const inserted = await insertActivity(caller, userId, input);
     if (inserted instanceof Response) {
       return inserted;
     }
