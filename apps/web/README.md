@@ -63,6 +63,54 @@ or failure messages are cleared. The next expense uses the same fixed
 expense/TWD/local-date request shape and the same configured account/category
 runtime references.
 
+## Validated Staging-Use Flow
+
+This WebApp is operated locally against the staging ingestion path. Runtime
+values stay local-only in `apps/web/.env.local` or the approved local runtime
+environment and must not be committed, logged, pasted, or documented.
+
+Prepare local runtime values by env name only:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_FINANCE_FUNCTION_URL`
+- `NEXT_PUBLIC_DEFAULT_EXPENSE_ACCOUNT_ID`
+- `NEXT_PUBLIC_DEFAULT_EXPENSE_CATEGORY_ID`
+
+Do not record the values for these names.
+
+Operator flow:
+
+1. Confirm local runtime values are prepared.
+2. Start the WebApp locally from `apps/web`:
+
+   ```powershell
+   .\node_modules\.bin\next dev --hostname 127.0.0.1 --port 3000
+   ```
+
+3. Open the local WebApp.
+4. Confirm runtime readiness shows env names and configured/missing state only.
+5. Sign in with an existing staging auth user without recording credentials or
+   session values.
+6. Submit one expense with a positive amount and description.
+7. Confirm the safe success message shows date, TWD amount, description, and
+   ready-for-next-expense status.
+8. Repeat entry if needed.
+9. Stop the local server when finished.
+
+The request shape remains `activity_date`, `movement_type = expense`, positive
+amount, `currency = TWD`, configured account/category UUID refs, and
+description. The WebApp still does not send `source_indicator`.
+
+Stop if the target could be production, runtime values are missing, credentials
+or UUID values would need to be recorded, or the workflow expands into
+deployment, server routes, selector/dynamic lookup, Dashboard/reporting,
+income/transfer/adjustment support, aliases, wrappers, package scripts,
+shortcut automation, auth architecture changes, schema/migration/Supabase config
+changes, AI/Projection, or legacy Sheets/GAS work.
+
+This staging-use flow is not production-ready.
+
 ## Local Checks
 
 ```powershell
