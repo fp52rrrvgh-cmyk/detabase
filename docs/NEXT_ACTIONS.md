@@ -3,9 +3,10 @@
 ## Pending
 
 - Define the initial project goal.
-- Define reusable local account/category setup helper boundary.
+- Implement reusable local account/category setup helper.
 - Keep production migration application out of scope until explicitly approved.
-- Keep reusable setup tooling, seed files, API, Dashboard, App, Apple Shortcut, transfer or adjustment support, AI, Projection, and legacy Sheets/GAS work out of scope until explicitly approved.
+- Keep the helper implementation local-only and narrowly scoped to `scripts/local/setup-references.js` unless a future implementation issue explicitly allows a docs update.
+- Keep validation, docs sync, `package.json`, seed files, API, Dashboard, App, Apple Shortcut, transfer or adjustment support, AI, Projection, reporting objects, staging, production, remote Supabase, and legacy Sheets/GAS work out of scope until explicitly approved.
 
 ## Not Started
 

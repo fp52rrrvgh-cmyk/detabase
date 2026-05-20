@@ -14,6 +14,7 @@ It is local-only operating documentation. It is not production deployment docume
 - The reusable script has been validated for one income activity, one expense activity, and a minimal local daily logging loop.
 - Local account/category setup workflow has been validated with temporary local references for one income activity and one expense activity.
 - Persistent local account/category setup runbook boundary validation has passed with one active account, one active income category, and one active expense category.
+- Reusable local account/category setup helper boundary is documented, but no helper script exists yet.
 - Production remains untouched.
 
 ## Local Environment Prerequisites
@@ -153,6 +154,40 @@ Before any implementation or helper tooling is considered, validation should con
 Issue #70 validated this runbook boundary with temporary local references. The validation confirmed that documented manual setup steps can support one active account, one active income category, and one active expense category; `scripts/local/manual-log.js` inserted one income and one expense; same-owner integrity passed; inactive account, inactive category, and cross-owner category checks failed as expected; query evidence passed by date, account, income category, expense category, and `movement_type`; and cleanup removed temporary accounts, categories, and activities.
 
 This validation did not introduce repo file changes, code, scripts, reusable setup tooling, seed files, App/API/Dashboard/Shortcut behavior, reporting objects, AI, Projection, production access, remote Supabase linking, `service_role` key usage, migration changes, schema changes, Supabase config changes, legacy Sheets/GAS work, versioning, or production-ready claims.
+
+## Reusable Local Account And Category Setup Helper Boundary
+
+A minimal reusable local account/category setup helper may be allowed next through a dedicated implementation issue.
+
+The helper boundary is local-only and limited to account/category reference setup for `scripts/local/manual-log.js`. It may create or identify one active local account, one active income category, and one active expense category; ensure the selected references belong to the same local owner context; and print UUIDs plus display names for manual logging.
+
+The helper must use UUID-first execution identifiers, keep display names as human confirmation only, avoid local aliases for now, and stay limited to account/category reference setup.
+
+The helper must not insert finance activities, replace `scripts/local/manual-log.js`, add aliases, add seed files, modify migrations, schema, or Supabase config, add App/API/Dashboard/Shortcut behavior, or add staging, production, or remote Supabase behavior.
+
+Boundary-level inputs:
+
+- Local owner context / `user_id`.
+- Account display name.
+- Account type.
+- Income category display name.
+- Expense category display name.
+- Optional category grouping purpose.
+- Optional dry-run flag if useful.
+
+Boundary-level outputs:
+
+- Active account UUID and display name.
+- Active income category UUID and display name.
+- Active expense category UUID and display name.
+- Same-owner confirmation.
+- Active-state confirmation.
+- Created versus already-existing status.
+- Command-ready references for `scripts/local/manual-log.js`.
+
+Future implementation may use `scripts/local/setup-references.js`. `docs/RUNBOOK.md` may be updated only if that future implementation issue explicitly allows it. Keep `package.json`, SQL migrations, Supabase config, seed files, App/API/Dashboard/Shortcut files, and reporting objects out of scope unless separately approved.
+
+Future implementation validation should include `node --check scripts/local/setup-references.js`, local Supabase DB-only startup using existing config, local reset/replay only if explicitly allowed, account/category setup output that works with `scripts/local/manual-log.js` for one income and one expense, same-owner integrity, inactive and cross-owner reference exclusion, query evidence by date/account/category/`movement_type`, cleanup evidence or local reset, and confirmation that no production, remote Supabase, `service_role`, schema/migration/config, seed, App/API/Dashboard/Shortcut, reporting, AI, Projection, or legacy Sheets/GAS work occurs.
 
 ## Verify Local Records
 
