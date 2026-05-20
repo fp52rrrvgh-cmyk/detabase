@@ -90,9 +90,20 @@
 - The helper boundary remains UUID-first for execution, display-name-confirmed for human review only, local-alias-deferred, and local-only.
 - The helper must not insert finance activities, replace `scripts/local/manual-log.js`, add seed files, add aliases, modify migrations, schema, or Supabase config, or add App/API/Dashboard/Shortcut, staging, production, or remote Supabase behavior.
 - Proposed future helper file is `scripts/local/setup-references.js`; `docs/RUNBOOK.md` may be updated only if a future implementation issue explicitly allows it.
+- PR #77 added `scripts/local/setup-references.js` as the reusable local account/category setup helper.
+- Issue #78 is closed as completed after local-only validation of `scripts/local/setup-references.js` passed.
+- `node --check scripts/local/setup-references.js` passed during Issue #78 validation.
+- Helper create behavior passed: it created one active local account, one active income category, and one active expense category.
+- Helper reuse behavior passed: a second run returned already-existing references.
+- Helper dry-run behavior passed: dry-run reported would-create and made no writes.
+- Helper output UUIDs worked with `scripts/local/manual-log.js` for one income activity and one expense activity.
+- Negative checks passed for invalid UUID, invalid account type, duplicate active account ambiguity, duplicate active category ambiguity, inactive refs not selected, and cross-owner refs not selected.
+- Query evidence passed for same-owner refs, date, account, income category, expense category, and `movement_type`.
+- Cleanup evidence passed after Issue #78 validation; temporary accounts, categories, activities, and local auth users were removed.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
+- No repo files were modified during Issue #78 validation; no code, scripts, reusable tooling, seed files, SQL migrations, schema changes, Supabase config changes, production access, remote Supabase linking, `service_role` key usage, App/API/Dashboard/Shortcut work, reporting objects, AI, Projection, legacy Sheets/GAS work, versioning, or production-ready claims were introduced.
 - No repo files, code, scripts, reusable tooling, SQL migrations, schema, Supabase config, seed files, reporting objects, App, API, Dashboard, Apple Shortcut, production database, `service_role` key, remote Supabase linking, AI, Projection, legacy Sheets/GAS, versioning, or production-ready claims were introduced during Issue #70 validation.
 - No repo files, SQL migrations, schema, Supabase config, seed files, reporting objects, App, API, Dashboard, Apple Shortcut, production database, `service_role` key, remote Supabase linking, AI, Projection, or legacy Sheets/GAS were changed during Issue #64 validation.
 - No repo files, SQL migrations, schema, Supabase config, `package.json`, seed files, reporting objects, App, API, Dashboard, Apple Shortcut, production database, `service_role` key, remote Supabase linking, AI, Projection, or legacy Sheets/GAS were changed during Issue #55 validation.

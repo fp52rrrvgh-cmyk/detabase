@@ -14,7 +14,8 @@ It is local-only operating documentation. It is not production deployment docume
 - The reusable script has been validated for one income activity, one expense activity, and a minimal local daily logging loop.
 - Local account/category setup workflow has been validated with temporary local references for one income activity and one expense activity.
 - Persistent local account/category setup runbook boundary validation has passed with one active account, one active income category, and one active expense category.
-- Reusable local account/category setup helper boundary is documented, but no helper script exists yet.
+- `scripts/local/setup-references.js` exists as the reusable local account/category setup helper.
+- Reusable local account/category setup helper validation has passed for create, reuse, dry-run, negative checks, manual-log compatibility, query evidence, and cleanup.
 - Production remains untouched.
 
 ## Local Environment Prerequisites
@@ -157,9 +158,9 @@ This validation did not introduce repo file changes, code, scripts, reusable set
 
 ## Reusable Local Account And Category Setup Helper Boundary
 
-A minimal reusable local account/category setup helper may be allowed next through a dedicated implementation issue.
+The reusable local account/category setup helper exists at `scripts/local/setup-references.js`.
 
-The helper boundary is local-only and limited to account/category reference setup for `scripts/local/manual-log.js`. It may create or identify one active local account, one active income category, and one active expense category; ensure the selected references belong to the same local owner context; and print UUIDs plus display names for manual logging.
+The helper is local-only and limited to account/category reference setup for `scripts/local/manual-log.js`. It can create or identify one active local account, one active income category, and one active expense category; ensure the selected references belong to the same local owner context; and print UUIDs plus display names for manual logging.
 
 The helper must use UUID-first execution identifiers, keep display names as human confirmation only, avoid local aliases for now, and stay limited to account/category reference setup.
 
@@ -185,9 +186,11 @@ Boundary-level outputs:
 - Created versus already-existing status.
 - Command-ready references for `scripts/local/manual-log.js`.
 
-Future implementation may use `scripts/local/setup-references.js`. `docs/RUNBOOK.md` may be updated only if that future implementation issue explicitly allows it. Keep `package.json`, SQL migrations, Supabase config, seed files, App/API/Dashboard/Shortcut files, and reporting objects out of scope unless separately approved.
+The implementation uses `scripts/local/setup-references.js`. Keep `package.json`, SQL migrations, Supabase config, seed files, App/API/Dashboard/Shortcut files, and reporting objects out of scope unless separately approved.
 
-Future implementation validation should include `node --check scripts/local/setup-references.js`, local Supabase DB-only startup using existing config, local reset/replay only if explicitly allowed, account/category setup output that works with `scripts/local/manual-log.js` for one income and one expense, same-owner integrity, inactive and cross-owner reference exclusion, query evidence by date/account/category/`movement_type`, cleanup evidence or local reset, and confirmation that no production, remote Supabase, `service_role`, schema/migration/config, seed, App/API/Dashboard/Shortcut, reporting, AI, Projection, or legacy Sheets/GAS work occurs.
+Issue #78 validated the helper locally. The validation confirmed `node --check scripts/local/setup-references.js` passed; create behavior produced one active local account, one active income category, and one active expense category; reuse behavior returned already-existing references; dry-run reported would-create and made no writes; helper output UUIDs worked with `scripts/local/manual-log.js` for one income and one expense; invalid UUID, invalid account type, duplicate active account ambiguity, duplicate active category ambiguity, inactive refs, and cross-owner refs were rejected or not selected as expected; query evidence passed for same-owner refs, date, account, income category, expense category, and `movement_type`; and cleanup removed temporary accounts, categories, activities, and local auth users.
+
+This validation did not modify repo files or introduce code changes, scripts, reusable tooling, seed files, App/API/Dashboard/Shortcut behavior, reporting objects, AI, Projection, production access, remote Supabase linking, `service_role` key usage, migration changes, schema changes, Supabase config changes, legacy Sheets/GAS work, versioning, or production-ready claims.
 
 ## Verify Local Records
 
