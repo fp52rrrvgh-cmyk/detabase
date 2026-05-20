@@ -147,6 +147,14 @@
 - Cross-owner references must not be selected.
 - Existing setup and manual logging helpers remain separate: `scripts/local/setup-references.js` creates or identifies references, and `scripts/local/manual-log.js` inserts one local finance activity.
 - No implementation, config, schema, migration, seed, production, remote Supabase, `service_role`, App/API/Dashboard, Apple Shortcut, reporting, AI, Projection, or legacy Sheets/GAS work was required or introduced during Issue #95 validation.
+- Issue #98 is closed as completed after recommendation-only boundary work defined backend local-complete criteria.
+- Backend local-complete means the local-only backend/operator layer is sufficient for one personal operator to set up local references, log income and expense activities, inspect local records, and maintain cleanup discipline using existing local tools and docs.
+- Backend local-complete is separate from production-ready status and does not include production, staging, remote Supabase, `service_role`, deployment, backup, monitoring, or hosted security review.
+- Backend local-complete is separate from App/API/Dashboard/Apple Shortcut completeness and does not include aliases, wrappers, package scripts, UI, API, Dashboard, or Shortcut implementation.
+- Required completed capabilities for backend local-complete include validated local schema/migration replay, validated local replay/reset workflow, validated `scripts/local/setup-references.js`, validated `scripts/local/manual-log.js`, validated setup-to-logging-to-query-to-cleanup operator workflow, validated mobile-friendly command snippets, validated alias/reference shortcut boundary, and synchronized source-of-truth docs.
+- Required validation evidence includes Node static checks, local DB startup/reset/replay evidence when allowed, setup helper create/reuse/dry-run behavior, income and expense inserts, required and optional field checks, same-owner integrity, inactive/cross-owner/duplicate ambiguity negative checks, query evidence, cleanup evidence, and explicit no-production/no-remote/no-`service_role` scope confirmation.
+- Acceptable remaining risks for personal local use include manual terminal operation, explicit UUID copying, operator-selected account/category names, local Docker/Supabase dependency, manual cleanup discipline, no mobile Shortcut/App/API/Dashboard/wrapper/alias/package script, and income/expense-only logging.
+- Future issues remain required for production/staging, remote Supabase, `service_role`, App/API/Dashboard/Apple Shortcut, alias implementation, package wrappers, seed files, schema/migration/config changes, transfer/adjustment support, reporting objects, AI/Projection, legacy Sheets/GAS, data backup/restore, versioning, or production-ready claims.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.

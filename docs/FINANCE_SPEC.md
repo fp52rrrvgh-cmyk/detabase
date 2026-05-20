@@ -1521,9 +1521,124 @@ Validation confirmed:
 - Existing setup and manual logging helpers remain separate: `scripts/local/setup-references.js` creates or identifies references, and `scripts/local/manual-log.js` inserts one local finance activity.
 - No implementation, config, schema, migration, seed, production, remote Supabase, `service_role`, App/API/Dashboard, Apple Shortcut, reporting, AI, Projection, or legacy Sheets/GAS work was required or introduced.
 
-### Recommended Next Issue After Validation
+### Completed Next Issue After Validation
 
-Define backend local-complete criteria.
+Issue #98 defined backend local-complete criteria at the recommendation-only boundary level.
+
+## Backend Local-Complete Criteria
+
+Issue #98 recommended criteria for when the Finance local backend/operator layer can be considered backend local-complete for personal daily-use finance logging.
+
+Backend local-complete means the local-only backend/operator layer is sufficient for one personal operator to:
+
+- Set up local account/category references.
+- Log one income or expense activity at a time.
+- Inspect local records.
+- Maintain cleanup discipline when validation data is used.
+- Use existing local tools and source-of-truth docs only.
+
+Backend local-complete is limited to income and expense local daily logging through the existing local scripts and local Supabase database path. It does not include transfer or adjustment support.
+
+### Separation From Production-Ready
+
+Backend local-complete is not production-ready.
+
+It does not include production deployment, staging workflow, remote Supabase linking, hosted database operation, production secrets handling, backup/restore policy, monitoring, production security review, `service_role` usage, or production data-change controls.
+
+### Separation From App/API/Dashboard/Apple Shortcut Completeness
+
+Backend local-complete does not require or imply App, API, Dashboard, Apple Shortcut, wrapper, alias, or package-script completeness.
+
+The local-complete path remains terminal/operator driven:
+
+- `scripts/local/setup-references.js` prepares account/category references.
+- `scripts/local/manual-log.js` inserts one local finance activity.
+- Local query inspection confirms records when issue scope includes inspection.
+
+### Required Completed Capabilities
+
+Backend local-complete requires these completed capabilities:
+
+- Local schema/migration exists and was validated.
+- Local replay/reset workflow was validated.
+- `scripts/local/setup-references.js` exists and was validated.
+- `scripts/local/manual-log.js` exists and was validated.
+- Setup to logging to query to cleanup operator workflow was validated.
+- Mobile-friendly command snippets were validated.
+- Alias/reference shortcut boundary was documented and validated.
+- Source-of-truth docs are synchronized with the completed local backend/operator state.
+
+### Required Validation Evidence
+
+Backend local-complete requires validation evidence that:
+
+- `node --check scripts/local/setup-references.js` passed.
+- `node --check scripts/local/manual-log.js` passed.
+- Local Supabase DB startup, reset, or replay passed where validation issues allowed it.
+- `scripts/local/setup-references.js` created or identified one active account, one active income category, and one active expense category.
+- Setup helper reuse and dry-run behavior passed.
+- `scripts/local/manual-log.js` inserted one income and one expense using helper output UUIDs.
+- Required input validation passed for date, positive amount, income or expense type, account UUID, and category UUID.
+- Optional field mapping passed where included.
+- Same-owner integrity passed.
+- Negative checks passed for invalid UUID, invalid account type, duplicate active ambiguity, inactive references, and cross-owner references where applicable.
+- Query evidence passed by date, account, category, income category, expense category, and `movement_type` where applicable.
+- Cleanup removed temporary activities, accounts, categories, temporary local auth users, and generated local Supabase metadata where applicable.
+- Validation reports confirmed no production access, remote Supabase linking, `service_role`, schema/migration/config change, seed file, App/API/Dashboard/Apple Shortcut, reporting, AI, Projection, or legacy Sheets/GAS work occurred.
+
+### Acceptable Remaining Risks For Personal Local Use
+
+The following risks remain acceptable for personal local use at this boundary:
+
+- Terminal-based operation remains manual.
+- UUID copying remains explicit.
+- The operator chooses account/category display names.
+- The operator decides whether references are persistent or temporary.
+- Local Docker and local Supabase availability are required.
+- Cleanup requires operator discipline when validation data is used.
+- No Apple Shortcut, App, API, Dashboard, wrapper, alias, or package script exists.
+- Income and expense are supported; transfer and adjustment remain deferred.
+- Query inspection is local and manual when needed.
+
+### Risks Requiring Future Issues
+
+The following risks still require future dedicated issues:
+
+- Production or staging deployment.
+- Remote Supabase linking or hosted database use.
+- `service_role` usage.
+- Production secrets handling, backup, restore, monitoring, and security review.
+- App/API/Dashboard/Apple Shortcut UX and authorization boundaries.
+- Alias/reference shortcut implementation and ambiguity handling.
+- Package wrapper or command wrapper design.
+- Transfer and adjustment support.
+- Reporting, totals, or dashboard behavior.
+- Durable reference setup strategy beyond the local helper behavior.
+- Data retention, export, backup, and restore for real personal records.
+- Any schema, migration, Supabase config, seed, or RLS policy change.
+
+### Explicit Out Of Scope After Backend Local-Complete
+
+The following remain out of scope after backend local-complete unless explicitly approved by later dedicated issues:
+
+- Production.
+- Remote Supabase.
+- `service_role`.
+- App/API/Dashboard/Apple Shortcut implementation.
+- Package wrappers.
+- Alias implementation.
+- Seed files.
+- Schema, migration, or Supabase config changes.
+- Transfer or adjustment support.
+- Reporting objects, views, functions, triggers, tables, dashboards, or formal reporting behavior.
+- AI or Projection behavior.
+- Legacy Sheets/GAS work.
+- Version labels.
+- Production-ready claims.
+
+### Recommended Next Issue After Documentation
+
+Validate backend local-complete criteria.
 
 ## Remaining Open Questions
 
