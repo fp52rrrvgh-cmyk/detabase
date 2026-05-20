@@ -27,6 +27,42 @@ only and must not be committed, logged, pasted, or documented.
 The WebApp does not define sign-up, password reset, magic link, OAuth, a server
 route, Dashboard behavior, production behavior, or schema/config changes.
 
+## Read-Only Finance Review Panel
+
+The WebApp includes a staging-only read-only finance review panel for the
+signed-in user. It uses the existing Supabase browser client session and
+publishable-key-compatible direct reads from existing Finance MVP tables only:
+
+- `finance_activities`
+- `finance_accounts`
+- `finance_categories`
+
+The review panel is read-only and limited to RLS-owned rows. It does not use
+`service_role`, server routes, Edge Functions, reporting views, reporting
+tables, schema changes, migrations, Supabase config changes, deployment, or
+production access.
+
+The panel can show:
+
+- recent owned activities;
+- date range filtering;
+- movement type filtering with an all option;
+- totals for the selected date range;
+- totals by movement type;
+- totals by category display name;
+- totals by account display name.
+
+Safe display fields are activity date, movement type, amount, currency, account
+display name, category display name, description, and created timestamp when
+needed for review ordering. The panel must not display credentials, tokens, auth
+headers, runtime values, session values, function URLs containing secrets,
+database URLs, or UUID values from local runtime files.
+
+If read-only review data cannot load, inspect staging auth, RLS, and table
+grant setup locally without pasting private values into issues, PRs, docs, or
+logs. Stop if troubleshooting would require writes, schema/config changes,
+server routes, reporting objects, production access, or secret disclosure.
+
 ## Safe Reference Guidance
 
 The expense form keeps account and category references UUID-first through the
@@ -95,8 +131,10 @@ Operator flow:
 6. Submit one expense with a positive amount and description.
 7. Confirm the safe success message shows date, TWD amount, description, and
    ready-for-next-expense status.
-8. Repeat entry if needed.
-9. Stop the local server when finished.
+8. Confirm the read-only review panel loads recent owned activities, display
+   names, filters, and totals without performing writes.
+9. Repeat entry if needed.
+10. Stop the local server when finished.
 
 The request shape remains `activity_date`, `movement_type = expense`, positive
 amount, `currency = TWD`, configured account/category UUID refs, and
@@ -104,7 +142,8 @@ description. The WebApp still does not send `source_indicator`.
 
 Stop if the target could be production, runtime values are missing, credentials
 or UUID values would need to be recorded, or the workflow expands into
-deployment, server routes, selector/dynamic lookup, Dashboard/reporting,
+deployment, server routes, selector/dynamic lookup, write-capable Dashboard
+behavior, reporting objects,
 income/transfer/adjustment support, aliases, wrappers, package scripts,
 shortcut automation, auth architecture changes, schema/migration/Supabase config
 changes, AI/Projection, or legacy Sheets/GAS work.
