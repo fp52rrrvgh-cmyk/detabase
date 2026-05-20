@@ -1971,7 +1971,7 @@ The validated WebApp staging-use operator runbook was documented before the Dash
 
 Issue #170 documents the first Finance Dashboard/reporting MVP boundary based on the Issue #169 recommendation.
 
-This boundary defines a staging-only, read-only inspection concept for existing Finance records before any Dashboard implementation. It is not a production-ready claim.
+This boundary defines a staging-only, read-only inspection concept for existing Finance records and remains separate from production-ready claims.
 
 The first Dashboard/reporting purpose is to:
 
@@ -2034,7 +2034,7 @@ If direct read access is not safely validated under existing RLS, work must stop
 
 The Dashboard/reporting MVP boundary does not include:
 
-- Dashboard implementation.
+- Dashboard implementation beyond the approved read-only review panel.
 - Reporting views, functions, triggers, tables, or other reporting objects.
 - Schema changes or migrations.
 - Supabase config changes.
@@ -2049,9 +2049,41 @@ The Dashboard/reporting MVP boundary does not include:
 - Legacy Sheets/GAS work.
 - Secrets, runtime values, UUID values from local runtime files, or access-granting values.
 
+### WebApp Read-Only Review Panel Implementation Result
+
+PR #176 merged after Issue #175 completed the first Dashboard/reporting MVP implementation inside the existing `apps/web` WebApp.
+
+The first Dashboard/reporting MVP is implemented as a staging-only, read-only finance review panel. It is not production-ready.
+
+Data access remains limited to:
+
+- Direct Supabase browser client reads.
+- Authenticated user session.
+- Publishable-key-compatible access.
+- RLS-owned rows only.
+- Existing Finance MVP tables only: `finance_activities`, `finance_accounts`, and `finance_categories`.
+
+The implemented review panel supports:
+
+- Recent owned activities.
+- Date range filter.
+- Movement type filter.
+- Totals by selected range.
+- Totals by `movement_type`.
+- Totals by category display name.
+- Totals by account display name.
+
+Review validation passed with safe evidence and performed no writes.
+
+The existing WebApp expense submit payload remains unchanged. The WebApp remains expense-only for input and still does not send `source_indicator`.
+
+`apps/web/.env.local` remains local-only and uncommitted.
+
+PR #176 introduced no production access, schema change, migration change, Supabase config change, reporting views/functions/triggers/tables, materialized reporting objects, write-capable Dashboard behavior, AI/Projection, transfer/adjustment support, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
+
 ### Recommended Next Issue After Boundary Documentation
 
-Define the next bounded Dashboard/reporting implementation-readiness step without implementing Dashboard code, reporting objects, production, deployment, or schema changes.
+Define the next bounded post-review-panel step without expanding into production, deployment, schema changes, reporting objects, or write-capable Dashboard behavior.
 
 ## Remaining Open Questions
 
