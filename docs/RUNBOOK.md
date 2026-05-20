@@ -2,9 +2,9 @@
 
 ## Purpose
 
-This runbook records the current validated local tooling path and the approved staging-oriented WebApp boundary for the Finance MVP.
+This runbook records the current validated local tooling path, the approved staging-oriented WebApp boundary, and the documented Dashboard/reporting boundary for the Finance MVP.
 
-It is not production deployment documentation and does not define Dashboard, Apple Shortcut, AI, Projection, reporting, seed, or production workflow behavior.
+It is not production deployment documentation and does not implement Dashboard, Apple Shortcut, AI, Projection, reporting objects, seed, or production workflow behavior.
 
 ## Current Status
 
@@ -46,6 +46,7 @@ It is not production deployment documentation and does not define Dashboard, App
 - Stale success and failure messages clear when the next entry starts.
 - First-submit and second-submit browser validation passed with safe evidence.
 - The WebApp remains expense-only and still does not send `source_indicator`.
+- The first Finance Dashboard/reporting MVP boundary is documented as staging-only, read-only inspection of existing Finance MVP records.
 - Production remains untouched.
 
 ## Local Environment Prerequisites
@@ -62,7 +63,7 @@ It is not production deployment documentation and does not define Dashboard, App
 - No production database access.
 - No `service_role` key usage.
 - No remote Supabase linking.
-- No broader App, Dashboard, or Apple Shortcut work beyond the approved minimal `apps/web` WebApp MVP.
+- No broader App, Dashboard implementation, or Apple Shortcut work beyond the approved minimal `apps/web` WebApp MVP and documented Dashboard/reporting boundary.
 - No seed files.
 - No reporting objects, views, functions, triggers, or reporting tables.
 - No AI or Projection behavior.
@@ -1063,9 +1064,84 @@ Stop conditions:
 
 This runbook does not introduce production behavior and is not a production-ready claim.
 
+## Finance Dashboard/Reporting MVP Boundary
+
+Issue #170 documents the first Finance Dashboard/reporting MVP boundary after the Issue #169 recommendation.
+
+This boundary is staging-only and read-only. It records a future inspection surface for existing Finance MVP records before any Dashboard/reporting implementation. It does not introduce production behavior and is not a production-ready claim.
+
+### Existing Table Boundary
+
+The first Dashboard/reporting boundary may inspect existing Finance MVP tables only:
+
+- `finance_activities`.
+- `finance_accounts`.
+- `finance_categories`.
+
+No reporting views, functions, triggers, tables, materialized objects, schema changes, migrations, or Supabase config changes are included.
+
+### First Surface
+
+The first surface is limited to:
+
+- Recent activities.
+- Date range filter.
+- Movement type filter.
+- Account filter.
+- Category filter.
+- Totals by selected date range.
+- Totals by `movement_type`.
+- Totals by category.
+- Totals by account.
+
+### Display Fields
+
+The display field boundary is:
+
+- Activity date.
+- Movement type.
+- Amount.
+- Currency.
+- Account display name.
+- Category display name.
+- Description.
+- Created timestamp if needed for review ordering.
+
+### Future Data Access Boundary
+
+Future implementation-readiness work must keep Dashboard/reporting data access:
+
+- Staging-only.
+- Read-only.
+- Authenticated by the user session.
+- Using the publishable key only.
+- Limited to RLS-owned rows.
+- Limited to direct Supabase browser client reads only if RLS select behavior is safely validated first.
+
+If direct browser read access is not safely validated under existing RLS, stop and define a dedicated API/read boundary before any Dashboard implementation.
+
+### Deferred Scope And Stop Conditions
+
+Stop before work expands into:
+
+- Dashboard implementation.
+- Reporting views, functions, triggers, tables, or other reporting objects.
+- Schema changes or migrations.
+- Supabase config changes.
+- Edge Function, API, or Next.js server route implementation.
+- Production, deployment, or production-ready claims.
+- Edit, delete, cleanup, pending-review management, or correction workflows.
+- Account or category management.
+- Formal charts or exports.
+- Income, transfer, or adjustment input expansion.
+- AI or Projection behavior.
+- Aliases, wrappers, package scripts, or shortcut automation.
+- Legacy Sheets/GAS work.
+- Secrets, runtime values, local UUID values, credentials, auth headers, database URLs, private URLs, or access-granting values.
+
 Next safe issue:
 
-Define the next bounded post-runbook step, likely deciding whether to pause WebApp work and move to the next module boundary.
+Define the next bounded Dashboard/reporting implementation-readiness step without implementing Dashboard code, reporting objects, production, deployment, or schema changes.
 
 ## Verify Local Records
 
