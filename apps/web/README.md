@@ -51,6 +51,18 @@ through approved staging operator handling outside the WebApp. Do not paste
 runtime values, session values, auth headers, tokens, database URLs, or private
 function URLs into issues, PRs, docs, or logs.
 
+## Repeat Entry Behavior
+
+After a successful expense save, the page shows a safe summary with only the
+activity date, TWD amount, and description, then indicates that the form is
+ready for the next expense. The amount and description fields are cleared after
+success.
+
+When the operator starts entering the next amount or description, stale success
+or failure messages are cleared. The next expense uses the same fixed
+expense/TWD/local-date request shape and the same configured account/category
+runtime references.
+
 ## Local Checks
 
 ```powershell
