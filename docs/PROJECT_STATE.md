@@ -136,8 +136,17 @@
 - If implemented later, aliases or reference shortcuts must resolve to exactly one same-owner active account/category UUID.
 - Duplicate alias or display-name ambiguity must stop and require a human decision.
 - Inactive references must not be selected for new logging.
+- Cross-owner references must not be selected.
 - Local alias/reference shortcut behavior remains local-only and must not introduce App/API/Dashboard/Shortcut, staging, production, remote Supabase, or `service_role` behavior.
 - Package wrappers, Apple Shortcut implementation, App/API/Dashboard, production/staging, remote Supabase, `service_role`, seed files, schema/migration/config changes, transfer or adjustment support, reporting objects, AI/Projection, and legacy Sheets/GAS remain deferred.
+- Issue #95 is closed as completed after documentation/boundary validation of the local alias/reference shortcut boundary passed.
+- UUID-first execution integrity remains preserved.
+- Alias/reference shortcuts, if implemented later, must resolve to exactly one same-owner active account/category UUID.
+- Duplicate alias or display-name ambiguity must stop and require a human decision.
+- Inactive references must not be selected for new logging.
+- Cross-owner references must not be selected.
+- Existing setup and manual logging helpers remain separate: `scripts/local/setup-references.js` creates or identifies references, and `scripts/local/manual-log.js` inserts one local finance activity.
+- No implementation, config, schema, migration, seed, production, remote Supabase, `service_role`, App/API/Dashboard, Apple Shortcut, reporting, AI, Projection, or legacy Sheets/GAS work was required or introduced during Issue #95 validation.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
