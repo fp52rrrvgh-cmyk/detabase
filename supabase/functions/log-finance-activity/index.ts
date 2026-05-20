@@ -5,6 +5,13 @@ const SOURCE_INDICATOR = "manual";
 const JSON_HEADERS = {
   "content-type": "application/json; charset=utf-8",
 };
+const ALLOWED_CORS_ORIGINS = new Set([
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+]);
+const DEFAULT_CORS_ORIGIN = "http://localhost:3000";
+const CORS_METHODS = "POST, OPTIONS";
+const CORS_HEADERS = "authorization, x-client-info, apikey, content-type";
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ALLOWED_FIELDS = new Set([
@@ -77,6 +84,42 @@ function jsonResponse(status: number, body: JsonObject): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: JSON_HEADERS,
+  });
+}
+
+function corsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("origin");
+  const allowedOrigin = origin && ALLOWED_CORS_ORIGINS.has(origin)
+    ? origin
+    : DEFAULT_CORS_ORIGIN;
+
+  return {
+    "access-control-allow-origin": allowedOrigin,
+    "access-control-allow-methods": CORS_METHODS,
+    "access-control-allow-headers": CORS_HEADERS,
+    "access-control-max-age": "86400",
+    vary: "Origin",
+  };
+}
+
+function withCors(req: Request, response: Response): Response {
+  const headers = new Headers(response.headers);
+
+  for (const [key, value] of Object.entries(corsHeaders(req))) {
+    headers.set(key, value);
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+function preflightResponse(req: Request): Response {
+  return new Response(null, {
+    status: 204,
+    headers: corsHeaders(req),
   });
 }
 
@@ -550,123 +593,134 @@ async function insertActivity(
   return inserted;
 }
 
-export async function handler(req: Request): Promise<Response> {
-  try {
-    if (req.method !== "POST") {
-      return new Response(
-        JSON.stringify({
-          ok: false,
-          error: {
-            code: "method_not_allowed",
-            message: "Only POST requests are supported.",
-          },
-        }),
-        {
-          status: 405,
-          headers: {
-            ...JSON_HEADERS,
-            allow: "POST",
-          },
+async function handlePost(req: Request): Promise<Response> {
+  if (req.method !== "POST") {
+    return new Response(
+      JSON.stringify({
+        ok: false,
+        error: {
+          code: "method_not_allowed",
+          message: "Only POST requests are supported.",
         },
-      );
-    }
-
-    let body: unknown;
-    try {
-      body = await req.json();
-    } catch {
-      return safeFailure(
-        400,
-        "invalid_json",
-        "Request body must be valid JSON.",
-      );
-    }
-
-    if (!isJsonObject(body)) {
-      return safeFailure(
-        400,
-        "invalid_request",
-        "Request body must be a JSON object.",
-      );
-    }
-
-    let input: ValidatedInput;
-    try {
-      input = validateInput(body);
-    } catch (error) {
-      if (error instanceof Response) {
-        return error;
-      }
-
-      return safeFailure(
-        400,
-        "invalid_request",
-        error instanceof Error ? error.message : "Request validation failed.",
-      );
-    }
-
-    const stagingRuntimeFailure = enforceStagingRuntime();
-    if (stagingRuntimeFailure) {
-      return stagingRuntimeFailure;
-    }
-
-    const caller = createCallerContext(req);
-    if (caller instanceof Response) {
-      return caller;
-    }
-
-    const userId = await resolveUserId(caller);
-    if (userId instanceof Response) {
-      return userId;
-    }
-
-    const account = await findActiveAccount(caller, userId, input.accountId);
-    if (account instanceof Response) {
-      return account;
-    }
-
-    const category = await findActiveCategory(caller, userId, input.categoryId);
-    if (category instanceof Response) {
-      return category;
-    }
-
-    if (!categoryMatchesMovement(category, input.movementType)) {
-      return safeFailure(
-        422,
-        "category_movement_mismatch",
-        "Category reference does not match the requested movement type.",
-      );
-    }
-
-    const inserted = await insertActivity(caller, userId, input);
-    if (inserted instanceof Response) {
-      return inserted;
-    }
-
-    return jsonResponse(201, {
-      ok: true,
-      activity: inserted,
-      validation: {
-        source: FUNCTION_NAME,
-        account_reference: {
-          id: account.id,
-          active: account.is_active,
-          same_owner: account.user_id === userId,
-        },
-        category_reference: {
-          id: category.id,
-          active: category.is_active,
-          same_owner: category.user_id === userId,
-          grouping_purpose: category.grouping_purpose,
+      }),
+      {
+        status: 405,
+        headers: {
+          ...JSON_HEADERS,
+          allow: CORS_METHODS,
         },
       },
-    });
+    );
+  }
+
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return safeFailure(
+      400,
+      "invalid_json",
+      "Request body must be valid JSON.",
+    );
+  }
+
+  if (!isJsonObject(body)) {
+    return safeFailure(
+      400,
+      "invalid_request",
+      "Request body must be a JSON object.",
+    );
+  }
+
+  let input: ValidatedInput;
+  try {
+    input = validateInput(body);
+  } catch (error) {
+    if (error instanceof Response) {
+      return error;
+    }
+
+    return safeFailure(
+      400,
+      "invalid_request",
+      error instanceof Error ? error.message : "Request validation failed.",
+    );
+  }
+
+  const stagingRuntimeFailure = enforceStagingRuntime();
+  if (stagingRuntimeFailure) {
+    return stagingRuntimeFailure;
+  }
+
+  const caller = createCallerContext(req);
+  if (caller instanceof Response) {
+    return caller;
+  }
+
+  const userId = await resolveUserId(caller);
+  if (userId instanceof Response) {
+    return userId;
+  }
+
+  const account = await findActiveAccount(caller, userId, input.accountId);
+  if (account instanceof Response) {
+    return account;
+  }
+
+  const category = await findActiveCategory(caller, userId, input.categoryId);
+  if (category instanceof Response) {
+    return category;
+  }
+
+  if (!categoryMatchesMovement(category, input.movementType)) {
+    return safeFailure(
+      422,
+      "category_movement_mismatch",
+      "Category reference does not match the requested movement type.",
+    );
+  }
+
+  const inserted = await insertActivity(caller, userId, input);
+  if (inserted instanceof Response) {
+    return inserted;
+  }
+
+  return jsonResponse(201, {
+    ok: true,
+    activity: inserted,
+    validation: {
+      source: FUNCTION_NAME,
+      account_reference: {
+        id: account.id,
+        active: account.is_active,
+        same_owner: account.user_id === userId,
+      },
+      category_reference: {
+        id: category.id,
+        active: category.is_active,
+        same_owner: category.user_id === userId,
+        grouping_purpose: category.grouping_purpose,
+      },
+    },
+  });
+}
+
+export async function handler(req: Request): Promise<Response> {
+  if (req.method === "OPTIONS") {
+    return preflightResponse(req);
+  }
+
+  try {
+    return withCors(req, await handlePost(req));
   } catch {
     console.error(`${FUNCTION_NAME}: internal_error`);
-    return safeFailure(
-      500,
-      "internal_error",
-      "Request could not be processed safely.",
+    return withCors(
+      req,
+      safeFailure(
+        500,
+        "internal_error",
+        "Request could not be processed safely.",
+      ),
     );
   }
 }
