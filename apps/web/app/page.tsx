@@ -28,6 +28,9 @@ type RuntimeConfig = {
   categoryId: string;
 };
 
+const REQUEST_FAILURE_MESSAGE =
+  "Expense was not saved. Network or runtime request failed; inspect staging setup locally.";
+
 const runtimeConfig: RuntimeConfig = {
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
   publishableKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "",
@@ -286,25 +289,37 @@ export default function ExpenseEntryPage() {
       return;
     }
 
-    const response = await fetch(runtimeConfig.functionUrl, {
-      method: "POST",
-      headers: {
-        apikey: runtimeConfig.publishableKey,
-        authorization: `Bearer ${currentSession.access_token}`,
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        activity_date: requestDate,
-        movement_type: "expense",
-        amount: trimmedAmount,
-        currency: "TWD",
-        account_id: runtimeConfig.accountId,
-        category_id: runtimeConfig.categoryId,
-        description: trimmedDescription,
-      }),
-    });
+    let response: Response;
+    let responseBody: unknown;
 
-    const responseBody = await readSafeJson(response);
+    try {
+      response = await fetch(runtimeConfig.functionUrl, {
+        method: "POST",
+        headers: {
+          apikey: runtimeConfig.publishableKey,
+          authorization: `Bearer ${currentSession.access_token}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          activity_date: requestDate,
+          movement_type: "expense",
+          amount: trimmedAmount,
+          currency: "TWD",
+          account_id: runtimeConfig.accountId,
+          category_id: runtimeConfig.categoryId,
+          description: trimmedDescription,
+        }),
+      });
+
+      responseBody = await readSafeJson(response);
+    } catch {
+      setSubmitState({
+        status: "failure",
+        message: REQUEST_FAILURE_MESSAGE,
+      });
+      return;
+    }
+
     const isSuccessful =
       response.ok &&
       typeof responseBody === "object" &&
