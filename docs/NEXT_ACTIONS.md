@@ -3,10 +3,10 @@
 ## Pending
 
 - Define the initial project goal.
-- Define post-backend local-complete transition boundary.
+- Verify staging environment access boundary.
 - Keep production migration application out of scope until explicitly approved.
-- Keep the next issue recommendation-only and focused on choosing the next transition boundary after the validated local-only backend/operator baseline, before any production, remote Supabase, App/API/Dashboard, Apple Shortcut, alias implementation, wrapper, package script, reporting, AI, Projection, or legacy work.
-- Do not jump directly to aliases, wrappers, package scripts, seed files, API, Dashboard, App, Apple Shortcut, transfer or adjustment support, AI, Projection, reporting objects, staging, production, remote Supabase, schema changes, migration changes, Supabase config changes, or legacy Sheets/GAS work without explicit approval.
+- Keep the next issue staging-only and focused on verifying environment access boundaries before any migration application, Supabase config change, production access, App/API/Dashboard, Apple Shortcut, alias implementation, wrapper, package script, reporting, AI, Projection, or legacy work.
+- Do not jump directly to aliases, wrappers, package scripts, seed files, API, Dashboard, App, Apple Shortcut, transfer or adjustment support, AI, Projection, reporting objects, staging migration application, production, unbounded remote Supabase work, schema changes, migration changes, Supabase config changes, or legacy Sheets/GAS work without explicit approval.
 
 ## Not Started
 
