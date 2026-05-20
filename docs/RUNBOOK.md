@@ -35,6 +35,11 @@ It is not production deployment documentation and does not define Dashboard, App
 - Authenticated browser expense submit passed against `detabase-staging`.
 - `log-finance-activity` accepted the WebApp request and inserted a staging `finance_activities` expense.
 - WebApp runtime values remain local-only in `apps/web/.env.local` and must not be committed.
+- PR #157 merged the WebApp runtime readiness and safe reference guidance implementation after Issue #156.
+- Runtime readiness displays approved env names and configured/missing state only; it does not display runtime values.
+- Safe guidance covers `invalid_account_reference`, `invalid_category_reference`, and `category_movement_mismatch`.
+- The existing expense request payload shape remains unchanged.
+- Browser validation passed with safe evidence after PR #157.
 - Production remains untouched.
 
 ## Local Environment Prerequisites
@@ -766,7 +771,7 @@ Before a future issue may apply existing migrations to staging, safe evidence mu
 
 ### Next Safe Step
 
-The next smallest safe issue after the Next.js WebApp MVP staging runtime validation is to define the next WebApp expense-entry usability boundary.
+The next smallest safe issue after WebApp runtime readiness and safe reference guidance is to define the next bounded WebApp step.
 
 ## Minimal Mobile Ingestion API Boundary
 
@@ -924,9 +929,42 @@ Scope confirmation:
 - No versioning.
 - No production-ready claim.
 
+### Runtime Readiness And Safe Reference Guidance
+
+PR #157 merged after Issue #156 completed WebApp runtime readiness and safe reference guidance implementation.
+
+Runtime readiness behavior:
+
+- Shows required runtime env names only.
+- Shows configured/missing state for each required env name.
+- Does not show runtime values.
+- Keeps runtime values local-only in `apps/web/.env.local`.
+- Keeps `apps/web/.env.local` uncommitted.
+
+Safe reference guidance covers:
+
+- `invalid_account_reference`: inspect the local-only default expense account UUID alignment against an active same-owner staging account reference.
+- `invalid_category_reference`: inspect the local-only default expense category UUID alignment against an active same-owner staging expense category reference.
+- `category_movement_mismatch`: inspect whether the local-only default expense category UUID points to an active same-owner staging category compatible with expense logging.
+
+The existing expense request payload shape remains unchanged:
+
+- `activity_date`.
+- `movement_type = expense`.
+- Positive amount.
+- `currency = TWD`.
+- Configured account/category UUID refs.
+- Description.
+
+The WebApp still does not send `source_indicator`.
+
+Browser validation passed with safe evidence: runtime readiness was shown, env names only were displayed, signed-in browser submit succeeded, and the safe success message was shown.
+
+This remains staging-only WebApp behavior. Production remains excluded, and this is not a production-ready claim. PR #157 introduced no schema or migration change, Supabase config change, Dashboard/reporting UI, AI/Projection, transfer or adjustment support, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
+
 Next safe issue:
 
-Define the next WebApp expense-entry usability boundary after staging runtime validation.
+Define the next bounded WebApp step after runtime readiness and safe reference guidance.
 
 ## Verify Local Records
 

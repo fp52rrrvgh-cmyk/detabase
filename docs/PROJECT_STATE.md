@@ -203,6 +203,14 @@
 - `log-finance-activity` accepted the WebApp request and inserted a staging `finance_activities` expense.
 - WebApp runtime values remain local-only in `apps/web/.env.local` and must not be committed.
 - The WebApp staging runtime validation introduced no production access, schema change, migration change, Supabase config change, Dashboard/reporting UI, AI/Projection, transfer/adjustment support, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
+- PR #157 is merged after Issue #156 implemented WebApp runtime readiness and safe reference guidance.
+- Issue #156 is closed as completed.
+- WebApp runtime readiness displays approved env names and configured/missing state only; it does not display runtime values.
+- Safe WebApp guidance supports `invalid_account_reference`, `invalid_category_reference`, and `category_movement_mismatch`.
+- The existing WebApp expense request payload shape remains unchanged after PR #157.
+- Browser validation passed with safe evidence: runtime readiness was shown, env names only were displayed, signed-in browser submit succeeded, and the safe success message was shown.
+- `apps/web/.env.local` remains local-only and uncommitted.
+- PR #157 introduced no production access, schema change, migration change, Supabase config change, Dashboard/reporting UI, AI/Projection, transfer/adjustment support, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
@@ -221,7 +229,7 @@
 
 ## Unknowns
 
-- Next WebApp expense-entry usability boundary after staging runtime validation.
+- Next bounded WebApp step after runtime readiness and safe reference guidance.
 - Data model.
 - Deployment target.
 - Dashboard requirements.

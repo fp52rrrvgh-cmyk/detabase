@@ -1906,9 +1906,37 @@ Validation confirmed:
 
 This validation is not a production-ready claim. It introduced no production access, schema change, migration change, Supabase config change, Dashboard/reporting UI, AI/Projection, transfer/adjustment support, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
 
-### Recommended Next Issue After Staging Runtime Validation
+### Runtime Readiness And Safe Reference Guidance
 
-Define the next WebApp expense-entry usability boundary after staging runtime validation.
+PR #157 merged after Issue #156 completed WebApp runtime readiness and safe reference guidance implementation.
+
+The WebApp runtime readiness surface displays approved environment variable names and configured/missing state only. It does not display runtime values.
+
+The approved runtime env names remain:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_FINANCE_FUNCTION_URL`
+- `NEXT_PUBLIC_DEFAULT_EXPENSE_ACCOUNT_ID`
+- `NEXT_PUBLIC_DEFAULT_EXPENSE_CATEGORY_ID`
+
+Safe guidance now covers these reference failure codes:
+
+- `invalid_account_reference`.
+- `invalid_category_reference`.
+- `category_movement_mismatch`.
+
+The existing WebApp expense request payload shape remains unchanged: `activity_date`, `movement_type = expense`, positive amount, `currency = TWD`, configured account/category UUID refs, and description. The WebApp still does not send `source_indicator`.
+
+Browser validation passed with safe evidence: runtime readiness was shown, env names only were displayed, signed-in browser submit succeeded, and the safe success message was shown.
+
+`apps/web/.env.local` remains local-only and uncommitted. Production remains excluded.
+
+This is not a production-ready claim. PR #157 introduced no production access, schema change, migration change, Supabase config change, Dashboard/reporting UI, AI/Projection, transfer/adjustment support, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
+
+### Recommended Next Issue After Runtime Readiness Guidance
+
+Define the next bounded WebApp step after runtime readiness and safe reference guidance.
 
 ## Remaining Open Questions
 
