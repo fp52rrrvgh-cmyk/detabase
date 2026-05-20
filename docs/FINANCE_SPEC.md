@@ -1446,9 +1446,66 @@ Validation confirmed:
 
 This validation did not modify repo files or introduce code changes, scripts, wrappers, aliases, package scripts, reusable tooling, seed files, SQL migration changes, schema changes, Supabase config changes, production access, remote Supabase linking, `service_role` key usage, Apple Shortcut work, App/API/Dashboard work, reporting objects, AI, Projection, legacy Sheets/GAS work, versioning, or production-ready claims.
 
-### Recommended Next Issue After Validation
+### Completed Next Issue After Validation
 
-Review next mobile-friendly local daily logging friction boundary.
+Issue #92 reviewed the next mobile-friendly local daily logging friction boundary.
+
+## Local Alias/Reference Shortcut Boundary For Mobile Daily Logging
+
+Issue #92 recommended local alias/reference shortcut definition as the next friction-reduction boundary after validated mobile-friendly command snippets.
+
+This is boundary documentation only. It does not implement aliases, wrappers, package scripts, reusable tooling, script changes, Apple Shortcut behavior, App/API/Dashboard behavior, production behavior, staging behavior, remote Supabase behavior, or schema/config changes.
+
+The purpose of this boundary is to define how shorter operator-facing references could later resolve to existing UUID-first account/category references for personal mobile/on-the-go daily logging.
+
+### Boundary Rules
+
+- UUID remains the execution identifier for account/category references.
+- Aliases or reference shortcuts must not replace UUID-first execution integrity.
+- Display names remain human confirmation unless a future dedicated issue explicitly promotes them.
+- If aliases or reference shortcuts are implemented later, each shortcut must resolve to exactly one same-owner active account/category UUID.
+- Duplicate alias or display-name ambiguity must stop and require a human decision.
+- Inactive references must not be selected for new logging.
+- Cross-owner references must not be selected.
+- Existing helpers remain separate: `scripts/local/setup-references.js` creates or identifies references, and `scripts/local/manual-log.js` inserts one local finance activity.
+- The boundary remains local-only.
+
+### Validation Expectations Before Implementation
+
+Before any alias/reference shortcut implementation, a dedicated validation issue should confirm:
+
+- Existing setup references still work with `scripts/local/manual-log.js`.
+- Any proposed shortcut maps to exactly one active same-owner account or category.
+- Ambiguous duplicate active references stop safely.
+- Inactive references are not selected for new logging.
+- Cross-owner references are not selected.
+- Resolved UUIDs can produce one income and one expense through `scripts/local/manual-log.js`.
+- Query evidence can confirm records by date, account, category, and `movement_type`.
+- Cleanup remains explicit for validation data.
+- No production, remote Supabase, `service_role`, schema, migration, config, seed, App/API/Dashboard, Apple Shortcut, reporting, AI, Projection, or legacy Sheets/GAS work occurs.
+
+### Deferred Scope
+
+- Alias implementation.
+- Wrapper implementation.
+- Package wrapper or npm script.
+- Apple Shortcut implementation.
+- App/API/Dashboard.
+- Production or staging workflow.
+- Remote Supabase.
+- `service_role` usage.
+- Seed files.
+- Schema, migration, or Supabase config changes.
+- Transfer or adjustment support.
+- Reporting objects, views, functions, triggers, or reporting tables.
+- AI or Projection behavior.
+- Legacy Sheets/GAS work.
+- Version labels.
+- Production-ready claims.
+
+### Recommended Next Issue After Boundary Documentation
+
+Validate local alias/reference shortcut boundary.
 
 ## Remaining Open Questions
 
