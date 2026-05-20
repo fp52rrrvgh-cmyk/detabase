@@ -155,6 +155,14 @@
 - Required validation evidence includes Node static checks, local DB startup/reset/replay evidence when allowed, setup helper create/reuse/dry-run behavior, income and expense inserts, required and optional field checks, same-owner integrity, inactive/cross-owner/duplicate ambiguity negative checks, query evidence, cleanup evidence, and explicit no-production/no-remote/no-`service_role` scope confirmation.
 - Acceptable remaining risks for personal local use include manual terminal operation, explicit UUID copying, operator-selected account/category names, local Docker/Supabase dependency, manual cleanup discipline, no mobile Shortcut/App/API/Dashboard/wrapper/alias/package script, and income/expense-only logging.
 - Future issues remain required for production/staging, remote Supabase, `service_role`, App/API/Dashboard/Apple Shortcut, alias implementation, package wrappers, seed files, schema/migration/config changes, transfer/adjustment support, reporting objects, AI/Projection, legacy Sheets/GAS, data backup/restore, versioning, or production-ready claims.
+- Issue #101 is closed as completed after backend local-complete criteria validation passed.
+- Required completed capabilities for backend local-complete are present.
+- Required validation evidence for backend local-complete is present.
+- Backend local-complete remains separate from production-ready status.
+- Backend local-complete remains separate from App/API/Dashboard/Apple Shortcut completeness.
+- Acceptable remaining risks, future-issue risks, and explicit out-of-scope items are documented.
+- No repo files were modified during Issue #101 validation.
+- Issue #101 validation introduced no code, scripts, aliases, wrappers, package scripts, reusable tooling, migration, schema, config, seed, local Supabase validation, production, remote Supabase, `service_role`, Apple Shortcut, App/API/Dashboard, reporting, AI, Projection, legacy Sheets/GAS, versioning, or production-ready claim.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
