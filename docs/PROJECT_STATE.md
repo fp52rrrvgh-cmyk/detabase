@@ -129,6 +129,15 @@
 - Confirmation/query command shape validation returned expected rows by date, account, category, and `movement_type`.
 - Cleanup/maintenance validation passed: temporary activities, account, categories, and auth owner were removed; generated `supabase/.temp` and `supabase/.branches` metadata were removed; final working tree was clean.
 - No repo files were modified during Issue #89 validation; no code, scripts, wrappers, aliases, package scripts, reusable tooling, seed files, migrations, schema changes, Supabase config changes, production access, remote Supabase linking, `service_role` key usage, Apple Shortcut work, App/API/Dashboard work, reporting objects, AI, Projection, legacy Sheets/GAS work, versioning, or production-ready claims were introduced.
+- Issue #92 is closed as completed after recommendation-only boundary review for the next mobile-friendly local daily logging friction step.
+- The recommended next friction-reduction boundary is local alias/reference shortcut definition for mobile daily logging.
+- The alias/reference shortcut boundary is documentation-only at this stage; no aliases, wrappers, package scripts, or script changes are implemented.
+- Aliases or reference shortcuts must not replace UUID-first execution integrity.
+- If implemented later, aliases or reference shortcuts must resolve to exactly one same-owner active account/category UUID.
+- Duplicate alias or display-name ambiguity must stop and require a human decision.
+- Inactive references must not be selected for new logging.
+- Local alias/reference shortcut behavior remains local-only and must not introduce App/API/Dashboard/Shortcut, staging, production, remote Supabase, or `service_role` behavior.
+- Package wrappers, Apple Shortcut implementation, App/API/Dashboard, production/staging, remote Supabase, `service_role`, seed files, schema/migration/config changes, transfer or adjustment support, reporting objects, AI/Projection, and legacy Sheets/GAS remain deferred.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
