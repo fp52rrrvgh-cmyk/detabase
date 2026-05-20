@@ -13,6 +13,7 @@ It is local-only operating documentation. It is not production deployment docume
 - `scripts/local/manual-log.js` exists as the first reusable local manual logging Node script.
 - The reusable script has been validated for one income activity, one expense activity, and a minimal local daily logging loop.
 - Local account/category setup workflow has been validated with temporary local references for one income activity and one expense activity.
+- Persistent local account/category setup runbook boundary validation has passed with one active account, one active income category, and one active expense category.
 - Production remains untouched.
 
 ## Local Environment Prerequisites
@@ -148,6 +149,10 @@ Minimum setup outputs:
 - Evidence that selected account/category references belong to the same local owner context.
 
 Before any implementation or helper tooling is considered, validation should confirm that one active account, one active income category, and one active expense category are available; `scripts/local/manual-log.js` can use those UUIDs for one income and one expense; same-owner integrity passes; inactive and cross-owner references are rejected; records remain queryable by date/account/category/`movement_type`; and cleanup removes temporary validation data.
+
+Issue #70 validated this runbook boundary with temporary local references. The validation confirmed that documented manual setup steps can support one active account, one active income category, and one active expense category; `scripts/local/manual-log.js` inserted one income and one expense; same-owner integrity passed; inactive account, inactive category, and cross-owner category checks failed as expected; query evidence passed by date, account, income category, expense category, and `movement_type`; and cleanup removed temporary accounts, categories, and activities.
+
+This validation did not introduce repo file changes, code, scripts, reusable setup tooling, seed files, App/API/Dashboard/Shortcut behavior, reporting objects, AI, Projection, production access, remote Supabase linking, `service_role` key usage, migration changes, schema changes, Supabase config changes, legacy Sheets/GAS work, versioning, or production-ready claims.
 
 ## Verify Local Records
 

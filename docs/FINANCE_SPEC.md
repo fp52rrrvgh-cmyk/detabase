@@ -949,9 +949,24 @@ This method remains:
 - Production or staging workflow.
 - Schema, migration, or Supabase config changes.
 
+### Persistent Local Account/Category Setup Runbook Validation Result
+
+Issue #70 validated the documented persistent local account/category setup runbook boundary with temporary local references.
+
+The validation confirmed:
+
+- The documented runbook manual setup boundary supported one active account, one active income category, and one active expense category.
+- `scripts/local/manual-log.js` inserted one income activity and one expense activity using those UUID-first references.
+- Same-owner integrity passed.
+- Negative checks passed for inactive account, inactive category, and cross-owner category references.
+- Query evidence passed by date, account, income category, expense category, and `movement_type`.
+- Cleanup evidence passed; temporary accounts, categories, and activities were removed.
+
+This validation remained local-only. It did not introduce repo file changes, code, scripts, reusable tooling, seed files, SQL migration changes, schema changes, Supabase config changes, production access, remote Supabase linking, `service_role` key usage, App/API/Dashboard/Shortcut work, reporting objects, AI, Projection, legacy Sheets/GAS work, versioning, or production-ready claims.
+
 ### Recommended Next Issue
 
-Validate persistent local account/category setup runbook boundary.
+Define reusable local account/category setup helper boundary.
 
 ## Remaining Open Questions
 

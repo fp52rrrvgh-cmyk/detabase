@@ -76,9 +76,17 @@
 - Reusable local helper script setup is deferred.
 - Seed-like setup is rejected for now.
 - Persistent local setup remains local-only, UUID-first for execution, display-name-confirmed, alias-deferred, and not onboarding, production workflow, or App/API/Dashboard/Shortcut behavior.
+- Issue #70 is closed as completed after persistent local account/category setup runbook boundary validation passed.
+- The documented runbook manual setup boundary supported one active account, one active income category, and one active expense category.
+- `scripts/local/manual-log.js` inserted one income activity and one expense activity using the documented runbook setup boundary.
+- Same-owner integrity passed during Issue #70 validation.
+- Negative checks passed for inactive account, inactive category, and cross-owner category references during Issue #70 validation.
+- Query evidence passed by date, account, income category, expense category, and `movement_type` during Issue #70 validation.
+- Cleanup evidence passed after Issue #70 validation; temporary accounts, categories, and activities were removed.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
+- No repo files, code, scripts, reusable tooling, SQL migrations, schema, Supabase config, seed files, reporting objects, App, API, Dashboard, Apple Shortcut, production database, `service_role` key, remote Supabase linking, AI, Projection, legacy Sheets/GAS, versioning, or production-ready claims were introduced during Issue #70 validation.
 - No repo files, SQL migrations, schema, Supabase config, seed files, reporting objects, App, API, Dashboard, Apple Shortcut, production database, `service_role` key, remote Supabase linking, AI, Projection, or legacy Sheets/GAS were changed during Issue #64 validation.
 - No repo files, SQL migrations, schema, Supabase config, `package.json`, seed files, reporting objects, App, API, Dashboard, Apple Shortcut, production database, `service_role` key, remote Supabase linking, AI, Projection, or legacy Sheets/GAS were changed during Issue #55 validation.
 - No application implementation is defined here.
