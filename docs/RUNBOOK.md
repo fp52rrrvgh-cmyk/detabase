@@ -2,9 +2,9 @@
 
 ## Purpose
 
-This runbook records the current validated local tooling path, the approved staging-oriented WebApp boundary, and the documented Dashboard/reporting boundary for the Finance MVP.
+This runbook records the current validated local tooling path, the approved staging-oriented WebApp boundary, and the implemented read-only Dashboard/reporting review panel boundary for the Finance MVP.
 
-It is not production deployment documentation and does not implement Dashboard, Apple Shortcut, AI, Projection, reporting objects, seed, or production workflow behavior.
+It is not production deployment documentation and does not implement write-capable Dashboard behavior, Apple Shortcut, AI, Projection, reporting objects, seed, or production workflow behavior.
 
 ## Current Status
 
@@ -47,6 +47,12 @@ It is not production deployment documentation and does not implement Dashboard, 
 - First-submit and second-submit browser validation passed with safe evidence.
 - The WebApp remains expense-only and still does not send `source_indicator`.
 - The first Finance Dashboard/reporting MVP boundary is documented as staging-only, read-only inspection of existing Finance MVP records.
+- PR #176 merged the first Dashboard/reporting MVP implementation inside the existing `apps/web` WebApp after Issue #175.
+- The implemented review panel is staging-only, read-only, and uses direct Supabase browser reads with an authenticated user session, publishable-key-compatible access, and RLS-owned rows only.
+- The review panel reads existing Finance MVP tables only: `finance_activities`, `finance_accounts`, and `finance_categories`.
+- The review panel supports recent owned activities, date range filtering, movement type filtering, totals by selected range, totals by `movement_type`, totals by category, and totals by account.
+- Review validation passed with safe evidence and performed no writes.
+- The existing expense submit payload remains unchanged, and `apps/web/.env.local` remains local-only and uncommitted.
 - Production remains untouched.
 
 ## Local Environment Prerequisites
@@ -63,7 +69,7 @@ It is not production deployment documentation and does not implement Dashboard, 
 - No production database access.
 - No `service_role` key usage.
 - No remote Supabase linking.
-- No broader App, Dashboard implementation, or Apple Shortcut work beyond the approved minimal `apps/web` WebApp MVP and documented Dashboard/reporting boundary.
+- No broader App, write-capable Dashboard implementation, separate Dashboard app, or Apple Shortcut work beyond the approved `apps/web` WebApp MVP and implemented read-only review panel boundary.
 - No seed files.
 - No reporting objects, views, functions, triggers, or reporting tables.
 - No AI or Projection behavior.
@@ -927,7 +933,7 @@ Scope confirmation:
 
 - No production access.
 - No schema, migration, or Supabase config change.
-- No Dashboard/reporting UI.
+- No Dashboard/reporting UI was introduced by that validation stage.
 - No AI/Projection.
 - No transfer or adjustment support.
 - No aliases.
@@ -1068,7 +1074,7 @@ This runbook does not introduce production behavior and is not a production-read
 
 Issue #170 documents the first Finance Dashboard/reporting MVP boundary after the Issue #169 recommendation.
 
-This boundary is staging-only and read-only. It records a future inspection surface for existing Finance MVP records before any Dashboard/reporting implementation. It does not introduce production behavior and is not a production-ready claim.
+This boundary is staging-only and read-only. It records the inspection surface for existing Finance MVP records and remains separate from production behavior and production-ready claims.
 
 ### Existing Table Boundary
 
@@ -1124,7 +1130,7 @@ If direct browser read access is not safely validated under existing RLS, stop a
 
 Stop before work expands into:
 
-- Dashboard implementation.
+- Dashboard implementation beyond the approved read-only review panel.
 - Reporting views, functions, triggers, tables, or other reporting objects.
 - Schema changes or migrations.
 - Supabase config changes.
@@ -1139,9 +1145,39 @@ Stop before work expands into:
 - Legacy Sheets/GAS work.
 - Secrets, runtime values, local UUID values, credentials, auth headers, database URLs, private URLs, or access-granting values.
 
+### Implemented Read-Only Review Panel
+
+PR #176 merged after Issue #175 completed the first Dashboard/reporting MVP implementation inside the existing `apps/web` WebApp.
+
+The implementation is limited to a staging-only, read-only finance review panel. It uses direct Supabase browser client reads with the authenticated user session, publishable-key-compatible access, and RLS-owned rows only.
+
+The review panel reads existing Finance MVP tables only:
+
+- `finance_activities`.
+- `finance_accounts`.
+- `finance_categories`.
+
+The review panel supports:
+
+- Recent owned activities.
+- Date range filter.
+- Movement type filter.
+- Totals by selected range.
+- Totals by `movement_type`.
+- Totals by category display name.
+- Totals by account display name.
+
+Review validation passed with safe evidence. The review flow performed no writes.
+
+The existing expense submit payload remains unchanged. The WebApp remains expense-only for input and still does not send `source_indicator`.
+
+`apps/web/.env.local` remains local-only and uncommitted. Do not record runtime values, session values, UUID values from local runtime files, credentials, auth headers, database URLs, function URLs containing secrets, or access-granting values.
+
+This implementation introduced no reporting views, functions, triggers, tables, materialized objects, schema changes, migrations, Supabase config changes, production access, deployment behavior, write-capable Dashboard behavior, edit/delete/cleanup/pending-review management, account/category management, charts, exports, AI/Projection, aliases, wrappers, package scripts, shortcut automation, legacy Sheets/GAS work, versioning, or production-ready claim.
+
 Next safe issue:
 
-Define the next bounded Dashboard/reporting implementation-readiness step without implementing Dashboard code, reporting objects, production, deployment, or schema changes.
+Define the next bounded post-review-panel step without expanding into production, deployment, schema changes, reporting objects, or write-capable Dashboard behavior.
 
 ## Verify Local Records
 

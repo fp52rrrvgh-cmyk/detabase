@@ -233,7 +233,18 @@
 - Display fields are limited to activity date, movement type, amount, currency, account display name, category display name, description, and created timestamp if needed for review ordering.
 - Future Dashboard/reporting data access must remain staging-only, read-only, authenticated by user session, publishable-key-only, and limited to RLS-owned rows.
 - Direct Supabase browser client reads are allowed only if RLS select behavior is safely validated first; otherwise work must stop and define a dedicated API/read boundary before Dashboard implementation.
-- Dashboard implementation, reporting views/functions/triggers/tables, schema or migration changes, Supabase config changes, Edge Function/API/server route implementation, production, deployment, edit/delete/cleanup/pending-review management, account/category management, formal charts, exports, AI/Projection, secrets, runtime values, UUID values, and production-ready claims remain deferred.
+- Dashboard implementation beyond the approved read-only review panel, reporting views/functions/triggers/tables, schema or migration changes, Supabase config changes, Edge Function/API/server route implementation, production, deployment, edit/delete/cleanup/pending-review management, account/category management, formal charts, exports, AI/Projection, secrets, runtime values, UUID values, and production-ready claims remain deferred.
+- PR #176 is merged after Issue #175 completed the WebApp read-only finance review panel implementation.
+- The first Dashboard/reporting MVP is implemented inside the existing `apps/web` WebApp as a read-only finance review panel.
+- The review panel is staging-only and read-only.
+- The review panel uses direct Supabase browser reads with an authenticated user session, publishable-key-compatible access, and RLS-owned rows only.
+- The review panel reads existing Finance MVP tables only: `finance_activities`, `finance_accounts`, and `finance_categories`.
+- The review panel supports recent owned activities, date range filtering, movement type filtering, totals by selected range, totals by `movement_type`, totals by category, and totals by account.
+- Review validation passed with safe evidence, and the review flow performed no writes.
+- The existing WebApp expense submit payload remains unchanged.
+- The WebApp remains expense-only for input and still does not send `source_indicator`.
+- `apps/web/.env.local` remains local-only and uncommitted.
+- PR #176 introduced no production access, schema change, migration change, Supabase config change, reporting objects, write-capable Dashboard behavior, AI/Projection, transfer/adjustment support, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
@@ -242,8 +253,9 @@
 - No repo files, SQL migrations, schema, Supabase config, seed files, reporting objects, App, API, Dashboard, Apple Shortcut, production database, `service_role` key, remote Supabase linking, AI, Projection, or legacy Sheets/GAS were changed during Issue #64 validation.
 - No repo files, SQL migrations, schema, Supabase config, `package.json`, seed files, reporting objects, App, API, Dashboard, Apple Shortcut, production database, `service_role` key, remote Supabase linking, AI, Projection, or legacy Sheets/GAS were changed during Issue #55 validation.
 - Application implementation is currently limited to the approved minimal Next.js WebApp MVP under `apps/web`.
+- The first Dashboard/reporting MVP implementation is limited to the approved read-only finance review panel inside `apps/web`.
 - No deployment configuration is defined here.
-- No Dashboard, Apple Shortcut, or legacy Sheets/GAS implementation exists.
+- No separate Dashboard app, write-capable Dashboard behavior, Apple Shortcut, or legacy Sheets/GAS implementation exists.
 
 ## Known Scope
 
@@ -252,8 +264,8 @@
 
 ## Unknowns
 
-- Next bounded Dashboard/reporting implementation-readiness step.
+- Next bounded post-review-panel step.
 - Data model.
 - Deployment target.
-- Dashboard requirements.
+- Dashboard follow-up requirements.
 - Supabase project configuration approach.
