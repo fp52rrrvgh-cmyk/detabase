@@ -1656,9 +1656,76 @@ Validation confirmed:
 - No repo files were modified during validation.
 - No code, scripts, aliases, wrappers, package scripts, reusable tooling, migration, schema, config, seed, local Supabase validation, production, remote Supabase, `service_role`, Apple Shortcut, App/API/Dashboard, reporting, AI, Projection, legacy Sheets/GAS, versioning, or production-ready claim was introduced.
 
-### Recommended Next Issue After Validation
+### Completed Next Issue After Validation
 
-Declare backend local-complete status.
+Backend local-complete status is declared below.
+
+## Backend Local-Complete Status Declaration
+
+Backend local-complete status is declared for the Finance local backend/operator layer based on the existing main-branch evidence from Issue #101 validation and PR #103 / Issue #102 documentation sync.
+
+This declaration means the local-only backend/operator baseline is complete enough for one personal operator to set up local references, log income and expense activities, inspect local records, and maintain cleanup discipline using the existing local scripts and source-of-truth docs.
+
+Backend local-complete remains not production-ready. It remains separate from App/API/Dashboard/Apple Shortcut completeness.
+
+This declaration introduces no code, scripts, aliases, wrappers, package scripts, new reusable tooling, migration, schema, config, seed, validation, staging, production, deployment, remote Supabase, `service_role`, Apple Shortcut, App/API/Dashboard, reporting, AI, Projection, legacy Sheets/GAS, versioning, or production-ready claim.
+
+### Completed Boundary
+
+The completed backend local-complete boundary includes:
+
+- Validated local schema/migration and local replay/reset evidence.
+- Validated `scripts/local/setup-references.js`.
+- Validated `scripts/local/manual-log.js`.
+- Validated setup to logging to query to cleanup operator workflow.
+- Validated mobile-friendly command snippets.
+- Documented and validated alias/reference shortcut boundary.
+- Synchronized source-of-truth docs.
+
+### Incomplete Boundary
+
+The following remain outside backend local-complete:
+
+- Production, staging, deployment, remote Supabase, and `service_role`.
+- App/API/Dashboard/Apple Shortcut implementation or completeness.
+- Alias implementation.
+- Wrappers and package scripts.
+- New reusable tooling beyond existing validated local scripts.
+- Seed files or durable seed data.
+- Reporting objects or formal reporting behavior.
+- Schema, migration, or Supabase config changes beyond the current validated local baseline.
+- Transfer or adjustment support.
+- AI or Projection behavior.
+- Legacy Sheets/GAS work.
+- Version labels.
+- Production-ready claims.
+
+### Remaining Risks
+
+Acceptable remaining risks for personal local use:
+
+- Terminal-based operation remains manual.
+- UUID copying remains explicit.
+- Account/category display names and persistence choices remain operator-selected.
+- Local Docker and local Supabase availability are required.
+- Cleanup requires operator discipline when validation data is used.
+- No App/API/Dashboard/Apple Shortcut, wrapper, alias, or package script exists.
+- Income and expense are supported; transfer and adjustment remain deferred.
+
+Future-phase risks requiring dedicated issues:
+
+- Production/staging, deployment, remote Supabase, `service_role`, secrets handling, backup/restore, monitoring, and security review.
+- App/API/Dashboard/Apple Shortcut UX and authorization boundaries.
+- Alias/reference shortcut implementation and ambiguity handling.
+- Package wrapper or command wrapper design.
+- Transfer and adjustment support.
+- Reporting, totals, or dashboard behavior.
+- Durable data retention, export, backup, and restore for real personal records.
+- Any schema, migration, Supabase config, seed, or RLS policy change.
+
+### Recommended Next Issue After Declaration
+
+Define post-backend local-complete transition boundary.
 
 ## Remaining Open Questions
 
