@@ -163,6 +163,13 @@
 - Acceptable remaining risks, future-issue risks, and explicit out-of-scope items are documented.
 - No repo files were modified during Issue #101 validation.
 - Issue #101 validation introduced no code, scripts, aliases, wrappers, package scripts, reusable tooling, migration, schema, config, seed, local Supabase validation, production, remote Supabase, `service_role`, Apple Shortcut, App/API/Dashboard, reporting, AI, Projection, legacy Sheets/GAS, versioning, or production-ready claim.
+- Backend local-complete status is declared for the local-only Finance backend/operator baseline.
+- The completed backend local-complete boundary covers local reference setup, local income/expense logging, local record inspection, cleanup discipline, validated local scripts, validated mobile-friendly command snippets, validated alias/reference shortcut boundary, and synchronized source-of-truth docs.
+- The incomplete boundary remains outside backend local-complete: production, staging, deployment, remote Supabase, `service_role`, App/API/Dashboard/Apple Shortcut completeness, alias implementation, wrappers, package scripts, new reusable tooling beyond existing validated local scripts, seed files, reporting objects, AI, Projection, legacy Sheets/GAS, versioning, and production-ready claims.
+- Backend local-complete remains not production-ready and remains separate from App/API/Dashboard/Apple Shortcut completeness.
+- Acceptable remaining risks for local personal use remain manual terminal operation, explicit UUID copying, operator-selected references, local Docker/Supabase dependency, manual cleanup discipline, no App/API/Dashboard/Apple Shortcut/wrapper/alias/package script, and income/expense-only logging.
+- Future-phase risks remain production/staging, remote Supabase, `service_role`, deployment controls, backup/restore, monitoring, App/API/Dashboard/Apple Shortcut boundaries, alias implementation, package wrappers, transfer/adjustment support, reporting objects, durable data retention/export, schema/migration/config changes, AI/Projection, legacy Sheets/GAS, versioning, and any production-ready claim.
+- The backend local-complete declaration introduced no code, scripts, aliases, wrappers, package scripts, new reusable tooling, migration, schema, config, seed, validation, staging, production, deployment, remote Supabase, `service_role`, Apple Shortcut, App/API/Dashboard, reporting, AI, Projection, legacy Sheets/GAS, versioning, or production-ready claim.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.

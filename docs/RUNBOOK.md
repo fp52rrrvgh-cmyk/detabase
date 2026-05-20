@@ -24,6 +24,7 @@ It is local-only operating documentation. It is not production deployment docume
 - Local alias/reference shortcut boundary validation has passed; no alias implementation exists.
 - Backend local-complete criteria are documented for the local-only Finance backend/operator layer.
 - Backend local-complete criteria validation has passed at the documentation/boundary level.
+- Backend local-complete status is declared for the local-only Finance backend/operator baseline.
 - Production remains untouched.
 
 ## Local Environment Prerequisites
@@ -643,7 +644,56 @@ Validation confirmed:
 - No repo files were modified during validation.
 - No code, scripts, aliases, wrappers, package scripts, reusable tooling, migration, schema, config, seed, local Supabase validation, production, remote Supabase, `service_role`, Apple Shortcut, App/API/Dashboard, reporting, AI, Projection, legacy Sheets/GAS, versioning, or production-ready claim was introduced.
 
-Recommended next issue after this validation sync: declare backend local-complete status.
+Completed next issue after this validation sync: backend local-complete status declaration.
+
+## Backend Local-Complete Status
+
+Backend local-complete status is declared for the local-only Finance backend/operator baseline.
+
+This status means the current local backend/operator path is sufficient for one personal operator to set up local references, log income and expense activities, inspect local records, and maintain cleanup discipline with existing local tools and source-of-truth docs.
+
+This is not production-ready. It does not include production, staging, deployment, remote Supabase, `service_role`, App/API/Dashboard/Apple Shortcut implementation, alias implementation, wrappers, package scripts, seed files, reporting objects, AI, Projection, or legacy Sheets/GAS work.
+
+This declaration introduces no code, scripts, aliases, wrappers, package scripts, new reusable tooling, migration, schema, config, seed, validation, staging, production, deployment, remote Supabase, `service_role`, Apple Shortcut, App/API/Dashboard, reporting, AI, Projection, legacy Sheets/GAS, versioning, or production-ready claim.
+
+Completed boundary:
+
+- Local schema/migration and replay/reset evidence are validated.
+- `scripts/local/setup-references.js` is implemented and validated.
+- `scripts/local/manual-log.js` is implemented and validated.
+- Setup to logging to query to cleanup operator workflow is validated.
+- Mobile-friendly command snippets are validated.
+- Alias/reference shortcut boundary is documented and validated, with no alias implementation.
+- Source-of-truth docs are synchronized.
+
+Incomplete boundary:
+
+- Production/staging/deployment/remote Supabase.
+- `service_role`.
+- App/API/Dashboard/Apple Shortcut completeness.
+- Alias implementation.
+- Wrappers and package scripts.
+- New reusable tooling beyond existing validated local scripts.
+- Seed files.
+- Reporting objects.
+- Schema, migration, or Supabase config changes.
+- Transfer or adjustment support.
+- AI or Projection.
+- Legacy Sheets/GAS.
+- Version labels or production-ready claims.
+
+Acceptable remaining local-use risks:
+
+- Manual terminal operation.
+- Explicit UUID copying.
+- Operator-selected account/category names and persistence choices.
+- Local Docker/Supabase dependency.
+- Manual cleanup discipline when validation data is used.
+- Income/expense-only logging.
+
+Future-phase risks require dedicated issues before work starts.
+
+Recommended next issue after this declaration: define post-backend local-complete transition boundary.
 
 ## Verify Local Records
 
