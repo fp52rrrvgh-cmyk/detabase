@@ -211,6 +211,16 @@
 - Browser validation passed with safe evidence: runtime readiness was shown, env names only were displayed, signed-in browser submit succeeded, and the safe success message was shown.
 - `apps/web/.env.local` remains local-only and uncommitted.
 - PR #157 introduced no production access, schema change, migration change, Supabase config change, Dashboard/reporting UI, AI/Projection, transfer/adjustment support, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
+- PR #162 is merged after Issue #161 implemented WebApp post-submit ready state and repeat-entry flow.
+- Issue #161 is closed as completed.
+- WebApp success messages now include a safe ready-for-next-expense cue while keeping the success summary limited to date, TWD amount, and description.
+- Amount and description reset after successful submit.
+- Stale success and failure messages clear when the next entry starts.
+- First-submit and second-submit browser validation passed with safe evidence.
+- The existing WebApp expense request payload shape remains unchanged after PR #162.
+- The WebApp remains expense-only and still does not send `source_indicator`.
+- `apps/web/.env.local` remains local-only and uncommitted after repeat-entry validation.
+- PR #162 introduced no production access, schema change, migration change, Supabase config change, Dashboard/reporting UI, AI/Projection, transfer/adjustment or income support, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
@@ -229,7 +239,7 @@
 
 ## Unknowns
 
-- Next bounded WebApp step after runtime readiness and safe reference guidance.
+- Next bounded WebApp step after repeat-entry flow.
 - Data model.
 - Deployment target.
 - Dashboard requirements.

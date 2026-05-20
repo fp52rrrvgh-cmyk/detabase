@@ -1934,9 +1934,38 @@ Browser validation passed with safe evidence: runtime readiness was shown, env n
 
 This is not a production-ready claim. PR #157 introduced no production access, schema change, migration change, Supabase config change, Dashboard/reporting UI, AI/Projection, transfer/adjustment support, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
 
-### Recommended Next Issue After Runtime Readiness Guidance
+### Post-Submit Ready State And Repeat-Entry Flow
 
-Define the next bounded WebApp step after runtime readiness and safe reference guidance.
+PR #162 merged after Issue #161 completed WebApp post-submit ready state and repeat-entry flow implementation.
+
+After a successful save, the WebApp success message now keeps the safe summary limited to:
+
+- Activity date.
+- TWD amount.
+- Description.
+
+The success message also includes a ready-for-next-expense cue.
+
+Repeat-entry behavior:
+
+- Amount resets after a successful submit.
+- Description resets after a successful submit.
+- Stale success or failure messages clear when the operator starts the next entry.
+- The WebApp remains ready for another expense without changing runtime configuration.
+
+Browser validation passed with safe evidence: first submit succeeded, fields reset, next-entry input cleared the stale message, and second submit succeeded.
+
+The existing expense request payload shape remains unchanged: `activity_date`, `movement_type = expense`, positive amount, `currency = TWD`, configured account/category UUID refs, and description.
+
+The WebApp remains expense-only and still does not send `source_indicator`.
+
+`apps/web/.env.local` remains local-only and uncommitted. Production remains excluded.
+
+This is not a production-ready claim. PR #162 introduced no production access, schema change, migration change, Supabase config change, Dashboard/reporting UI, AI/Projection, transfer/adjustment or income support, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
+
+### Recommended Next Issue After Repeat-Entry Flow
+
+Define the next bounded WebApp step after repeat-entry flow.
 
 ## Remaining Open Questions
 
