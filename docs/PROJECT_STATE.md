@@ -122,6 +122,13 @@
 - UUID copying remains explicit for now; display names remain human confirmation only.
 - Aliases, package scripts, wrappers, Apple Shortcut implementation, App/API/Dashboard work, production or staging workflow, remote Supabase, `service_role`, seed files, schema/migration/config changes, transfer or adjustment support, reporting objects, AI/Projection, and legacy Sheets/GAS remain deferred.
 - No repo files, code, scripts, wrappers, aliases, package scripts, seed files, migrations, schema changes, Supabase config changes, validation runs, Apple Shortcut work, App/API/Dashboard work, production workflow, staging workflow, remote Supabase access, `service_role` key usage, reporting objects, AI, Projection, legacy Sheets/GAS work, versioning, or production-ready claims were introduced during Issue #87 recommendation-only work.
+- Issue #89 is closed as completed after local-only validation of the mobile-friendly daily logging command snippets passed.
+- Setup command shape validation passed with `scripts/local/setup-references.js`.
+- Income command shape validation passed with `scripts/local/manual-log.js`.
+- Expense command shape validation passed with `scripts/local/manual-log.js`.
+- Confirmation/query command shape validation returned expected rows by date, account, category, and `movement_type`.
+- Cleanup/maintenance validation passed: temporary activities, account, categories, and auth owner were removed; generated `supabase/.temp` and `supabase/.branches` metadata were removed; final working tree was clean.
+- No repo files were modified during Issue #89 validation; no code, scripts, wrappers, aliases, package scripts, reusable tooling, seed files, migrations, schema changes, Supabase config changes, production access, remote Supabase linking, `service_role` key usage, Apple Shortcut work, App/API/Dashboard work, reporting objects, AI, Projection, legacy Sheets/GAS work, versioning, or production-ready claims were introduced.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.

@@ -19,6 +19,7 @@ It is local-only operating documentation. It is not production deployment docume
 - First practical local daily logging operator workflow boundary has been defined as setup, daily logging, confirmation/query, and cleanup/maintenance phases using existing local helpers only.
 - First practical local daily logging operator workflow validation has passed end-to-end using `scripts/local/setup-references.js` and `scripts/local/manual-log.js`.
 - Mobile-friendly local daily logging path boundary is documented as copy-ready operator command snippets using the existing local helpers.
+- Mobile-friendly local daily logging command snippets validation has passed using the existing local helpers.
 - Production remains untouched.
 
 ## Local Environment Prerequisites
@@ -466,6 +467,27 @@ order by created_at;
 - Reporting objects.
 - AI or Projection behavior.
 - Legacy Sheets/GAS work.
+
+## Mobile-Friendly Local Daily Logging Command Snippet Validation
+
+Issue #89 validated the documented copy-ready mobile/operator command snippets locally with the existing helpers only.
+
+Validation confirmed:
+
+- Setup command shape passed with `scripts/local/setup-references.js`.
+- Income command shape passed with `scripts/local/manual-log.js`.
+- Expense command shape passed with `scripts/local/manual-log.js`.
+- Confirmation/query command shape returned expected rows by date, account, category, and `movement_type`.
+- Cleanup/maintenance passed: temporary activities were removed, the temporary account was removed, temporary categories were removed, and the temporary auth owner was removed.
+- Generated `supabase/.temp` and `supabase/.branches` metadata were removed.
+- Final working tree was clean.
+
+Scope confirmation:
+
+- No repo files were modified during validation.
+- No code, scripts, wrappers, aliases, package scripts, reusable tooling, seed files, migrations, schema changes, or Supabase config changes were introduced.
+- No production access, remote Supabase linking, or `service_role` key usage occurred.
+- No Apple Shortcut, App, API, Dashboard, reporting, AI, Projection, legacy Sheets/GAS, versioning, or production-ready claim was introduced.
 
 ## Verify Local Records
 
