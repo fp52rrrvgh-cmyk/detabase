@@ -1963,9 +1963,95 @@ The WebApp remains expense-only and still does not send `source_indicator`.
 
 This is not a production-ready claim. PR #162 introduced no production access, schema change, migration change, Supabase config change, Dashboard/reporting UI, AI/Projection, transfer/adjustment or income support, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
 
-### Recommended Next Issue After Repeat-Entry Flow
+### Completed Next Issue After Repeat-Entry Flow
 
-Define the next bounded WebApp step after repeat-entry flow.
+The validated WebApp staging-use operator runbook was documented before the Dashboard/reporting MVP boundary below.
+
+## Finance Dashboard/Reporting MVP Boundary
+
+Issue #170 documents the first Finance Dashboard/reporting MVP boundary based on the Issue #169 recommendation.
+
+This boundary defines a staging-only, read-only inspection concept for existing Finance records before any Dashboard implementation. It is not a production-ready claim.
+
+The first Dashboard/reporting purpose is to:
+
+- Inspect recent finance activities.
+- Inspect basic totals for a selected date range.
+- Group totals by movement type, category, and account.
+- Review records by date, amount, currency, movement type, account, category, and description.
+
+### First Surface Scope
+
+The first Dashboard/reporting surface is limited to:
+
+- Recent activity list.
+- Date range filter.
+- Movement type filter.
+- Account filter.
+- Category filter.
+- Basic totals by selected date range.
+- Basic totals by movement type.
+- Basic totals by category.
+- Basic totals by account.
+
+### Display Fields
+
+Display fields are limited to safe Finance context:
+
+- Activity date.
+- Movement type.
+- Amount.
+- Currency.
+- Account display name.
+- Category display name.
+- Description.
+- Created timestamp if needed for review ordering.
+
+### Data Source Boundary
+
+The data source boundary is existing Finance MVP tables only:
+
+- `finance_activities`.
+- `finance_accounts`.
+- `finance_categories`.
+
+No reporting views, functions, triggers, tables, or materialized reporting objects are part of this boundary.
+
+### Future Data Access Boundary
+
+Any future implementation-readiness work must keep data access:
+
+- Staging-only.
+- Read-only.
+- Authenticated through the user session.
+- Limited to the publishable key.
+- Limited to RLS-owned rows.
+- Limited to direct Supabase browser client reads only if RLS select behavior is safely validated first.
+
+If direct read access is not safely validated under existing RLS, work must stop and define a dedicated API/read boundary before Dashboard implementation.
+
+### Explicitly Deferred Scope
+
+The Dashboard/reporting MVP boundary does not include:
+
+- Dashboard implementation.
+- Reporting views, functions, triggers, tables, or other reporting objects.
+- Schema changes or migrations.
+- Supabase config changes.
+- Edge Function, API, or Next.js server route implementation.
+- Production, deployment, or production-ready claims.
+- Edit, delete, cleanup, or pending-review management.
+- Account or category management.
+- Formal charts or exports.
+- Income, transfer, or adjustment input expansion.
+- AI or Projection behavior.
+- Aliases, wrappers, package scripts, or shortcut automation.
+- Legacy Sheets/GAS work.
+- Secrets, runtime values, UUID values from local runtime files, or access-granting values.
+
+### Recommended Next Issue After Boundary Documentation
+
+Define the next bounded Dashboard/reporting implementation-readiness step without implementing Dashboard code, reporting objects, production, deployment, or schema changes.
 
 ## Remaining Open Questions
 

@@ -226,6 +226,14 @@
 - The runbook records env names only, keeps runtime values local-only in `apps/web/.env.local` or the approved local runtime environment, and keeps production excluded.
 - The documented WebApp staging-use flow preserves the existing expense request payload shape and does not send `source_indicator`.
 - The documented runbook includes safe reference troubleshooting without UUID values, repeat-entry behavior, stop conditions, and not-production-ready language.
+- Issue #170 documents the first Finance Dashboard/reporting MVP boundary after the Issue #169 recommendation.
+- The first Dashboard/reporting MVP boundary is staging-only, read-only inspection of existing Finance MVP records.
+- The Dashboard/reporting data source boundary is limited to existing `finance_activities`, `finance_accounts`, and `finance_categories` tables.
+- The first surface is limited to recent activities, date range filter, movement type filter, account filter, category filter, totals by selected date range, totals by `movement_type`, totals by category, and totals by account.
+- Display fields are limited to activity date, movement type, amount, currency, account display name, category display name, description, and created timestamp if needed for review ordering.
+- Future Dashboard/reporting data access must remain staging-only, read-only, authenticated by user session, publishable-key-only, and limited to RLS-owned rows.
+- Direct Supabase browser client reads are allowed only if RLS select behavior is safely validated first; otherwise work must stop and define a dedicated API/read boundary before Dashboard implementation.
+- Dashboard implementation, reporting views/functions/triggers/tables, schema or migration changes, Supabase config changes, Edge Function/API/server route implementation, production, deployment, edit/delete/cleanup/pending-review management, account/category management, formal charts, exports, AI/Projection, secrets, runtime values, UUID values, and production-ready claims remain deferred.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
@@ -244,7 +252,7 @@
 
 ## Unknowns
 
-- Next bounded post-runbook step.
+- Next bounded Dashboard/reporting implementation-readiness step.
 - Data model.
 - Deployment target.
 - Dashboard requirements.
