@@ -197,6 +197,12 @@
 - PR #139 validation passed `npm install`, `npm run build`, and `git diff --cached --check`.
 - Hosted staging success request validation was not run for PR #139 because it requires private runtime/session values.
 - PR #139 introduced no production access, schema change, migration change, Supabase config change, Dashboard/reporting UI, AI/Projection, transfer/adjustment flow, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
+- Issue #143 is closed as completed after Next.js WebApp MVP staging runtime validation passed.
+- Issue #152 is closed as completed after staging default finance account reference preparation resolved `invalid_account_reference`.
+- Authenticated browser expense submit passed against `detabase-staging`.
+- `log-finance-activity` accepted the WebApp request and inserted a staging `finance_activities` expense.
+- WebApp runtime values remain local-only in `apps/web/.env.local` and must not be committed.
+- The WebApp staging runtime validation introduced no production access, schema change, migration change, Supabase config change, Dashboard/reporting UI, AI/Projection, transfer/adjustment support, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
@@ -215,7 +221,7 @@
 
 ## Unknowns
 
-- WebApp runtime configuration and staging validation boundary.
+- Next WebApp expense-entry usability boundary after staging runtime validation.
 - Data model.
 - Deployment target.
 - Dashboard requirements.

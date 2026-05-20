@@ -1890,9 +1890,25 @@ Hosted staging success request validation was not run because it requires privat
 
 The implementation introduced no production access, schema change, migration change, Supabase config change, Dashboard/reporting UI, AI/Projection, transfer/adjustment flow, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
 
-### Recommended Next Issue After Implementation Sync
+### Staging Runtime Validation Result
 
-Define Next.js WebApp runtime configuration and staging validation boundary.
+Issue #143 completed Next.js WebApp MVP staging runtime validation.
+
+Issue #152 completed staging default finance account reference preparation and resolved `invalid_account_reference` for the WebApp validation path.
+
+Validation confirmed:
+
+- Authenticated browser expense submit passed against `detabase-staging`.
+- `log-finance-activity` accepted the WebApp request.
+- A staging `finance_activities` expense was inserted through the WebApp request path.
+- Runtime values remain local-only in `apps/web/.env.local` and must not be committed.
+- Production remains excluded.
+
+This validation is not a production-ready claim. It introduced no production access, schema change, migration change, Supabase config change, Dashboard/reporting UI, AI/Projection, transfer/adjustment support, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
+
+### Recommended Next Issue After Staging Runtime Validation
+
+Define the next WebApp expense-entry usability boundary after staging runtime validation.
 
 ## Remaining Open Questions
 

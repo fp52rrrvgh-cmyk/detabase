@@ -30,7 +30,11 @@ It is not production deployment documentation and does not define Dashboard, App
 - PR #139 merged the minimal Next.js App Router TypeScript WebApp under `apps/web`.
 - Issue #138 is completed after implementing one mobile-first expense-entry page for the WebApp MVP.
 - PR #139 validation passed `npm install`, `npm run build`, and `git diff --cached --check`.
-- Hosted staging success request validation was not run for PR #139 because it requires private runtime/session values.
+- Issue #143 completed Next.js WebApp MVP staging runtime validation.
+- Issue #152 completed staging default finance account reference preparation and resolved `invalid_account_reference`.
+- Authenticated browser expense submit passed against `detabase-staging`.
+- `log-finance-activity` accepted the WebApp request and inserted a staging `finance_activities` expense.
+- WebApp runtime values remain local-only in `apps/web/.env.local` and must not be committed.
 - Production remains untouched.
 
 ## Local Environment Prerequisites
@@ -762,7 +766,7 @@ Before a future issue may apply existing migrations to staging, safe evidence mu
 
 ### Next Safe Step
 
-The next smallest safe issue after the Next.js WebApp MVP implementation docs sync is to define the Next.js WebApp runtime configuration and staging validation boundary.
+The next smallest safe issue after the Next.js WebApp MVP staging runtime validation is to define the next WebApp expense-entry usability boundary.
 
 ## Minimal Mobile Ingestion API Boundary
 
@@ -889,6 +893,24 @@ Validation recorded during PR #139:
 
 Hosted staging success request validation was not run because it requires private runtime/session values.
 
+### Staging Runtime Validation
+
+Issue #143 completed Next.js WebApp MVP staging runtime validation after the runtime/session, fetch failure handling, CORS compatibility, and staging reference alignment work.
+
+Issue #152 completed staging default finance account reference preparation and resolved `invalid_account_reference` for the WebApp staging validation path.
+
+Validated staging behavior:
+
+- Runtime values remained local-only in `apps/web/.env.local`.
+- Runtime values, credentials, session values, auth headers, database URLs, function URLs containing secrets, and access-granting values were not committed or recorded.
+- Browser sign-in/session handling passed.
+- Authenticated browser expense submit passed against `detabase-staging`.
+- `log-finance-activity` accepted the WebApp request.
+- A staging `finance_activities` expense was inserted through the WebApp request path.
+- CORS/fetch compatibility passed after the prior compatibility fix.
+
+This validation remains staging-only. It is not production-ready and does not introduce production access, schema or migration changes, Supabase config changes, deployment, Dashboard/reporting behavior, AI/Projection, transfer or adjustment support, aliases, legacy Sheets/GAS work, versioning, or production-ready claims.
+
 Scope confirmation:
 
 - No production access.
@@ -904,7 +926,7 @@ Scope confirmation:
 
 Next safe issue:
 
-Define Next.js WebApp runtime configuration and staging validation boundary.
+Define the next WebApp expense-entry usability boundary after staging runtime validation.
 
 ## Verify Local Records
 
