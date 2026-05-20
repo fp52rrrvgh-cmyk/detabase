@@ -1342,6 +1342,94 @@ No repo files were modified during Issue #84 validation. The validation did not 
 
 Define mobile-friendly local daily logging path boundary.
 
+## Mobile-Friendly Local Daily Logging Path Boundary
+
+Issue #87 completed recommendation-only boundary work for the mobile-friendly local daily logging path.
+
+The recommended path is documented copy-ready operator command snippets. This is the smallest safe step for reducing operator friction while keeping the existing validated local helper workflow unchanged.
+
+This boundary remains:
+
+- Local-only.
+- Based on the existing `scripts/local/setup-references.js` and `scripts/local/manual-log.js` workflow.
+- Explicit about UUID copying from setup output into manual logging commands.
+- Separate between reference setup and activity logging.
+- Display-name-confirmed for human review only.
+
+It does not introduce aliases, package scripts, wrappers, Apple Shortcut implementation, App/API/Dashboard behavior, production or staging workflow, remote Supabase access, `service_role` usage, seed files, schema changes, migration changes, Supabase config changes, transfer or adjustment support, reporting objects, AI/Projection behavior, or legacy Sheets/GAS work.
+
+### First Safe Step
+
+Document copy-ready mobile/operator command snippets first.
+
+The command snippets should include:
+
+- Setup command template for `scripts/local/setup-references.js`.
+- Income command template for `scripts/local/manual-log.js`.
+- Expense command template for `scripts/local/manual-log.js`.
+- Confirmation/query command shape.
+- Cleanup/maintenance reminder.
+
+`scripts/local/setup-references.js` and `scripts/local/manual-log.js` remain separate. UUID copying remains explicit until a dedicated alias or wrapper boundary is approved.
+
+### Minimum Mobile/Operator Inputs
+
+- Date.
+- Amount.
+- Movement type: income or expense.
+- Account/category references from setup.
+- Optional description.
+- Optional merchant or payee.
+- Optional payment method.
+
+### Minimum Mobile/Operator Outputs
+
+- Command-ready references.
+- Inserted row summary.
+- Query/confirmation result when inspection is in scope.
+- Cleanup/maintenance status when validation data is used.
+
+### What Can Remain Manual
+
+- Selecting account/category names.
+- Deciding whether references are persistent or temporary.
+- Copying UUIDs.
+- Choosing description, merchant/payee, and payment method.
+- Deciding cleanup behavior.
+- Checking inserted row summary.
+
+### Deferred Items
+
+- Aliases.
+- Package scripts.
+- Wrappers.
+- Apple Shortcut implementation.
+- App/API/Dashboard.
+- Production or staging workflow.
+- Remote Supabase.
+- `service_role` usage.
+- Seed files.
+- Schema, migration, or Supabase config changes.
+- Transfer or adjustment support.
+- Reporting objects.
+- AI or Projection behavior.
+- Legacy Sheets/GAS work.
+
+### Validation Expectations Before Implementation
+
+Before any implementation beyond documentation, a dedicated validation issue should confirm:
+
+- Copy-ready commands remain local-only.
+- Setup references still work with `scripts/local/manual-log.js`.
+- Command snippets can produce one income and one expense.
+- Query evidence can confirm records.
+- Cleanup remains explicit.
+- No production, remote Supabase, `service_role`, schema, config, or seed work occurs.
+
+### Recommended Next Issue
+
+Validate mobile-friendly local daily logging command snippets.
+
 ## Remaining Open Questions
 
 - What data model should represent these requirements?
