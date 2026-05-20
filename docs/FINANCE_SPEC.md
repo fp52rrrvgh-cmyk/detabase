@@ -1727,6 +1727,121 @@ Future-phase risks requiring dedicated issues:
 
 Define post-backend local-complete transition boundary.
 
+## Minimal Mobile Ingestion API Boundary
+
+Issue #115 recommended the minimal mobile ingestion API boundary after the hosted backend baseline validation in Issue #114.
+
+This boundary is documentation-only. It records the first mobile ingestion API direction before any Edge Function, Apple Shortcut, App, Dashboard, deployment, production, schema, migration, Supabase config, seed, alias, wrapper, package script, reporting, AI, Projection, transfer/adjustment, or legacy Sheets/GAS work.
+
+### Recommended Primary Path
+
+The recommended primary path is:
+
+`iPhone Shortcut later -> dedicated Supabase Edge Function -> existing Finance tables in detabase-staging`
+
+The dedicated Supabase Edge Function is the first recommended mobile ingestion boundary because it gives a future mobile client a narrow hosted endpoint for one income or expense record, centralizes backend validation, and prevents Apple Shortcut from deciding database rules directly.
+
+### Paths Not Recommended First
+
+Direct client insert from Shortcut or App is not the first recommended path because it puts too much database-facing responsibility into the mobile client and makes credential handling, authorization, and validation boundaries less controlled.
+
+Local script reuse is not the first recommended mobile path because `scripts/local/setup-references.js` and `scripts/local/manual-log.js` remain useful for local operator workflows but do not solve hosted iPhone or Shortcut ingestion.
+
+Dashboard-first input is not the first recommended path because it delays the mobile input goal and expands UI/reporting scope before minimal ingestion is proven.
+
+### Minimal Request Shape
+
+A future minimal mobile ingestion request should represent one income or expense record.
+
+Required fields:
+
+- `activity_date`: date string.
+- `movement_type`: `income` or `expense`.
+- `amount`: positive amount.
+- `account_id`: account UUID.
+- `category_id`: category UUID.
+
+Optional fields:
+
+- `currency`: optional for the MVP boundary; default or expected value is `TWD` if omitted by the future implementation.
+- `description`.
+- `merchant_or_payee`.
+- `payment_method`.
+- `source_system_name`, controlled by the API implementation.
+- `source_record_reference`.
+
+### Minimum Validation Rules
+
+A future implementation boundary should preserve these minimum validation rules:
+
+- `movement_type` must be `income` or `expense` only.
+- `amount` must be positive.
+- `account_id` and `category_id` must be UUIDs.
+- Account and category references must belong to the same owner/auth boundary.
+- Account and category references must be active.
+- Category must match the requested movement type.
+- Transfer and adjustment remain out of scope.
+- Unknown or unsupported fields should be rejected or ignored only by an explicit future implementation decision.
+
+### Authentication And Authorization Boundary
+
+Authentication and authorization are defined here at policy level only.
+
+- A future Edge Function must not require Apple Shortcut to hold broad database credentials.
+- A future Edge Function should resolve caller/operator identity through a bounded auth mechanism before writing.
+- `service_role` must not be exposed to the client.
+- Production remains out of scope.
+
+### Account And Category References
+
+The first mobile ingestion path remains UUID-first.
+
+- `account_id` and `category_id` are execution identifiers.
+- Display names may be used later for human confirmation only.
+- Alias behavior remains out of scope unless a later dedicated issue explicitly approves it.
+
+### Safe Response Shapes
+
+A safe success response should include only non-secret result details, such as:
+
+- Success status.
+- Inserted activity id.
+- Movement type.
+- Activity date.
+- Amount.
+- Account/category confirmation fields if safe.
+- Validation source.
+
+A safe failure response should include:
+
+- Safe error code.
+- Human-readable message.
+
+Failure responses must not include credentials, SQL internals, connection details, private URLs, or access-granting values.
+
+### Explicit Out Of Scope
+
+- Edge Function implementation.
+- Apple Shortcut implementation.
+- App, API, Dashboard, or reporting behavior.
+- Deployment.
+- Direct production use or production-ready claims.
+- Supabase config changes.
+- Schema or migration changes.
+- Seed data or durable personal data.
+- Credential disclosure.
+- Aliases.
+- Wrappers or package scripts.
+- New reusable tooling.
+- Transfer or adjustment support.
+- AI or Projection behavior.
+- Legacy Sheets/GAS work.
+- Version labels.
+
+### Recommended Next Issue After Documentation
+
+Define minimal Edge Function implementation boundary.
+
 ## Remaining Open Questions
 
 - What data model should represent these requirements?

@@ -178,6 +178,17 @@
 - Secret values and access-granting values must stay outside repo files, issues, PRs, logs, and docs.
 - Stop conditions for staging connection preparation include missing operator values, unclear staging-vs-production target, production ambiguity, credential exposure requests, unapproved privileged access, destructive or irreversible actions, and scope expansion.
 - Before existing migrations can be applied to staging, evidence must show the staging target is clearly identified by the operator, production is excluded, credential handling rules are documented, the connection method is bounded, safe evidence format is defined, and rollback/reset expectations are known.
+- Issue #114 is closed as completed after hosted backend baseline validation passed for `detabase-staging`.
+- Issue #114 validation confirmed migration presence, expected Finance tables, RLS/policy presence, constraints/indexes, insert checks, query checks, negative checks, and cleanup on staging, with production excluded and no credential disclosure.
+- Issue #115 is closed as completed after recommendation-only boundary work defined the minimal mobile ingestion API boundary.
+- The minimal mobile ingestion API boundary is documented after Issue #115 as docs-only API boundary documentation.
+- The recommended primary path is `iPhone Shortcut later -> dedicated Supabase Edge Function -> existing Finance tables in detabase-staging`.
+- Direct client insert is not the first recommended path because it pushes too much database-facing responsibility into the mobile client and makes credential, auth, and validation boundaries less controlled.
+- Local script reuse is not the first recommended mobile path because the local helpers remain useful for operator workflows but do not solve hosted iPhone or Shortcut ingestion.
+- Dashboard-first input is not the first recommended path because it delays the mobile input goal and expands UI/reporting scope before minimal ingestion is proven.
+- The boundary requires one income or expense request to use UUID-first account/category references, minimum validation for date, income/expense movement type, positive amount, active same-owner account/category references, and safe success/failure responses without credentials, SQL internals, connection details, or access-granting values.
+- The boundary defines authentication and authorization at policy level only; a future Edge Function must not require Apple Shortcut to hold broad database credentials, must resolve caller/operator identity through a bounded mechanism before writing, must not expose `service_role` to the client, and keeps production out of scope.
+- The minimal mobile ingestion API boundary introduces no Edge Function implementation, App/API/Dashboard/Apple Shortcut code, deployment, production access, Supabase config change, schema or migration change, seed data, durable personal data, credential disclosure, aliases, wrappers, package scripts, reusable tooling, reporting objects, AI, Projection, transfer or adjustment support, legacy Sheets/GAS work, production-ready claim, or versioning.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.

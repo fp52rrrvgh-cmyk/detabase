@@ -3,10 +3,10 @@
 ## Pending
 
 - Define the initial project goal.
-- Verify staging environment access boundary.
+- Define minimal Edge Function implementation boundary.
 - Keep production migration application out of scope until explicitly approved.
-- Keep the next issue staging-only and focused on verifying environment access boundaries before any migration application, Supabase config change, production access, App/API/Dashboard, Apple Shortcut, alias implementation, wrapper, package script, reporting, AI, Projection, or legacy work.
-- Do not jump directly to aliases, wrappers, package scripts, seed files, API, Dashboard, App, Apple Shortcut, transfer or adjustment support, AI, Projection, reporting objects, staging migration application, production, unbounded remote Supabase work, schema changes, migration changes, Supabase config changes, or legacy Sheets/GAS work without explicit approval.
+- Keep the next issue focused on the minimal Edge Function implementation boundary before any implementation, deployment, production access, Supabase config change, schema change, migration change, seed data, durable personal data, App/API/Dashboard/Apple Shortcut code, alias implementation, wrapper, package script, reporting, AI, Projection, transfer or adjustment support, or legacy work.
+- Do not jump directly to Edge Function implementation, Apple Shortcut implementation, App/API/Dashboard, aliases, wrappers, package scripts, seed files, transfer or adjustment support, AI, Projection, reporting objects, production, unbounded remote Supabase work, schema changes, migration changes, Supabase config changes, or legacy Sheets/GAS work without explicit approval.
 
 ## Not Started
 
