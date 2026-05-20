@@ -100,6 +100,15 @@
 - Negative checks passed for invalid UUID, invalid account type, duplicate active account ambiguity, duplicate active category ambiguity, inactive refs not selected, and cross-owner refs not selected.
 - Query evidence passed for same-owner refs, date, account, income category, expense category, and `movement_type`.
 - Cleanup evidence passed after Issue #78 validation; temporary accounts, categories, activities, and local auth users were removed.
+- Issue #81 is closed as completed after recommendation-only boundary work for the first practical local daily logging operator workflow.
+- The recommended operator workflow is local-only and split into setup, daily logging, confirmation/query, and cleanup/maintenance phases.
+- The setup phase uses `scripts/local/setup-references.js` with an existing local owner `user_id`, account display name, account type, income category display name, expense category display name, and optional category grouping purpose.
+- Setup output includes command-ready account/category UUIDs, display names for human confirmation, created versus already-existing status, same-owner confirmation, and active-state confirmation.
+- The daily logging phase uses `scripts/local/manual-log.js` with activity date, positive amount, income or expense type, account UUID from setup, income or expense category UUID from setup, and optional note/context fields.
+- The confirmation/query phase uses the inserted row summary from `scripts/local/manual-log.js` and query evidence by date, account, category, and `movement_type` when inspection is in scope.
+- The cleanup/maintenance phase separates temporary validation cleanup from intentionally persistent local operator references; inactive refs are not selected for new logging, duplicate active display-name ambiguity requires a human decision, and generated local Supabase metadata is not committed.
+- The workflow keeps `scripts/local/setup-references.js` and `scripts/local/manual-log.js` separate; it does not add aliases, wrappers, package scripts, seed files, App/API/Dashboard/Shortcut behavior, production or staging workflow, remote Supabase access, automated recurring logging, transfer or adjustment support, reporting objects, AI, Projection, legacy Sheets/GAS work, versioning, or production-ready claims.
+- No repo files, code, scripts, wrappers, aliases, seed files, migrations, schema changes, Supabase config changes, validation runs, package scripts, production access, remote Supabase linking, `service_role` key usage, App/API/Dashboard/Shortcut work, reporting objects, AI, Projection, legacy Sheets/GAS work, versioning, or production-ready claims were introduced during Issue #81 recommendation-only work.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
