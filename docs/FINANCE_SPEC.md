@@ -1838,9 +1838,61 @@ Failure responses must not include credentials, SQL internals, connection detail
 - Legacy Sheets/GAS work.
 - Version labels.
 
-### Recommended Next Issue After Documentation
+### Completed Next Issue After Documentation
 
-Define minimal Edge Function implementation boundary.
+The minimal Edge Function implementation boundary was defined before later Edge Function and WebApp work.
+
+## Next.js WebApp MVP Expense Entry Implementation
+
+PR #139 merged the minimal Next.js App Router TypeScript WebApp under `apps/web` after Issue #138.
+
+Issue #138 is completed. The approved WebApp MVP is a staging-oriented expense-entry surface and remains separate from Dashboard/reporting, production deployment, schema/migration/config changes, income flow, transfer flow, adjustment flow, aliases, AI/Projection, and legacy Sheets/GAS work.
+
+### Implemented MVP Surface
+
+The WebApp MVP includes one mobile-first expense-entry page with:
+
+- Amount input.
+- Description input.
+- Submit button.
+- Loading state.
+- Safe success message.
+- Safe failure message.
+
+The request behavior is limited to one expense record:
+
+- Defaults `activity_date` to the current local date in `YYYY-MM-DD`.
+- Sends `movement_type = expense`.
+- Sends `currency = TWD`.
+- Sends user-entered amount and description.
+- Sends account/category references from approved runtime env names.
+- Does not send `source_indicator` because the current `log-finance-activity` allowed-field list does not include it.
+
+### Runtime Environment Names
+
+The WebApp records names only. No values are documented or committed:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_FINANCE_FUNCTION_URL`
+- `NEXT_PUBLIC_DEFAULT_EXPENSE_ACCOUNT_ID`
+- `NEXT_PUBLIC_DEFAULT_EXPENSE_CATEGORY_ID`
+
+### Validation Recorded For PR #139
+
+PR #139 validation passed:
+
+- `npm install` inside `apps/web`.
+- `npm run build` inside `apps/web`.
+- `git diff --cached --check`.
+
+Hosted staging success request validation was not run because it requires private runtime/session values.
+
+The implementation introduced no production access, schema change, migration change, Supabase config change, Dashboard/reporting UI, AI/Projection, transfer/adjustment flow, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
+
+### Recommended Next Issue After Implementation Sync
+
+Define Next.js WebApp runtime configuration and staging validation boundary.
 
 ## Remaining Open Questions
 
