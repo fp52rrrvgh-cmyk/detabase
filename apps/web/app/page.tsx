@@ -281,6 +281,24 @@ export default function ExpenseEntryPage() {
     });
   }
 
+  function clearSettledSubmitState() {
+    setSubmitState((current) =>
+      current.status === "success" || current.status === "failure"
+        ? { status: "idle" }
+        : current,
+    );
+  }
+
+  function handleAmountChange(value: string) {
+    setAmount(value);
+    clearSettledSubmitState();
+  }
+
+  function handleDescriptionChange(value: string) {
+    setDescription(value);
+    clearSettledSubmitState();
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitState({ status: "idle" });
@@ -466,7 +484,7 @@ export default function ExpenseEntryPage() {
               inputMode="decimal"
               min="0.01"
               name="amount"
-              onChange={(event) => setAmount(event.target.value)}
+              onChange={(event) => handleAmountChange(event.target.value)}
               placeholder="0"
               required
               step="0.01"
@@ -479,7 +497,7 @@ export default function ExpenseEntryPage() {
             <span>Description</span>
             <textarea
               name="description"
-              onChange={(event) => setDescription(event.target.value)}
+              onChange={(event) => handleDescriptionChange(event.target.value)}
               placeholder="Short expense note"
               required
               rows={4}
@@ -623,7 +641,7 @@ function StatusMessage({
     return (
       <p className="status-message status-success" role="status">
         Expense saved for {state.activityDate}: TWD {state.amount} -{" "}
-        {state.description}
+        {state.description}. Ready for next expense.
       </p>
     );
   }
