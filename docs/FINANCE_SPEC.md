@@ -1503,9 +1503,27 @@ Before any alias/reference shortcut implementation, a dedicated validation issue
 - Version labels.
 - Production-ready claims.
 
-### Recommended Next Issue After Boundary Documentation
+### Completed Next Issue After Boundary Documentation
 
-Validate local alias/reference shortcut boundary.
+Issue #95 validated the local alias/reference shortcut boundary.
+
+### Local Alias/Reference Shortcut Boundary Validation Result
+
+Issue #95 passed documentation/boundary validation of the local alias/reference shortcut boundary.
+
+Validation confirmed:
+
+- UUID-first execution integrity remains preserved.
+- Alias/reference shortcuts, if implemented later, must resolve to exactly one same-owner active account/category UUID.
+- Duplicate alias or display-name ambiguity must stop and require a human decision.
+- Inactive references must not be selected for new logging.
+- Cross-owner references must not be selected.
+- Existing setup and manual logging helpers remain separate: `scripts/local/setup-references.js` creates or identifies references, and `scripts/local/manual-log.js` inserts one local finance activity.
+- No implementation, config, schema, migration, seed, production, remote Supabase, `service_role`, App/API/Dashboard, Apple Shortcut, reporting, AI, Projection, or legacy Sheets/GAS work was required or introduced.
+
+### Recommended Next Issue After Validation
+
+Define backend local-complete criteria.
 
 ## Remaining Open Questions
 

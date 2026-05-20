@@ -21,6 +21,7 @@ It is local-only operating documentation. It is not production deployment docume
 - Mobile-friendly local daily logging path boundary is documented as copy-ready operator command snippets using the existing local helpers.
 - Mobile-friendly local daily logging command snippets validation has passed using the existing local helpers.
 - Local alias/reference shortcut boundary is documented as the next mobile-friendly friction-reduction boundary; no alias implementation exists.
+- Local alias/reference shortcut boundary validation has passed; no alias implementation exists.
 - Production remains untouched.
 
 ## Local Environment Prerequisites
@@ -533,6 +534,21 @@ Deferred scope:
 - Reporting objects, views, functions, triggers, or reporting tables.
 - AI or Projection behavior.
 - Legacy Sheets/GAS work.
+
+## Local Alias/Reference Shortcut Boundary Validation
+
+Issue #95 validated the local alias/reference shortcut boundary at the documentation/boundary level.
+
+Validation confirmed:
+
+- UUID-first execution integrity remains preserved.
+- Alias/reference shortcuts, if implemented later, must resolve to exactly one same-owner active account/category UUID.
+- Duplicate alias or display-name ambiguity must stop and require a human decision.
+- Inactive references must not be selected for new logging.
+- Cross-owner references must not be selected.
+- Existing setup and manual logging helpers remain separate: `scripts/local/setup-references.js` creates or identifies references, and `scripts/local/manual-log.js` inserts one local finance activity.
+
+This validation did not require or introduce implementation, config, schema, migration, seed, production access, remote Supabase linking, `service_role` key usage, App/API/Dashboard work, Apple Shortcut work, reporting objects, AI, Projection, or legacy Sheets/GAS work.
 
 ## Verify Local Records
 
