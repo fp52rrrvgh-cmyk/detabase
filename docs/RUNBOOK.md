@@ -25,6 +25,8 @@ It is local-only operating documentation. It is not production deployment docume
 - Backend local-complete criteria are documented for the local-only Finance backend/operator layer.
 - Backend local-complete criteria validation has passed at the documentation/boundary level.
 - Backend local-complete status is declared for the local-only Finance backend/operator baseline.
+- Hosted backend baseline validation has passed on `detabase-staging`.
+- Minimal mobile ingestion API boundary is documented after Issue #115 as docs-only API boundary documentation.
 - Production remains untouched.
 
 ## Local Environment Prerequisites
@@ -754,9 +756,101 @@ Before a future issue may apply existing migrations to staging, safe evidence mu
 - The safe evidence format is defined.
 - Rollback, reset, or cleanup expectations are known.
 
-### Next Staging Step
+### Next Safe Step
 
-The next smallest safe issue is to verify staging environment access boundary.
+The next smallest safe issue after the documented minimal mobile ingestion API boundary is to define minimal Edge Function implementation boundary.
+
+## Minimal Mobile Ingestion API Boundary
+
+Issue #115 recommended a dedicated Supabase Edge Function as the minimal mobile ingestion boundary after hosted backend baseline validation passed on `detabase-staging`.
+
+This runbook records policy and operator boundary only. It does not implement an Edge Function, Apple Shortcut, App, API route, Dashboard, deployment, production workflow, schema change, migration change, Supabase config change, seed data, durable personal data, alias, wrapper, package script, reporting object, AI, Projection, transfer/adjustment support, or legacy Sheets/GAS behavior.
+
+### Recommended Path
+
+The recommended primary path is:
+
+```text
+iPhone Shortcut later -> dedicated Supabase Edge Function -> existing Finance tables in detabase-staging
+```
+
+Direct client insert is not the first recommended path because the mobile client should not own broad database-facing responsibility, credential handling, authorization decisions, or validation rules.
+
+Local script reuse is not the first recommended mobile path because the existing local scripts remain local operator tools and do not provide hosted iPhone or Shortcut ingestion.
+
+Dashboard-first input is not the first recommended path because it expands UI and reporting scope before minimal mobile ingestion is proven.
+
+### Minimal Request Shape
+
+One future ingestion request should represent one income or expense record.
+
+Required fields:
+
+- `activity_date`.
+- `movement_type` as `income` or `expense`.
+- Positive `amount`.
+- `account_id` as UUID.
+- `category_id` as UUID.
+
+Optional fields:
+
+- `currency`, default or expected `TWD` if omitted by a future implementation.
+- `description`.
+- `merchant_or_payee`.
+- `payment_method`.
+- `source_system_name`.
+- `source_record_reference`.
+
+### Minimum Validation Rules
+
+- Accept income and expense only.
+- Reject non-positive amounts.
+- Require UUID-shaped account and category references.
+- Require selected account and category references to be active.
+- Require selected account and category references to belong to the same owner/auth boundary.
+- Require category to match the requested movement type.
+- Keep transfer and adjustment out of scope.
+- Handle unknown or unsupported fields only through an explicit future implementation decision.
+
+### Authentication And Authorization Boundary
+
+- Authentication and authorization remain policy-level in this documentation step.
+- A future Edge Function must not require Apple Shortcut to hold broad database credentials.
+- A future Edge Function should resolve caller/operator identity through a bounded auth mechanism before writing.
+- `service_role` must not be exposed to the client.
+- Production remains out of scope.
+
+### Account And Category References
+
+- UUID-first account/category references remain required for execution.
+- Display names may be used for human confirmation later, not as execution identifiers.
+- Alias behavior remains out of scope until a later dedicated issue explicitly approves it.
+
+### Safe Responses
+
+A safe success response may include success status, inserted activity id, movement type, date, amount, safe account/category confirmation fields, and validation source.
+
+A safe failure response may include a safe error code and human-readable message.
+
+Responses must not expose credentials, SQL internals, connection details, private URLs, or access-granting values.
+
+### Deferred Scope
+
+- Edge Function implementation.
+- Apple Shortcut implementation.
+- App/API/Dashboard code.
+- Deployment, staging promotion, or production behavior.
+- Supabase config changes.
+- Schema or migration changes.
+- Seed data or durable personal data.
+- Credential disclosure.
+- Aliases, wrappers, package scripts, or new reusable tooling.
+- Reporting objects.
+- AI or Projection behavior.
+- Transfer or adjustment support.
+- Legacy Sheets/GAS work.
+- Version labels.
+- Production-ready claims.
 
 ## Verify Local Records
 
