@@ -1003,9 +1003,69 @@ The WebApp remains expense-only and still does not send `source_indicator`.
 
 This remains staging-only WebApp behavior. Production remains excluded, and this is not a production-ready claim. PR #162 introduced no schema or migration change, Supabase config change, Dashboard/reporting UI, AI/Projection, transfer/adjustment or income support, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
 
+### Validated Staging-Use Operator Flow
+
+Issue #166 documents the validated WebApp staging-use flow as a repeatable operator runbook.
+
+This flow is staging-use only. Runtime values remain local-only in `apps/web/.env.local` or an approved local runtime environment. Do not commit, log, paste, screenshot, or document runtime values, credentials, auth headers, session values, database URLs, function URLs containing secrets, UUID values from local `.env.local`, or access-granting values.
+
+Prepare local runtime values using env names only:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_FINANCE_FUNCTION_URL`
+- `NEXT_PUBLIC_DEFAULT_EXPENSE_ACCOUNT_ID`
+- `NEXT_PUBLIC_DEFAULT_EXPENSE_CATEGORY_ID`
+
+Do not record the values for those names in repo files, issues, PRs, logs, chat, or screenshots.
+
+Validated operator flow:
+
+1. Prepare local runtime values in `apps/web/.env.local` or the approved local runtime environment.
+2. From `apps/web`, start the WebApp locally with the local Next.js CLI, for example:
+
+   ```powershell
+   .\node_modules\.bin\next dev --hostname 127.0.0.1 --port 3000
+   ```
+
+3. Open the local WebApp in a browser.
+4. Confirm runtime readiness shows env names and configured/missing state only, not values.
+5. Sign in with an existing staging auth user through the browser UI. Do not record credentials or session values.
+6. Submit one expense with a positive amount and description.
+7. Confirm the safe success message shows only date, TWD amount, description, and ready-for-next-expense status.
+8. Repeat entry if needed. After a successful submit, amount and description reset; stale success or failure messages clear when the next entry starts.
+9. Stop the local WebApp server when finished.
+
+The WebApp request shape remains:
+
+- `activity_date`.
+- `movement_type = expense`.
+- Positive amount.
+- `currency = TWD`.
+- Configured account/category UUID refs.
+- Description.
+
+The WebApp remains expense-only and still does not send `source_indicator`.
+
+Safe reference troubleshooting:
+
+- For `invalid_account_reference`, inspect local-only account reference alignment and confirm the configured account reference points to an active same-owner staging account. Do not paste or record the UUID value.
+- For `invalid_category_reference`, inspect local-only category reference alignment and confirm the configured category reference points to an active same-owner staging expense category. Do not paste or record the UUID value.
+- For `category_movement_mismatch`, inspect local-only category purpose alignment and confirm the configured category reference is compatible with expense logging. Do not paste or record the UUID value.
+
+Stop conditions:
+
+- Stop if the staging target is unclear or could be production.
+- Stop if production access, deployment, schema changes, migration changes, Supabase config changes, or Edge Function deployment would be required.
+- Stop if private runtime values, credentials, auth headers, session values, database URLs, private function URLs, UUID values from local `.env.local`, or access-granting values would need to be recorded or shared.
+- Stop if required local runtime values or staging auth credentials are missing.
+- Stop if troubleshooting would require account/category selector UI, dynamic lookup, server routes, Dashboard/reporting, income/transfer/adjustment support, aliases, wrappers, package scripts, shortcut automation, auth architecture expansion, AI/Projection, or legacy Sheets/GAS work.
+
+This runbook does not introduce production behavior and is not a production-ready claim.
+
 Next safe issue:
 
-Define the next bounded WebApp step after repeat-entry flow.
+Define the next bounded post-runbook step, likely deciding whether to pause WebApp work and move to the next module boundary.
 
 ## Verify Local Records
 

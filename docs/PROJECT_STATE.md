@@ -221,6 +221,11 @@
 - The WebApp remains expense-only and still does not send `source_indicator`.
 - `apps/web/.env.local` remains local-only and uncommitted after repeat-entry validation.
 - PR #162 introduced no production access, schema change, migration change, Supabase config change, Dashboard/reporting UI, AI/Projection, transfer/adjustment or income support, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
+- Issue #166 documents the validated WebApp staging-use operator runbook.
+- The documented staging-use flow is prepare local runtime values, start the WebApp locally, confirm runtime readiness, sign in with an existing staging auth user, submit one expense, confirm safe success, repeat entry if needed, and stop the local server.
+- The runbook records env names only, keeps runtime values local-only in `apps/web/.env.local` or the approved local runtime environment, and keeps production excluded.
+- The documented WebApp staging-use flow preserves the existing expense request payload shape and does not send `source_indicator`.
+- The documented runbook includes safe reference troubleshooting without UUID values, repeat-entry behavior, stop conditions, and not-production-ready language.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
@@ -239,7 +244,7 @@
 
 ## Unknowns
 
-- Next bounded WebApp step after repeat-entry flow.
+- Next bounded post-runbook step.
 - Data model.
 - Deployment target.
 - Dashboard requirements.
