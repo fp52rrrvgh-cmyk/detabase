@@ -1,6 +1,6 @@
 "use client";
 
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type Session } from "@supabase/supabase-js";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -13,6 +13,11 @@ type SubmitState =
       amount: string;
       description: string;
     }
+  | { status: "failure"; message: string };
+
+type AuthStatus = "checking" | "signed_out" | "signed_in";
+type AuthMessage =
+  | { status: "success"; message: string }
   | { status: "failure"; message: string };
 
 type RuntimeConfig = {
@@ -83,6 +88,12 @@ async function readSafeJson(response: Response): Promise<unknown> {
 }
 
 export default function ExpenseEntryPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [session, setSession] = useState<Session | null>(null);
+  const [authStatus, setAuthStatus] = useState<AuthStatus>("checking");
+  const [authMessage, setAuthMessage] = useState<AuthMessage | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [activityDate, setActivityDate] = useState("");
@@ -105,6 +116,128 @@ export default function ExpenseEntryPage() {
   useEffect(() => {
     setActivityDate(currentLocalDate());
   }, []);
+
+  useEffect(() => {
+    if (!supabase) {
+      setAuthStatus("signed_out");
+      setSession(null);
+      return;
+    }
+
+    let isMounted = true;
+
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!isMounted) {
+          return;
+        }
+
+        setSession(data.session);
+        setAuthStatus(data.session ? "signed_in" : "signed_out");
+      })
+      .catch(() => {
+        if (!isMounted) {
+          return;
+        }
+
+        setSession(null);
+        setAuthStatus("signed_out");
+        setAuthMessage({
+          status: "failure",
+          message: "Session status could not be checked safely.",
+        });
+      });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setAuthStatus(nextSession ? "signed_in" : "signed_out");
+
+      if (nextSession) {
+        setAuthMessage(null);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
+
+  async function handleSignIn(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setAuthMessage(null);
+
+    const trimmedEmail = email.trim();
+    if (!configReady || !supabase) {
+      setAuthMessage({
+        status: "failure",
+        message: "Runtime configuration is incomplete.",
+      });
+      return;
+    }
+
+    if (!trimmedEmail || !password) {
+      setAuthMessage({
+        status: "failure",
+        message: "Enter staging email and password.",
+      });
+      return;
+    }
+
+    setAuthLoading(true);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: trimmedEmail,
+      password,
+    });
+    setAuthLoading(false);
+
+    if (error || !data.session) {
+      setSession(null);
+      setAuthStatus("signed_out");
+      setAuthMessage({
+        status: "failure",
+        message: "Sign in failed. Check staging credentials locally.",
+      });
+      return;
+    }
+
+    setPassword("");
+    setSession(data.session);
+    setAuthStatus("signed_in");
+    setAuthMessage({
+      status: "success",
+      message: "Signed in for staging expense entry.",
+    });
+  }
+
+  async function handleSignOut() {
+    if (!supabase) {
+      return;
+    }
+
+    setAuthLoading(true);
+    const { error } = await supabase.auth.signOut();
+    setAuthLoading(false);
+
+    if (error) {
+      setAuthMessage({
+        status: "failure",
+        message: "Sign out failed. Retry locally.",
+      });
+      return;
+    }
+
+    setSession(null);
+    setAuthStatus("signed_out");
+    setSubmitState({ status: "idle" });
+    setAuthMessage({
+      status: "success",
+      message: "Signed out.",
+    });
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -141,14 +274,14 @@ export default function ExpenseEntryPage() {
     setSubmitState({ status: "loading" });
 
     const {
-      data: { session },
+      data: { session: currentSession },
       error: sessionError,
     } = await supabase.auth.getSession();
 
-    if (sessionError || !session?.access_token) {
+    if (sessionError || !currentSession?.access_token) {
       setSubmitState({
         status: "failure",
-        message: "Authenticated session is unavailable.",
+        message: "Sign in before saving an expense.",
       });
       return;
     }
@@ -157,7 +290,7 @@ export default function ExpenseEntryPage() {
       method: "POST",
       headers: {
         apikey: runtimeConfig.publishableKey,
-        authorization: `Bearer ${session.access_token}`,
+        authorization: `Bearer ${currentSession.access_token}`,
         "content-type": "application/json",
       },
       body: JSON.stringify({
@@ -212,6 +345,63 @@ export default function ExpenseEntryPage() {
           </p>
         </div>
 
+        <section className="auth-section" aria-labelledby="auth-title">
+          <div className="section-heading">
+            <h2 id="auth-title">Staging sign in</h2>
+            <SessionStatus status={authStatus} hasSession={Boolean(session)} />
+          </div>
+
+          {authStatus === "signed_in" ? (
+            <button
+              className="secondary-button"
+              disabled={authLoading}
+              onClick={handleSignOut}
+              type="button"
+            >
+              {authLoading ? "Signing out..." : "Sign out"}
+            </button>
+          ) : (
+            <form className="auth-form" onSubmit={handleSignIn}>
+              <label className="field">
+                <span>Email</span>
+                <input
+                  autoComplete="email"
+                  inputMode="email"
+                  name="email"
+                  onChange={(event) => setEmail(event.target.value)}
+                  placeholder="staging operator email"
+                  required
+                  type="email"
+                  value={email}
+                />
+              </label>
+
+              <label className="field">
+                <span>Password</span>
+                <input
+                  autoComplete="current-password"
+                  name="password"
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="staging password"
+                  required
+                  type="password"
+                  value={password}
+                />
+              </label>
+
+              <button
+                className="submit-button"
+                disabled={authLoading || !configReady}
+                type="submit"
+              >
+                {authLoading ? "Signing in..." : "Sign in"}
+              </button>
+            </form>
+          )}
+
+          <AuthMessageView message={authMessage} />
+        </section>
+
         <form className="entry-form" onSubmit={handleSubmit}>
           <label className="field">
             <span>Amount</span>
@@ -248,16 +438,57 @@ export default function ExpenseEntryPage() {
 
           <button
             className="submit-button"
-            disabled={submitState.status === "loading"}
+            disabled={
+              submitState.status === "loading" || authStatus !== "signed_in"
+            }
             type="submit"
           >
-            {submitState.status === "loading" ? "Saving..." : "Save expense"}
+            {submitState.status === "loading"
+              ? "Saving..."
+              : authStatus === "signed_in"
+              ? "Save expense"
+              : "Sign in to save"}
           </button>
         </form>
 
         <StatusMessage state={submitState} configReady={configReady} />
       </section>
     </main>
+  );
+}
+
+function SessionStatus({
+  status,
+  hasSession,
+}: {
+  status: AuthStatus;
+  hasSession: boolean;
+}) {
+  if (status === "checking") {
+    return <p className="session-status">Checking session</p>;
+  }
+
+  if (status === "signed_in" && hasSession) {
+    return <p className="session-status session-ready">Signed in</p>;
+  }
+
+  return <p className="session-status">Signed out</p>;
+}
+
+function AuthMessageView({ message }: { message: AuthMessage | null }) {
+  if (!message) {
+    return null;
+  }
+
+  return (
+    <p
+      className={`status-message ${
+        message.status === "success" ? "status-success" : "status-error"
+      }`}
+      role={message.status === "success" ? "status" : "alert"}
+    >
+      {message.message}
+    </p>
   );
 }
 

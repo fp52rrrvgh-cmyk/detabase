@@ -14,9 +14,12 @@ values:
 - `NEXT_PUBLIC_DEFAULT_EXPENSE_ACCOUNT_ID`
 - `NEXT_PUBLIC_DEFAULT_EXPENSE_CATEGORY_ID`
 
-The page uses the existing browser Supabase session when available. It does not
-define login UI, a server route, Dashboard behavior, production behavior, or
-schema/config changes.
+The page uses the Supabase browser client for a minimal staging email/password
+sign-in flow. Credentials and session values are entered locally in the browser
+only and must not be committed, logged, pasted, or documented.
+
+The WebApp does not define sign-up, password reset, magic link, OAuth, a server
+route, Dashboard behavior, production behavior, or schema/config changes.
 
 ## Local Checks
 
@@ -25,6 +28,8 @@ npm install
 npm run build
 ```
 
-The MVP sends one expense request with `movement_type = expense`, `currency =
-TWD`, the current local `activity_date`, the configured account/category UUIDs,
-and the entered amount and description. It does not send `source_indicator`.
+The MVP signs in with an existing staging auth user, keeps session material in
+the browser session path handled by `@supabase/supabase-js`, and sends one
+expense request with `movement_type = expense`, `currency = TWD`, the current
+local `activity_date`, the configured account/category UUIDs, and the entered
+amount and description. It does not send `source_indicator`.
