@@ -83,6 +83,13 @@
 - Negative checks passed for inactive account, inactive category, and cross-owner category references during Issue #70 validation.
 - Query evidence passed by date, account, income category, expense category, and `movement_type` during Issue #70 validation.
 - Cleanup evidence passed after Issue #70 validation; temporary accounts, categories, and activities were removed.
+- Issue #73 is closed as completed after recommendation-only boundary work for a reusable local account/category setup helper.
+- A minimal reusable local account/category setup helper may be allowed next through a dedicated local-only implementation issue.
+- The helper boundary is limited to account/category reference setup for `scripts/local/manual-log.js`.
+- The helper may create or identify one active local account, one active income category, and one active expense category, ensure same-owner references, and print UUIDs and display names.
+- The helper boundary remains UUID-first for execution, display-name-confirmed for human review only, local-alias-deferred, and local-only.
+- The helper must not insert finance activities, replace `scripts/local/manual-log.js`, add seed files, add aliases, modify migrations, schema, or Supabase config, or add App/API/Dashboard/Shortcut, staging, production, or remote Supabase behavior.
+- Proposed future helper file is `scripts/local/setup-references.js`; `docs/RUNBOOK.md` may be updated only if a future implementation issue explicitly allows it.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.

@@ -964,9 +964,126 @@ The validation confirmed:
 
 This validation remained local-only. It did not introduce repo file changes, code, scripts, reusable tooling, seed files, SQL migration changes, schema changes, Supabase config changes, production access, remote Supabase linking, `service_role` key usage, App/API/Dashboard/Shortcut work, reporting objects, AI, Projection, legacy Sheets/GAS work, versioning, or production-ready claims.
 
+## Reusable Local Account/Category Setup Helper Boundary
+
+Issue #73 completed recommendation-only boundary work for a reusable local account/category setup helper.
+
+### Recommendation
+
+A minimal reusable local account/category setup helper may be allowed next, but only through a dedicated implementation issue.
+
+The helper must remain local-only and limited to account/category reference setup for `scripts/local/manual-log.js`.
+
+It must not introduce seed files, schema changes, migration changes, Supabase config changes, App/API/Dashboard/Shortcut behavior, staging behavior, production access, remote Supabase access, or `service_role` usage.
+
+### Helper Responsibility
+
+The helper may:
+
+- Create or identify one active local account.
+- Create or identify one active income category.
+- Create or identify one active expense category.
+- Ensure all references belong to the same local owner context.
+- Print UUIDs and display names for use with `scripts/local/manual-log.js`.
+- Stay local-only.
+
+The helper must:
+
+- Use UUID-first execution identifiers.
+- Keep display names as human confirmation only.
+- Avoid local aliases for now.
+- Stay limited to account/category reference setup.
+
+The helper must not:
+
+- Insert finance activities.
+- Replace `scripts/local/manual-log.js`.
+- Add aliases.
+- Add seed files.
+- Modify migrations, schema, or Supabase config.
+- Add App/API/Dashboard/Shortcut behavior.
+- Add staging, production, or remote Supabase behavior.
+
+### Boundary-Level Input Contract
+
+- Local owner context / `user_id`.
+- Account display name.
+- Account type.
+- Income category display name.
+- Expense category display name.
+- Optional category grouping purpose.
+- Optional dry-run flag if useful.
+
+### Boundary-Level Output Contract
+
+- Active account UUID and display name.
+- Active income category UUID and display name.
+- Active expense category UUID and display name.
+- Same-owner confirmation.
+- Active-state confirmation.
+- Created versus already-existing status.
+- Command-ready references for `scripts/local/manual-log.js`.
+
+### Proposed Future Allowed Files
+
+Allowed for a future implementation issue if explicitly approved:
+
+- `scripts/local/setup-references.js`.
+- `docs/RUNBOOK.md` only if the future implementation issue explicitly allows a docs update.
+
+Out of scope unless separately approved:
+
+- `package.json`.
+- SQL migrations.
+- Supabase config.
+- Seed files.
+- App/API/Dashboard/Shortcut files.
+- Reporting objects.
+
+### Future Implementation Validation Expectations
+
+A future implementation issue should validate:
+
+- `node --check scripts/local/setup-references.js`.
+- Local Supabase DB-only startup using existing config.
+- Local reset/replay only if explicitly allowed by that future issue.
+- The helper creates or identifies one active account, one active income category, and one active expense category.
+- Helper output UUIDs work with `scripts/local/manual-log.js` for one income and one expense.
+- Same-owner integrity passes.
+- Inactive and cross-owner references are not selected for new manual logging.
+- Query evidence passes by date, account, category, and `movement_type`.
+- Cleanup evidence or local reset removes temporary validation data.
+- No production, remote Supabase, `service_role`, schema/migration/config, seed, App/API/Dashboard/Shortcut, reporting, AI, Projection, or legacy Sheets/GAS work occurs.
+
+### Out of Scope
+
+- Implementation in this documentation step.
+- Code changes.
+- Script or reusable tooling creation.
+- Production or staging workflow.
+- Remote Supabase linking.
+- `service_role` usage.
+- Schema, migration, or Supabase config changes.
+- Seed files.
+- App/API/Dashboard/Shortcut work.
+- Reporting objects.
+- Local aliases.
+- AI or Projection behavior.
+- Legacy Sheets/GAS work.
+- Version labels.
+- Production-ready claims.
+
+### Open Questions Before Implementation
+
+- Should the helper generate UUIDs through database defaults or accept explicit UUIDs for local validation?
+- Should the helper only create missing records or also print existing matching records?
+- Should duplicate display names cause stop/NEED_HUMAN?
+- Should the helper support only one account plus two categories first?
+- Should docs update be included in implementation or kept as a separate docs-sync issue?
+
 ### Recommended Next Issue
 
-Define reusable local account/category setup helper boundary.
+Implement reusable local account/category setup helper.
 
 ## Remaining Open Questions
 
