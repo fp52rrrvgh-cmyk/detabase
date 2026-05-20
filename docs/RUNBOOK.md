@@ -17,6 +17,7 @@ It is local-only operating documentation. It is not production deployment docume
 - `scripts/local/setup-references.js` exists as the reusable local account/category setup helper.
 - Reusable local account/category setup helper validation has passed for create, reuse, dry-run, negative checks, manual-log compatibility, query evidence, and cleanup.
 - First practical local daily logging operator workflow boundary has been defined as setup, daily logging, confirmation/query, and cleanup/maintenance phases using existing local helpers only.
+- First practical local daily logging operator workflow validation has passed end-to-end using `scripts/local/setup-references.js` and `scripts/local/manual-log.js`.
 - Production remains untouched.
 
 ## Local Environment Prerequisites
@@ -315,6 +316,53 @@ Minimum confirmation:
 - Reporting objects.
 - AI or Projection.
 - Legacy Sheets/GAS.
+
+## First Practical Local Daily Logging Operator Workflow Validation
+
+Issue #84 validated the first practical local daily logging operator workflow end to end.
+
+Static checks passed:
+
+- `node --check scripts/local/setup-references.js`.
+- `node --check scripts/local/manual-log.js`.
+
+Setup phase passed:
+
+- `scripts/local/setup-references.js` created command-ready account/category references.
+- Active account UUID and display name were produced.
+- Active income category UUID and display name were produced.
+- Active expense category UUID and display name were produced.
+- Same-owner confirmation passed.
+- Active-state confirmation passed.
+
+Daily logging phase passed:
+
+- `scripts/local/manual-log.js` inserted one income activity using setup output UUIDs.
+- `scripts/local/manual-log.js` inserted one expense activity using setup output UUIDs.
+
+Confirmation/query phase passed:
+
+- Query by date passed.
+- Query by account passed.
+- Query by income category passed.
+- Query by expense category passed.
+- Query by `movement_type` passed.
+- Same-owner join evidence passed.
+
+Cleanup/maintenance phase passed:
+
+- Temporary activities were removed.
+- Temporary account was removed.
+- Temporary categories were removed.
+- Temporary local auth owner was removed.
+- Generated `supabase/.temp/` was removed.
+- Generated `supabase/.branches/` was removed.
+- Final working tree was clean.
+
+Scope confirmation:
+
+- No repo files were modified during validation.
+- No code, scripts, wrappers, aliases, package scripts, seed files, migrations, schema changes, Supabase config changes, production access, remote Supabase linking, `service_role` key usage, App/API/Dashboard/Shortcut work, reporting objects, AI, Projection, legacy Sheets/GAS work, versioning, or production-ready claim was introduced.
 
 ## Verify Local Records
 

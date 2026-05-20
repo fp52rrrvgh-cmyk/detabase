@@ -1273,9 +1273,74 @@ A future validation issue should confirm:
 - Cross-owner refs are not selected for the active local owner context.
 - No production, remote Supabase, `service_role`, schema, migration, config, seed, App/API/Dashboard/Shortcut, reporting, AI, Projection, or legacy Sheets/GAS work occurs.
 
-### Recommended Next Issue
+### Completed Next Issue After Workflow Definition
 
-Validate first practical local daily logging operator workflow.
+Issue #84 validated the first practical local daily logging operator workflow.
+
+## First Practical Local Daily Logging Operator Workflow Validation Result
+
+Issue #84 validated the first practical local daily logging operator workflow locally.
+
+The validation remained local-only and used only existing local helpers.
+
+### Static Checks
+
+- `node --check scripts/local/setup-references.js` passed.
+- `node --check scripts/local/manual-log.js` passed.
+
+### Setup Phase Result
+
+`scripts/local/setup-references.js` created command-ready account/category references for a temporary local owner.
+
+The setup phase produced:
+
+- Active account UUID and display name.
+- Active income category UUID and display name.
+- Active expense category UUID and display name.
+- Created status for each temporary reference.
+- Same-owner confirmation.
+- Active-state confirmation.
+- Command-ready references for `scripts/local/manual-log.js`.
+
+### Daily Logging Phase Result
+
+`scripts/local/manual-log.js` inserted:
+
+- One income activity using setup output UUIDs.
+- One expense activity using setup output UUIDs.
+
+Both inserted row summaries reported `currency = TWD` and `source_indicator = manual`.
+
+### Confirmation/Query Phase Result
+
+Query evidence passed for:
+
+- Date.
+- Account.
+- Income category.
+- Expense category.
+- `movement_type`.
+- Same-owner joins across activity, account, and category references.
+
+### Cleanup/Maintenance Phase Result
+
+Cleanup evidence passed:
+
+- Temporary activities were removed.
+- Temporary account was removed.
+- Temporary categories were removed.
+- Temporary local auth owner was removed.
+- Generated `supabase/.temp/` metadata was removed.
+- Generated `supabase/.branches/` metadata was removed.
+- Final working tree was clean.
+
+### Scope Confirmation
+
+No repo files were modified during Issue #84 validation. The validation did not introduce code, scripts, wrappers, aliases, package scripts, seed files, migrations, schema changes, Supabase config changes, production access, remote Supabase linking, `service_role` key usage, App/API/Dashboard/Shortcut work, reporting objects, AI, Projection, legacy Sheets/GAS work, versioning, or production-ready claims.
+
+### Recommended Next Issue After Validation
+
+Define mobile-friendly local daily logging path boundary.
 
 ## Remaining Open Questions
 
