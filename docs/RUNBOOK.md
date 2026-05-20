@@ -16,6 +16,7 @@ It is local-only operating documentation. It is not production deployment docume
 - Persistent local account/category setup runbook boundary validation has passed with one active account, one active income category, and one active expense category.
 - `scripts/local/setup-references.js` exists as the reusable local account/category setup helper.
 - Reusable local account/category setup helper validation has passed for create, reuse, dry-run, negative checks, manual-log compatibility, query evidence, and cleanup.
+- First practical local daily logging operator workflow boundary has been defined as setup, daily logging, confirmation/query, and cleanup/maintenance phases using existing local helpers only.
 - Production remains untouched.
 
 ## Local Environment Prerequisites
@@ -191,6 +192,129 @@ The implementation uses `scripts/local/setup-references.js`. Keep `package.json`
 Issue #78 validated the helper locally. The validation confirmed `node --check scripts/local/setup-references.js` passed; create behavior produced one active local account, one active income category, and one active expense category; reuse behavior returned already-existing references; dry-run reported would-create and made no writes; helper output UUIDs worked with `scripts/local/manual-log.js` for one income and one expense; invalid UUID, invalid account type, duplicate active account ambiguity, duplicate active category ambiguity, inactive refs, and cross-owner refs were rejected or not selected as expected; query evidence passed for same-owner refs, date, account, income category, expense category, and `movement_type`; and cleanup removed temporary accounts, categories, activities, and local auth users.
 
 This validation did not modify repo files or introduce code changes, scripts, reusable tooling, seed files, App/API/Dashboard/Shortcut behavior, reporting objects, AI, Projection, production access, remote Supabase linking, `service_role` key usage, migration changes, schema changes, Supabase config changes, legacy Sheets/GAS work, versioning, or production-ready claims.
+
+## First Practical Local Daily Logging Operator Workflow
+
+This workflow is the first practical local operator path for daily logging. It uses the existing validated local helpers as separate steps and remains local-only.
+
+It does not define App/API/Dashboard/Shortcut behavior, production or staging workflow, remote Supabase workflow, aliases, package wrappers, package scripts, seed files, automated recurring logging, reporting objects, AI, Projection, transfer or adjustment support, or legacy Sheets/GAS behavior.
+
+### Setup Phase
+
+Use `scripts/local/setup-references.js` with:
+
+- Existing local owner context / `user_id`.
+- Account display name.
+- Account type.
+- Income category display name.
+- Expense category display name.
+- Optional income or expense category grouping purpose.
+
+The setup output should provide:
+
+- Active account UUID and display name.
+- Active income category UUID and display name.
+- Active expense category UUID and display name.
+- Created versus already-existing status.
+- Same-owner confirmation.
+- Active-state confirmation.
+- Command-ready references for `scripts/local/manual-log.js`.
+
+### Daily Logging Phase
+
+Use `scripts/local/manual-log.js` with:
+
+- `--date <YYYY-MM-DD>`.
+- `--amount <positive-number>`.
+- `--type <income|expense>`.
+- `--account <account-uuid-from-setup>`.
+- `--category <income-or-expense-category-uuid-from-setup>`.
+
+Optional context fields:
+
+- `--description <text>`.
+- `--merchant-or-payee <text>`.
+- `--payment-method <text>`.
+- `--source-system-name <text>`.
+- `--source-record-reference <text>`.
+
+Use the income category UUID for income records and the expense category UUID for expense records. Transfer and adjustment remain out of scope.
+
+### Confirmation/Query Phase
+
+Minimum confirmation:
+
+- Review the inserted row summary printed by `scripts/local/manual-log.js`.
+- Query by date when issue scope includes query inspection.
+- Query by account when issue scope includes query inspection.
+- Query by category when issue scope includes query inspection.
+- Query by `movement_type` when issue scope includes query inspection.
+
+### Cleanup/Maintenance Phase
+
+- Temporary validation data should be cleaned up when this workflow is used for validation.
+- Persistent local operator references may remain if intentionally used for recurring local work.
+- Inactive account/category references must not be selected for new logging.
+- Duplicate active display-name ambiguity should stop and require a human decision.
+- Generated local Supabase metadata should not be committed.
+
+### Script Roles
+
+`scripts/local/setup-references.js` creates or identifies account/category references, prints UUIDs and display names, prints created versus already-existing status, prints same-owner and active-state confirmation, and prints command-ready references for `scripts/local/manual-log.js`.
+
+`scripts/local/setup-references.js` does not insert finance activities, replace `scripts/local/manual-log.js`, add aliases, use seed files, or touch production, staging, or remote Supabase.
+
+`scripts/local/manual-log.js` inserts one local `finance_activities` record, uses UUID-first account/category references, supports income and expense only, defaults currency to `TWD`, defaults `source_indicator` to `manual`, and reports an inserted row summary.
+
+`scripts/local/manual-log.js` does not create account/category references, support transfer or adjustment, or define App/API/Dashboard/Shortcut workflow.
+
+### Minimum Operator Inputs
+
+- Local owner user id.
+- Account display name.
+- Account type.
+- Income category display name.
+- Expense category display name.
+- Activity date.
+- Amount.
+- Movement type.
+- Account/category UUIDs.
+- Optional note/context fields.
+
+### Minimum Operator Outputs
+
+- Command-ready account UUID.
+- Command-ready income category UUID.
+- Command-ready expense category UUID.
+- Display names for human confirmation.
+- Inserted activity summary.
+- Query evidence when issue scope includes query inspection.
+- Cleanup or maintenance status when validation data is used.
+
+### What Remains Manual
+
+- Choosing account/category display names.
+- Choosing account type.
+- Deciding whether references are persistent or temporary.
+- Copying UUIDs into `scripts/local/manual-log.js` commands.
+- Reviewing inserted activity summaries.
+- Choosing cleanup behavior for validation data.
+- Deciding how to handle duplicate active display-name ambiguity.
+
+### Intentionally Deferred
+
+- Aliases.
+- Package wrapper or npm script.
+- Apple Shortcut.
+- App/API/Dashboard.
+- Production or staging workflow.
+- Remote Supabase.
+- Seed files.
+- Automated recurring logging.
+- Transfer or adjustment support.
+- Reporting objects.
+- AI or Projection.
+- Legacy Sheets/GAS.
 
 ## Verify Local Records
 

@@ -1110,9 +1110,172 @@ The validation confirmed:
 
 This validation remained local-only. It did not modify repo files or introduce code changes, scripts, reusable tooling, seed files, SQL migration changes, schema changes, Supabase config changes, production access, remote Supabase linking, `service_role` key usage, App/API/Dashboard/Shortcut work, reporting objects, AI, Projection, legacy Sheets/GAS work, versioning, or production-ready claims.
 
-### Recommended Next Issue After Helper Validation
+### Completed Next Issue After Helper Validation
 
-Define first practical local daily logging operator workflow.
+Issue #81 defined the first practical local daily logging operator workflow at the recommendation-only boundary level.
+
+## First Practical Local Daily Logging Operator Workflow
+
+Issue #81 completed recommendation-only boundary work for the first practical local daily logging operator workflow.
+
+No repo files, code, scripts, wrappers, aliases, seed files, migrations, schema changes, Supabase config changes, validation runs, package scripts, production access, remote Supabase linking, `service_role` key usage, App/API/Dashboard/Shortcut work, reporting objects, AI, Projection, legacy Sheets/GAS work, versioning, or production-ready claims were introduced during Issue #81.
+
+The workflow stays local-only and uses the existing validated helpers as separate operator steps.
+
+### Workflow Phases
+
+Setup phase:
+
+- Use `scripts/local/setup-references.js`.
+- Use an existing local owner context / `user_id`.
+- Provide account display name.
+- Provide account type.
+- Provide income category display name.
+- Provide expense category display name.
+- Optionally provide category grouping purpose.
+- Output account/category UUIDs and display names.
+- Output created versus already-existing status.
+- Output same-owner confirmation.
+- Output active-state confirmation.
+
+Daily logging phase:
+
+- Use `scripts/local/manual-log.js`.
+- Provide activity date.
+- Provide positive amount.
+- Provide movement type: income or expense.
+- Provide account UUID from the setup phase.
+- Provide income or expense category UUID from the setup phase.
+- Optionally provide description.
+- Optionally provide merchant or payee.
+- Optionally provide payment method.
+- Optionally provide source system name and source record reference.
+
+Confirmation/query phase:
+
+- Review the inserted row summary printed by `scripts/local/manual-log.js`.
+- Query by date when inspection is in scope.
+- Query by account when inspection is in scope.
+- Query by category when inspection is in scope.
+- Query by `movement_type` when inspection is in scope.
+
+Cleanup/maintenance phase:
+
+- Clean temporary validation data when the workflow is used for validation.
+- Allow persistent local operator references to remain only when intentionally used for recurring local work.
+- Do not select inactive account/category references for new logging.
+- Stop and require a human decision for duplicate active display-name ambiguity.
+- Do not commit generated local Supabase metadata.
+
+### Exact Role Of `scripts/local/setup-references.js`
+
+`scripts/local/setup-references.js`:
+
+- Creates or identifies account/category references.
+- Prints UUIDs and display names.
+- Prints created versus already-existing status.
+- Prints same-owner and active-state confirmation.
+- Prints command-ready references for `scripts/local/manual-log.js`.
+- Does not insert finance activities.
+- Does not replace `scripts/local/manual-log.js`.
+- Does not add aliases.
+- Does not use seed files.
+- Does not touch production, staging, or remote Supabase.
+
+### Exact Role Of `scripts/local/manual-log.js`
+
+`scripts/local/manual-log.js`:
+
+- Inserts one local `finance_activities` record.
+- Uses UUID-first account/category references.
+- Supports income and expense only.
+- Defaults currency to `TWD`.
+- Defaults `source_indicator` to `manual`.
+- Reports an inserted row summary.
+- Does not create account/category references.
+- Does not support transfer or adjustment.
+- Does not define App/API/Dashboard/Shortcut workflow.
+
+### Minimum Operator Inputs
+
+Minimum setup inputs:
+
+- Local owner user id.
+- Account display name.
+- Account type.
+- Income category display name.
+- Expense category display name.
+- Optional category grouping purpose.
+
+Minimum daily logging inputs:
+
+- Activity date.
+- Amount.
+- Movement type: income or expense.
+- Account/category UUIDs from setup.
+
+Optional note/context fields:
+
+- Description.
+- Merchant or payee.
+- Payment method.
+- Source system name.
+- Source record reference.
+
+### Minimum Operator Outputs
+
+- Command-ready account UUID.
+- Command-ready income category UUID.
+- Command-ready expense category UUID.
+- Display names for human confirmation.
+- Same-owner confirmation.
+- Active-state confirmation.
+- Inserted activity summary.
+- Query evidence when the issue scope includes query inspection.
+- Cleanup or maintenance status when validation data is used.
+
+### What Remains Manual
+
+- Choosing account/category display names.
+- Choosing account type.
+- Deciding whether references are persistent local operator references or temporary validation data.
+- Copying UUIDs from `scripts/local/setup-references.js` output into `scripts/local/manual-log.js` commands.
+- Reviewing inserted activity summaries.
+- Choosing cleanup behavior for validation data.
+- Deciding how to handle duplicate active display-name ambiguity.
+
+### Intentionally Deferred
+
+- Aliases.
+- Package wrapper or npm script.
+- Apple Shortcut.
+- App/API/Dashboard.
+- Production or staging workflow.
+- Remote Supabase.
+- Seed files or durable seed data.
+- Automated recurring logging.
+- Transfer or adjustment support.
+- Reporting objects, views, functions, triggers, or reporting tables.
+- AI or Projection behavior.
+- Legacy Sheets/GAS porting.
+
+### Validation Expectations Before Further UX Wrapper
+
+A future validation issue should confirm:
+
+- `scripts/local/setup-references.js` produces stable command-ready references.
+- `scripts/local/manual-log.js` accepts helper output UUIDs for one income and one expense.
+- Query evidence passes by date, account, category, and `movement_type`.
+- Invalid UUIDs stop safely.
+- Invalid account type stops safely.
+- Duplicate active display-name ambiguity stops safely.
+- Inactive refs are not selected for new logging.
+- Cross-owner refs are not selected for the active local owner context.
+- No production, remote Supabase, `service_role`, schema, migration, config, seed, App/API/Dashboard/Shortcut, reporting, AI, Projection, or legacy Sheets/GAS work occurs.
+
+### Recommended Next Issue
+
+Validate first practical local daily logging operator workflow.
 
 ## Remaining Open Questions
 
