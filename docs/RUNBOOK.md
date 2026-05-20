@@ -693,7 +693,70 @@ Acceptable remaining local-use risks:
 
 Future-phase risks require dedicated issues before work starts.
 
-Recommended next issue after this declaration: define post-backend local-complete transition boundary.
+Completed next issue after this declaration: post-backend local-complete transition boundary was defined before staging connection policy work.
+
+## Staging Supabase Environment Connection Rules
+
+Issue #108 defined staging Supabase environment connection preparation as policy/operator-boundary work only.
+
+Preparing the staging environment connection means defining what information an operator must have ready, how that information is handled, and what evidence is required before any hosted action occurs. It does not mean creating, connecting, modifying, validating, or applying migrations to a hosted Supabase project.
+
+This policy exists after backend local-complete declaration and after staging was selected as the first hosted backend validation boundary. Production remains untouched.
+
+### Allowed Repo Documentation Content
+
+Repo files may document only non-secret staging preparation content:
+
+- Non-secret setup steps.
+- Environment variable names or placeholders without values.
+- Required operator confirmations.
+- Stop conditions.
+- Validation checklist items.
+- Safe evidence expectations.
+
+### Values That Must Stay Out Of Repo And GitHub Text
+
+Secret values and access-granting values must stay outside repo files, issues, PRs, logs, and docs.
+
+Do not record:
+
+- Database connection strings.
+- API keys.
+- Access tokens.
+- Dashboard credentials.
+- Passwords.
+- Copied hosted dashboard credentials.
+- Private URLs that expose access.
+- Hosted project identifiers when they are sensitive in context.
+- Any value that grants access.
+
+### Stop Conditions
+
+Stop before any staging connection, verification, migration, or hosted action if any of these occur:
+
+- Required operator values are missing.
+- The staging target is unclear.
+- The target could be production.
+- Production ambiguity exists.
+- A request asks to expose or record credentials.
+- Privileged access is needed but not explicitly approved.
+- A destructive or irreversible action would be required.
+- Scope expands into migration application, Supabase config changes, production access, App/API/Dashboard/Apple Shortcut code, aliases, wrappers, package scripts, reusable tooling, seed files, reporting objects, AI, Projection, transfer or adjustment support, or legacy Sheets/GAS work.
+
+### Evidence Required Before Applying Existing Migrations To Staging
+
+Before a future issue may apply existing migrations to staging, safe evidence must show:
+
+- The staging target is clearly identified by the operator without recording secret or access-granting values.
+- Production exclusion is explicitly confirmed.
+- Credential handling rules are documented.
+- The connection method is bounded by a dedicated staging-only issue.
+- The safe evidence format is defined.
+- Rollback, reset, or cleanup expectations are known.
+
+### Next Staging Step
+
+The next smallest safe issue is to verify staging environment access boundary.
 
 ## Verify Local Records
 

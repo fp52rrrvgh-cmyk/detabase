@@ -170,6 +170,14 @@
 - Acceptable remaining risks for local personal use remain manual terminal operation, explicit UUID copying, operator-selected references, local Docker/Supabase dependency, manual cleanup discipline, no App/API/Dashboard/Apple Shortcut/wrapper/alias/package script, and income/expense-only logging.
 - Future-phase risks remain production/staging, remote Supabase, `service_role`, deployment controls, backup/restore, monitoring, App/API/Dashboard/Apple Shortcut boundaries, alias implementation, package wrappers, transfer/adjustment support, reporting objects, durable data retention/export, schema/migration/config changes, AI/Projection, legacy Sheets/GAS, versioning, and any production-ready claim.
 - The backend local-complete declaration introduced no code, scripts, aliases, wrappers, package scripts, new reusable tooling, migration, schema, config, seed, validation, staging, production, deployment, remote Supabase, `service_role`, Apple Shortcut, App/API/Dashboard, reporting, AI, Projection, legacy Sheets/GAS, versioning, or production-ready claim.
+- Issue #106 is closed as completed after defining the post-backend local-complete transition boundary.
+- Issue #107 is closed as completed after defining staging Supabase as the first hosted backend validation boundary.
+- Issue #108 is closed as completed after defining staging Supabase environment connection preparation as policy/operator-boundary work only.
+- Staging environment connection rules are documented after Issue #108 without creating or connecting a hosted Supabase project, applying migrations, modifying Supabase config, disclosing credentials, accessing production, or adding App/API/Dashboard/Apple Shortcut behavior.
+- Repo files may document non-secret setup steps, variable names, operator confirmations, stop conditions, and validation checklist items for staging connection preparation.
+- Secret values and access-granting values must stay outside repo files, issues, PRs, logs, and docs.
+- Stop conditions for staging connection preparation include missing operator values, unclear staging-vs-production target, production ambiguity, credential exposure requests, unapproved privileged access, destructive or irreversible actions, and scope expansion.
+- Before existing migrations can be applied to staging, evidence must show the staging target is clearly identified by the operator, production is excluded, credential handling rules are documented, the connection method is bounded, safe evidence format is defined, and rollback/reset expectations are known.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
