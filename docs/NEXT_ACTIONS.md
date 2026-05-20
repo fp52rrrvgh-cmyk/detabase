@@ -3,10 +3,10 @@
 ## Pending
 
 - Define the initial project goal.
-- Validate first practical local daily logging operator workflow.
+- Define mobile-friendly local daily logging path boundary.
 - Keep production migration application out of scope until explicitly approved.
-- Use only the existing local helpers, `scripts/local/setup-references.js` and `scripts/local/manual-log.js`, to validate the documented operator workflow.
-- Keep package wrappers, aliases, package scripts, seed files, API, Dashboard, App, Apple Shortcut, transfer or adjustment support, AI, Projection, reporting objects, staging, production, remote Supabase, schema changes, migration changes, Supabase config changes, and legacy Sheets/GAS work out of scope until explicitly approved.
+- Keep the next issue recommendation-only and focused on reducing operator friction for real personal use with the existing local helper boundary as context.
+- Do not jump directly to aliases, wrappers, package scripts, seed files, API, Dashboard, App, Apple Shortcut, transfer or adjustment support, AI, Projection, reporting objects, staging, production, remote Supabase, schema changes, migration changes, Supabase config changes, or legacy Sheets/GAS work without explicit approval.
 
 ## Not Started
 

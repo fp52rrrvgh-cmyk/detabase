@@ -109,6 +109,13 @@
 - The cleanup/maintenance phase separates temporary validation cleanup from intentionally persistent local operator references; inactive refs are not selected for new logging, duplicate active display-name ambiguity requires a human decision, and generated local Supabase metadata is not committed.
 - The workflow keeps `scripts/local/setup-references.js` and `scripts/local/manual-log.js` separate; it does not add aliases, wrappers, package scripts, seed files, App/API/Dashboard/Shortcut behavior, production or staging workflow, remote Supabase access, automated recurring logging, transfer or adjustment support, reporting objects, AI, Projection, legacy Sheets/GAS work, versioning, or production-ready claims.
 - No repo files, code, scripts, wrappers, aliases, seed files, migrations, schema changes, Supabase config changes, validation runs, package scripts, production access, remote Supabase linking, `service_role` key usage, App/API/Dashboard/Shortcut work, reporting objects, AI, Projection, legacy Sheets/GAS work, versioning, or production-ready claims were introduced during Issue #81 recommendation-only work.
+- Issue #84 is closed as completed after local-only validation of the first practical local daily logging operator workflow passed.
+- `node --check scripts/local/setup-references.js` and `node --check scripts/local/manual-log.js` passed during Issue #84 validation.
+- Setup phase validation passed: `scripts/local/setup-references.js` created command-ready account/category refs, produced an active account UUID and display name, produced active income and expense category UUIDs and display names, and confirmed same-owner and active-state status.
+- Daily logging phase validation passed: `scripts/local/manual-log.js` inserted one income activity and one expense activity using setup output UUIDs.
+- Confirmation/query phase validation passed by date, account, income category, expense category, and `movement_type`; same-owner join evidence passed.
+- Cleanup/maintenance phase validation passed: temporary activities, account, categories, and local auth owner were removed; generated `supabase/.temp/` and `supabase/.branches/` metadata were removed; final working tree was clean.
+- No repo files were modified during Issue #84 validation; no code, scripts, wrappers, aliases, package scripts, seed files, migrations, schema changes, Supabase config changes, production access, remote Supabase linking, `service_role` key usage, App/API/Dashboard/Shortcut work, reporting objects, AI, Projection, legacy Sheets/GAS work, versioning, or production-ready claims were introduced.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
