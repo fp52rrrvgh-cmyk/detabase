@@ -18,6 +18,7 @@ It is local-only operating documentation. It is not production deployment docume
 - Reusable local account/category setup helper validation has passed for create, reuse, dry-run, negative checks, manual-log compatibility, query evidence, and cleanup.
 - First practical local daily logging operator workflow boundary has been defined as setup, daily logging, confirmation/query, and cleanup/maintenance phases using existing local helpers only.
 - First practical local daily logging operator workflow validation has passed end-to-end using `scripts/local/setup-references.js` and `scripts/local/manual-log.js`.
+- Mobile-friendly local daily logging path boundary is documented as copy-ready operator command snippets using the existing local helpers.
 - Production remains untouched.
 
 ## Local Environment Prerequisites
@@ -363,6 +364,108 @@ Scope confirmation:
 
 - No repo files were modified during validation.
 - No code, scripts, wrappers, aliases, package scripts, seed files, migrations, schema changes, Supabase config changes, production access, remote Supabase linking, `service_role` key usage, App/API/Dashboard/Shortcut work, reporting objects, AI, Projection, legacy Sheets/GAS work, versioning, or production-ready claim was introduced.
+
+## Mobile-Friendly Local Daily Logging Path Boundary
+
+The first mobile-friendly local daily logging path is documented copy-ready operator command snippets.
+
+This path reduces repeated typing while preserving the existing local-only workflow. `scripts/local/setup-references.js` and `scripts/local/manual-log.js` remain separate. UUID copying from setup output into manual logging commands remains explicit for now.
+
+This path does not add aliases, wrappers, package scripts, Apple Shortcut implementation, App/API/Dashboard behavior, production or staging workflow, remote Supabase access, `service_role` usage, seed files, schema changes, migration changes, Supabase config changes, transfer or adjustment support, reporting objects, AI/Projection behavior, or legacy Sheets/GAS work.
+
+### Setup Command Template
+
+```powershell
+node scripts/local/setup-references.js --user <local-owner-user-id> --account-name "<account-display-name>" --account-type <cash|bank|credit_card|stored_value|other> --income-category-name "<income-category-display-name>" --expense-category-name "<expense-category-display-name>" --income-grouping-purpose "income" --expense-grouping-purpose "expense"
+```
+
+Copy the printed account UUID, income category UUID, and expense category UUID into the daily logging commands.
+
+### Income Command Template
+
+```powershell
+node scripts/local/manual-log.js --date <YYYY-MM-DD> --amount <positive-number> --type income --account <account-uuid-from-setup> --category <income-category-uuid-from-setup> --description "<optional-description>" --merchant-or-payee "<optional-merchant-or-payee>" --payment-method "<optional-payment-method>"
+```
+
+### Expense Command Template
+
+```powershell
+node scripts/local/manual-log.js --date <YYYY-MM-DD> --amount <positive-number> --type expense --account <account-uuid-from-setup> --category <expense-category-uuid-from-setup> --description "<optional-description>" --merchant-or-payee "<optional-merchant-or-payee>" --payment-method "<optional-payment-method>"
+```
+
+### Confirmation/Query Command Shape
+
+When inspection is in scope, confirm local records by date, account, category, and `movement_type`.
+
+```powershell
+@'
+select
+  activity_date,
+  account_id,
+  category_id,
+  movement_type,
+  amount,
+  currency,
+  source_indicator
+from public.finance_activities
+where activity_date = '<YYYY-MM-DD>'
+  and account_id = '<account-uuid>'
+  and category_id = '<category-uuid>'
+  and movement_type = '<income|expense>'
+order by created_at;
+'@ | docker exec -i supabase_db_detabase psql --username postgres --dbname postgres --quiet --tuples-only --no-align
+```
+
+### Cleanup/Maintenance Reminder
+
+- Temporary validation records should be cleaned up when snippets are used for validation.
+- Persistent local operator references may remain only when intentionally used for recurring local work.
+- Inactive references must not be selected for new logging.
+- Duplicate active display-name ambiguity should stop and require a human decision.
+- Generated local Supabase metadata should not be committed.
+
+### Minimum Mobile/Operator Inputs
+
+- Date.
+- Amount.
+- Movement type: income or expense.
+- Account/category references from setup.
+- Optional description.
+- Optional merchant or payee.
+- Optional payment method.
+
+### Minimum Mobile/Operator Outputs
+
+- Command-ready references.
+- Inserted row summary.
+- Query/confirmation result when inspection is in scope.
+- Cleanup or maintenance status when validation data is used.
+
+### What Can Remain Manual
+
+- Selecting account/category names.
+- Deciding whether references are persistent or temporary.
+- Copying UUIDs.
+- Choosing description, merchant/payee, and payment method.
+- Deciding cleanup behavior.
+- Checking inserted row summary.
+
+### Deferred Items
+
+- Aliases.
+- Package scripts.
+- Wrappers.
+- Apple Shortcut implementation.
+- App/API/Dashboard.
+- Production or staging workflow.
+- Remote Supabase.
+- `service_role` usage.
+- Seed files.
+- Schema, migration, or Supabase config changes.
+- Transfer or adjustment support.
+- Reporting objects.
+- AI or Projection behavior.
+- Legacy Sheets/GAS work.
 
 ## Verify Local Records
 

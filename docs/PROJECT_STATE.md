@@ -116,6 +116,12 @@
 - Confirmation/query phase validation passed by date, account, income category, expense category, and `movement_type`; same-owner join evidence passed.
 - Cleanup/maintenance phase validation passed: temporary activities, account, categories, and local auth owner were removed; generated `supabase/.temp/` and `supabase/.branches/` metadata were removed; final working tree was clean.
 - No repo files were modified during Issue #84 validation; no code, scripts, wrappers, aliases, package scripts, seed files, migrations, schema changes, Supabase config changes, production access, remote Supabase linking, `service_role` key usage, App/API/Dashboard/Shortcut work, reporting objects, AI, Projection, legacy Sheets/GAS work, versioning, or production-ready claims were introduced.
+- Issue #87 is closed as completed after recommendation-only boundary work for the mobile-friendly local daily logging path.
+- The recommended mobile-friendly path boundary is documented copy-ready operator command snippets that reduce typing while keeping the existing local helpers separate.
+- The first safe step is to document setup, income, expense, confirmation/query, and cleanup/maintenance command shapes using `scripts/local/setup-references.js` and `scripts/local/manual-log.js`.
+- UUID copying remains explicit for now; display names remain human confirmation only.
+- Aliases, package scripts, wrappers, Apple Shortcut implementation, App/API/Dashboard work, production or staging workflow, remote Supabase, `service_role`, seed files, schema/migration/config changes, transfer or adjustment support, reporting objects, AI/Projection, and legacy Sheets/GAS remain deferred.
+- No repo files, code, scripts, wrappers, aliases, package scripts, seed files, migrations, schema changes, Supabase config changes, validation runs, Apple Shortcut work, App/API/Dashboard work, production workflow, staging workflow, remote Supabase access, `service_role` key usage, reporting objects, AI, Projection, legacy Sheets/GAS work, versioning, or production-ready claims were introduced during Issue #87 recommendation-only work.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
