@@ -1,5 +1,3 @@
-import { createClient } from "npm:@supabase/supabase-js@2";
-
 const FUNCTION_NAME = "log-finance-activity";
 const REQUIRED_ENVIRONMENT_LABEL = "staging";
 const DEFAULT_CURRENCY = "TWD";
@@ -25,10 +23,10 @@ const ALLOWED_FIELDS = new Set([
 
 type JsonObject = Record<string, unknown>;
 type MovementType = "income" | "expense";
-type SupabaseClient = ReturnType<typeof createClient>;
-type CallerClient = {
+type CallerContext = {
   accessToken: string;
-  supabase: SupabaseClient;
+  supabaseUrl: string;
+  publishableKey: string;
 };
 
 type ValidatedInput = {
@@ -137,7 +135,10 @@ function validateDate(value: unknown): string {
   }
 
   const parsed = new Date(`${value}T00:00:00.000Z`);
-  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value) {
+  if (
+    Number.isNaN(parsed.getTime()) ||
+    parsed.toISOString().slice(0, 10) !== value
+  ) {
     throw new Error("activity_date must be a real calendar date");
   }
 
@@ -153,12 +154,11 @@ function validateMovementType(value: unknown): MovementType {
 }
 
 function validateAmount(value: unknown): string {
-  const raw =
-    typeof value === "number"
-      ? String(value)
-      : typeof value === "string"
-        ? value.trim()
-        : "";
+  const raw = typeof value === "number"
+    ? String(value)
+    : typeof value === "string"
+    ? value.trim()
+    : "";
 
   if (!/^(?:0|[1-9]\d*)(?:\.\d+)?$/.test(raw)) {
     throw new Error("amount must be a positive decimal number");
@@ -257,6 +257,10 @@ function getPublishableKey(): string | null {
     null;
 }
 
+function normalizeSupabaseUrl(value: string): string {
+  return value.replace(/\/+$/, "");
+}
+
 function enforceStagingRuntime(): Response | null {
   const environmentLabel = Deno.env.get("DETABASE_ENVIRONMENT");
 
@@ -294,8 +298,8 @@ function extractBearerToken(req: Request): string | Response {
   return token;
 }
 
-function createCallerClient(req: Request): CallerClient | Response {
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+function createCallerContext(req: Request): CallerContext | Response {
+  const rawSupabaseUrl = Deno.env.get("SUPABASE_URL");
   const publishableKey = getPublishableKey();
   const accessToken = extractBearerToken(req);
 
@@ -303,7 +307,7 @@ function createCallerClient(req: Request): CallerClient | Response {
     return accessToken;
   }
 
-  if (!supabaseUrl || !publishableKey) {
+  if (!rawSupabaseUrl || !publishableKey) {
     return safeFailure(
       500,
       "runtime_not_configured",
@@ -311,31 +315,47 @@ function createCallerClient(req: Request): CallerClient | Response {
     );
   }
 
-  const authorization = `Bearer ${accessToken}`;
-  const supabase = createClient(supabaseUrl, publishableKey, {
-    accessToken: async () => accessToken,
-    auth: {
-      autoRefreshToken: false,
-      detectSessionInUrl: false,
-      persistSession: false,
-    },
-    global: {
-      headers: {
-        Authorization: authorization,
-      },
-    },
-  });
-
   return {
     accessToken,
-    supabase,
+    supabaseUrl: normalizeSupabaseUrl(rawSupabaseUrl),
+    publishableKey,
   };
 }
 
-async function resolveUserId(caller: CallerClient): Promise<string | Response> {
-  const { data, error } = await caller.supabase.auth.getUser(caller.accessToken);
+function callerHeaders(caller: CallerContext): Record<string, string> {
+  return {
+    apikey: caller.publishableKey,
+    Authorization: `Bearer ${caller.accessToken}`,
+  };
+}
 
-  if (error || !data.user?.id) {
+async function readJson(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+function restUrl(
+  caller: CallerContext,
+  table: string,
+  select: string,
+): URL {
+  const url = new URL(`${caller.supabaseUrl}/rest/v1/${table}`);
+  url.searchParams.set("select", select);
+  return url;
+}
+
+async function resolveUserId(
+  caller: CallerContext,
+): Promise<string | Response> {
+  const response = await fetch(`${caller.supabaseUrl}/auth/v1/user`, {
+    headers: callerHeaders(caller),
+  });
+  const data = await readJson(response);
+
+  if (!response.ok || !isJsonObject(data) || typeof data.id !== "string") {
     return safeFailure(
       401,
       "unauthorized",
@@ -343,23 +363,30 @@ async function resolveUserId(caller: CallerClient): Promise<string | Response> {
     );
   }
 
-  return data.user.id;
+  return data.id;
 }
 
 async function findActiveAccount(
-  caller: CallerClient,
+  caller: CallerContext,
   userId: string,
   accountId: string,
 ): Promise<FinanceAccount | Response> {
-  const { data, error } = await caller.supabase
-    .from("finance_accounts")
-    .select("id,user_id,display_name,is_active")
-    .eq("id", accountId)
-    .eq("user_id", userId)
-    .eq("is_active", true)
-    .maybeSingle();
+  const url = restUrl(
+    caller,
+    "finance_accounts",
+    "id,user_id,display_name,is_active",
+  );
+  url.searchParams.set("id", `eq.${accountId}`);
+  url.searchParams.set("user_id", `eq.${userId}`);
+  url.searchParams.set("is_active", "eq.true");
+  url.searchParams.set("limit", "1");
 
-  if (error) {
+  const response = await fetch(url, {
+    headers: callerHeaders(caller),
+  });
+  const data = await readJson(response);
+
+  if (!response.ok || !Array.isArray(data)) {
     return safeFailure(
       500,
       "reference_lookup_failed",
@@ -367,7 +394,7 @@ async function findActiveAccount(
     );
   }
 
-  if (!data) {
+  if (data.length === 0) {
     return safeFailure(
       422,
       "invalid_account_reference",
@@ -375,23 +402,45 @@ async function findActiveAccount(
     );
   }
 
-  return data as FinanceAccount;
+  const account = data[0];
+  if (
+    !isJsonObject(account) ||
+    typeof account.id !== "string" ||
+    typeof account.user_id !== "string" ||
+    typeof account.display_name !== "string" ||
+    typeof account.is_active !== "boolean"
+  ) {
+    return safeFailure(
+      500,
+      "reference_lookup_failed",
+      "Account reference could not be checked safely.",
+    );
+  }
+
+  return account as FinanceAccount;
 }
 
 async function findActiveCategory(
-  caller: CallerClient,
+  caller: CallerContext,
   userId: string,
   categoryId: string,
 ): Promise<FinanceCategory | Response> {
-  const { data, error } = await caller.supabase
-    .from("finance_categories")
-    .select("id,user_id,display_name,grouping_purpose,is_active")
-    .eq("id", categoryId)
-    .eq("user_id", userId)
-    .eq("is_active", true)
-    .maybeSingle();
+  const url = restUrl(
+    caller,
+    "finance_categories",
+    "id,user_id,display_name,grouping_purpose,is_active",
+  );
+  url.searchParams.set("id", `eq.${categoryId}`);
+  url.searchParams.set("user_id", `eq.${userId}`);
+  url.searchParams.set("is_active", "eq.true");
+  url.searchParams.set("limit", "1");
 
-  if (error) {
+  const response = await fetch(url, {
+    headers: callerHeaders(caller),
+  });
+  const data = await readJson(response);
+
+  if (!response.ok || !Array.isArray(data)) {
     return safeFailure(
       500,
       "reference_lookup_failed",
@@ -399,7 +448,7 @@ async function findActiveCategory(
     );
   }
 
-  if (!data) {
+  if (data.length === 0) {
     return safeFailure(
       422,
       "invalid_category_reference",
@@ -407,7 +456,26 @@ async function findActiveCategory(
     );
   }
 
-  return data as FinanceCategory;
+  const category = data[0];
+  if (
+    !isJsonObject(category) ||
+    typeof category.id !== "string" ||
+    typeof category.user_id !== "string" ||
+    typeof category.display_name !== "string" ||
+    (
+      typeof category.grouping_purpose !== "string" &&
+      category.grouping_purpose !== null
+    ) ||
+    typeof category.is_active !== "boolean"
+  ) {
+    return safeFailure(
+      500,
+      "reference_lookup_failed",
+      "Category reference could not be checked safely.",
+    );
+  }
+
+  return category as FinanceCategory;
 }
 
 function categoryMatchesMovement(
@@ -418,13 +486,33 @@ function categoryMatchesMovement(
 }
 
 async function insertActivity(
-  caller: CallerClient,
+  caller: CallerContext,
   userId: string,
   input: ValidatedInput,
 ): Promise<JsonObject | Response> {
-  const { data, error } = await caller.supabase
-    .from("finance_activities")
-    .insert({
+  const url = restUrl(
+    caller,
+    "finance_activities",
+    [
+      "id",
+      "activity_date",
+      "amount",
+      "currency",
+      "movement_type",
+      "account_id",
+      "category_id",
+      "source_indicator",
+    ].join(","),
+  );
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      ...callerHeaders(caller),
+      "content-type": "application/json",
+      prefer: "return=representation",
+    },
+    body: JSON.stringify({
       user_id: userId,
       activity_date: input.activityDate,
       amount: input.amount,
@@ -438,22 +526,11 @@ async function insertActivity(
       source_record_reference: input.sourceRecordReference,
       merchant_or_payee: input.merchantOrPayee,
       payment_method: input.paymentMethod,
-    })
-    .select(
-      [
-        "id",
-        "activity_date",
-        "amount",
-        "currency",
-        "movement_type",
-        "account_id",
-        "category_id",
-        "source_indicator",
-      ].join(","),
-    )
-    .single();
+    }),
+  });
+  const data = await readJson(response);
 
-  if (error || !data) {
+  if (!response.ok || !Array.isArray(data) || data.length !== 1) {
     return safeFailure(
       500,
       "insert_failed",
@@ -461,7 +538,16 @@ async function insertActivity(
     );
   }
 
-  return data as JsonObject;
+  const inserted = data[0];
+  if (!isJsonObject(inserted)) {
+    return safeFailure(
+      500,
+      "insert_failed",
+      "Finance activity could not be inserted safely.",
+    );
+  }
+
+  return inserted;
 }
 
 export async function handler(req: Request): Promise<Response> {
@@ -489,11 +575,19 @@ export async function handler(req: Request): Promise<Response> {
     try {
       body = await req.json();
     } catch {
-      return safeFailure(400, "invalid_json", "Request body must be valid JSON.");
+      return safeFailure(
+        400,
+        "invalid_json",
+        "Request body must be valid JSON.",
+      );
     }
 
     if (!isJsonObject(body)) {
-      return safeFailure(400, "invalid_request", "Request body must be a JSON object.");
+      return safeFailure(
+        400,
+        "invalid_request",
+        "Request body must be a JSON object.",
+      );
     }
 
     let input: ValidatedInput;
@@ -516,7 +610,7 @@ export async function handler(req: Request): Promise<Response> {
       return stagingRuntimeFailure;
     }
 
-    const caller = createCallerClient(req);
+    const caller = createCallerContext(req);
     if (caller instanceof Response) {
       return caller;
     }
