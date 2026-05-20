@@ -28,6 +28,22 @@ type RuntimeConfig = {
   categoryId: string;
 };
 
+type RuntimeStatusItem = {
+  name: string;
+  configured: boolean;
+};
+
+const RUNTIME_ENVIRONMENT_FIELDS: Array<{
+  name: string;
+  key: keyof RuntimeConfig;
+}> = [
+  { name: "NEXT_PUBLIC_SUPABASE_URL", key: "supabaseUrl" },
+  { name: "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", key: "publishableKey" },
+  { name: "NEXT_PUBLIC_FINANCE_FUNCTION_URL", key: "functionUrl" },
+  { name: "NEXT_PUBLIC_DEFAULT_EXPENSE_ACCOUNT_ID", key: "accountId" },
+  { name: "NEXT_PUBLIC_DEFAULT_EXPENSE_CATEGORY_ID", key: "categoryId" },
+];
+
 const REQUEST_FAILURE_MESSAGE =
   "Expense was not saved. Network or runtime request failed; inspect staging setup locally.";
 
@@ -47,6 +63,13 @@ function currentLocalDate(): string {
 
 function hasRuntimeConfig(config: RuntimeConfig): boolean {
   return Object.values(config).every((value) => value.trim().length > 0);
+}
+
+function runtimeEnvironmentStatus(config: RuntimeConfig): RuntimeStatusItem[] {
+  return RUNTIME_ENVIRONMENT_FIELDS.map(({ name, key }) => ({
+    name,
+    configured: config[key].trim().length > 0,
+  }));
 }
 
 function isPositiveAmount(value: string): boolean {
@@ -77,6 +100,21 @@ function extractSafeErrorCode(body: unknown): string | null {
   return code;
 }
 
+function safeFailureMessage(code: string | null): string {
+  switch (code) {
+    case "invalid_account_reference":
+      return "Expense was not saved. Check NEXT_PUBLIC_DEFAULT_EXPENSE_ACCOUNT_ID in apps/web/.env.local against an active same-owner staging account.";
+    case "invalid_category_reference":
+      return "Expense was not saved. Check NEXT_PUBLIC_DEFAULT_EXPENSE_CATEGORY_ID in apps/web/.env.local against an active same-owner staging expense category.";
+    case "category_movement_mismatch":
+      return "Expense was not saved. Check that NEXT_PUBLIC_DEFAULT_EXPENSE_CATEGORY_ID points to an active same-owner staging expense category.";
+    default:
+      return code
+        ? `Expense was not saved. Safe error: ${code}. Inspect staging setup locally.`
+        : "Expense was not saved. Inspect staging separately if needed.";
+  }
+}
+
 async function readSafeJson(response: Response): Promise<unknown> {
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) {
@@ -105,6 +143,7 @@ export default function ExpenseEntryPage() {
   });
 
   const configReady = hasRuntimeConfig(runtimeConfig);
+  const runtimeStatusItems = runtimeEnvironmentStatus(runtimeConfig);
   const supabase = useMemo(() => {
     if (!runtimeConfig.supabaseUrl || !runtimeConfig.publishableKey) {
       return null;
@@ -331,9 +370,7 @@ export default function ExpenseEntryPage() {
       const code = extractSafeErrorCode(responseBody);
       setSubmitState({
         status: "failure",
-        message: code
-          ? `Expense was not saved. Safe error: ${code}.`
-          : "Expense was not saved. Inspect staging separately if needed.",
+        message: safeFailureMessage(code),
       });
       return;
     }
@@ -359,6 +396,11 @@ export default function ExpenseEntryPage() {
             Record one TWD expense through the staging ingestion endpoint.
           </p>
         </div>
+
+        <RuntimeReadiness
+          configured={configReady}
+          items={runtimeStatusItems}
+        />
 
         <section className="auth-section" aria-labelledby="auth-title">
           <div className="section-heading">
@@ -454,12 +496,16 @@ export default function ExpenseEntryPage() {
           <button
             className="submit-button"
             disabled={
-              submitState.status === "loading" || authStatus !== "signed_in"
+              submitState.status === "loading" ||
+              authStatus !== "signed_in" ||
+              !configReady
             }
             type="submit"
           >
             {submitState.status === "loading"
               ? "Saving..."
+              : !configReady
+              ? "Complete runtime setup"
               : authStatus === "signed_in"
               ? "Save expense"
               : "Sign in to save"}
@@ -469,6 +515,48 @@ export default function ExpenseEntryPage() {
         <StatusMessage state={submitState} configReady={configReady} />
       </section>
     </main>
+  );
+}
+
+function RuntimeReadiness({
+  configured,
+  items,
+}: {
+  configured: boolean;
+  items: RuntimeStatusItem[];
+}) {
+  return (
+    <section className="runtime-section" aria-labelledby="runtime-title">
+      <div className="section-heading">
+        <h2 id="runtime-title">Runtime readiness</h2>
+        <p
+          className={`session-status ${
+            configured ? "session-ready" : "session-warning"
+          }`}
+        >
+          {configured ? "Configured" : "Missing"}
+        </p>
+      </div>
+
+      <p className="runtime-note">
+        Values stay local in apps/web/.env.local and are not displayed here.
+      </p>
+
+      <ul className="runtime-list" aria-label="Runtime environment status">
+        {items.map((item) => (
+          <li key={item.name}>
+            <code>{item.name}</code>
+            <span
+              className={`runtime-state ${
+                item.configured ? "runtime-ready" : "runtime-missing"
+              }`}
+            >
+              {item.configured ? "Configured" : "Missing"}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -517,7 +605,7 @@ function StatusMessage({
   if (!configReady) {
     return (
       <p className="status-message status-warning" role="status">
-        Runtime configuration is incomplete. Add the approved public env names
+        Runtime configuration is incomplete. Review the missing env names above
         before submitting.
       </p>
     );
