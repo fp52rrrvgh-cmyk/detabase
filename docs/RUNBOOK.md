@@ -40,6 +40,12 @@ It is not production deployment documentation and does not define Dashboard, App
 - Safe guidance covers `invalid_account_reference`, `invalid_category_reference`, and `category_movement_mismatch`.
 - The existing expense request payload shape remains unchanged.
 - Browser validation passed with safe evidence after PR #157.
+- PR #162 merged the WebApp post-submit ready state and repeat-entry flow implementation after Issue #161.
+- Success messages now include a ready-for-next-expense cue while keeping the safe summary limited to date, TWD amount, and description.
+- Amount and description reset after successful submit.
+- Stale success and failure messages clear when the next entry starts.
+- First-submit and second-submit browser validation passed with safe evidence.
+- The WebApp remains expense-only and still does not send `source_indicator`.
 - Production remains untouched.
 
 ## Local Environment Prerequisites
@@ -771,7 +777,7 @@ Before a future issue may apply existing migrations to staging, safe evidence mu
 
 ### Next Safe Step
 
-The next smallest safe issue after WebApp runtime readiness and safe reference guidance is to define the next bounded WebApp step.
+The next smallest safe issue after WebApp repeat-entry flow is to define the next bounded WebApp step.
 
 ## Minimal Mobile Ingestion API Boundary
 
@@ -962,9 +968,44 @@ Browser validation passed with safe evidence: runtime readiness was shown, env n
 
 This remains staging-only WebApp behavior. Production remains excluded, and this is not a production-ready claim. PR #157 introduced no schema or migration change, Supabase config change, Dashboard/reporting UI, AI/Projection, transfer or adjustment support, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
 
+### Post-Submit Ready State And Repeat-Entry Flow
+
+PR #162 merged after Issue #161 completed WebApp post-submit ready state and repeat-entry flow implementation.
+
+After a successful expense save:
+
+- The success message keeps the safe summary limited to date, TWD amount, and description.
+- The success message indicates the form is ready for the next expense.
+- Amount resets.
+- Description resets.
+
+When the operator starts entering the next amount or description, stale success or failure messages clear.
+
+First-submit and second-submit browser validation passed with safe evidence:
+
+- First submit succeeded.
+- Amount and description reset after success.
+- Next-entry input cleared the stale message.
+- Second submit succeeded without changing runtime configuration.
+
+The existing expense request payload shape remains unchanged:
+
+- `activity_date`.
+- `movement_type = expense`.
+- Positive amount.
+- `currency = TWD`.
+- Configured account/category UUID refs.
+- Description.
+
+The WebApp remains expense-only and still does not send `source_indicator`.
+
+`apps/web/.env.local` remains local-only and uncommitted.
+
+This remains staging-only WebApp behavior. Production remains excluded, and this is not a production-ready claim. PR #162 introduced no schema or migration change, Supabase config change, Dashboard/reporting UI, AI/Projection, transfer/adjustment or income support, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
+
 Next safe issue:
 
-Define the next bounded WebApp step after runtime readiness and safe reference guidance.
+Define the next bounded WebApp step after repeat-entry flow.
 
 ## Verify Local Records
 
