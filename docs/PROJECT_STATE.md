@@ -189,6 +189,14 @@
 - The boundary requires one income or expense request to use UUID-first account/category references, minimum validation for date, income/expense movement type, positive amount, active same-owner account/category references, and safe success/failure responses without credentials, SQL internals, connection details, or access-granting values.
 - The boundary defines authentication and authorization at policy level only; a future Edge Function must not require Apple Shortcut to hold broad database credentials, must resolve caller/operator identity through a bounded mechanism before writing, must not expose `service_role` to the client, and keeps production out of scope.
 - The minimal mobile ingestion API boundary introduces no Edge Function implementation, App/API/Dashboard/Apple Shortcut code, deployment, production access, Supabase config change, schema or migration change, seed data, durable personal data, credential disclosure, aliases, wrappers, package scripts, reusable tooling, reporting objects, AI, Projection, transfer or adjustment support, legacy Sheets/GAS work, production-ready claim, or versioning.
+- PR #139 merged the minimal Next.js App Router TypeScript WebApp under `apps/web`.
+- Issue #138 is closed as completed after the Next.js WebApp MVP expense-entry flow implementation.
+- The WebApp MVP includes one mobile-first expense-entry page with amount input, description input, submit button, loading state, safe success message, and safe failure message.
+- The WebApp MVP reads runtime environment names only, without values: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_FINANCE_FUNCTION_URL`, `NEXT_PUBLIC_DEFAULT_EXPENSE_ACCOUNT_ID`, and `NEXT_PUBLIC_DEFAULT_EXPENSE_CATEGORY_ID`.
+- The WebApp MVP defaults `activity_date` to the current local date, sends `movement_type = expense`, sends `currency = TWD`, uses account/category references from the approved env names, and does not send `source_indicator`.
+- PR #139 validation passed `npm install`, `npm run build`, and `git diff --cached --check`.
+- Hosted staging success request validation was not run for PR #139 because it requires private runtime/session values.
+- PR #139 introduced no production access, schema change, migration change, Supabase config change, Dashboard/reporting UI, AI/Projection, transfer/adjustment flow, aliases, legacy Sheets/GAS work, sensitive value disclosure, versioning, or production-ready claim.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
@@ -196,9 +204,9 @@
 - No repo files, code, scripts, reusable tooling, SQL migrations, schema, Supabase config, seed files, reporting objects, App, API, Dashboard, Apple Shortcut, production database, `service_role` key, remote Supabase linking, AI, Projection, legacy Sheets/GAS, versioning, or production-ready claims were introduced during Issue #70 validation.
 - No repo files, SQL migrations, schema, Supabase config, seed files, reporting objects, App, API, Dashboard, Apple Shortcut, production database, `service_role` key, remote Supabase linking, AI, Projection, or legacy Sheets/GAS were changed during Issue #64 validation.
 - No repo files, SQL migrations, schema, Supabase config, `package.json`, seed files, reporting objects, App, API, Dashboard, Apple Shortcut, production database, `service_role` key, remote Supabase linking, AI, Projection, or legacy Sheets/GAS were changed during Issue #55 validation.
-- No application implementation is defined here.
+- Application implementation is currently limited to the approved minimal Next.js WebApp MVP under `apps/web`.
 - No deployment configuration is defined here.
-- No App, API, Dashboard, Apple Shortcut, or legacy Sheets/GAS implementation exists.
+- No Dashboard, Apple Shortcut, or legacy Sheets/GAS implementation exists.
 
 ## Known Scope
 
@@ -207,7 +215,7 @@
 
 ## Unknowns
 
-- Application architecture.
+- WebApp runtime configuration and staging validation boundary.
 - Data model.
 - Deployment target.
 - Dashboard requirements.

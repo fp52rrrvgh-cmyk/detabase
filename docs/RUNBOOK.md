@@ -2,9 +2,9 @@
 
 ## Purpose
 
-This runbook records the current validated local tooling path for the Finance MVP.
+This runbook records the current validated local tooling path and the approved staging-oriented WebApp boundary for the Finance MVP.
 
-It is local-only operating documentation. It is not production deployment documentation and does not define App, API, Dashboard, Apple Shortcut, AI, Projection, reporting, seed, or production workflow behavior.
+It is not production deployment documentation and does not define Dashboard, Apple Shortcut, AI, Projection, reporting, seed, or production workflow behavior.
 
 ## Current Status
 
@@ -27,6 +27,10 @@ It is local-only operating documentation. It is not production deployment docume
 - Backend local-complete status is declared for the local-only Finance backend/operator baseline.
 - Hosted backend baseline validation has passed on `detabase-staging`.
 - Minimal mobile ingestion API boundary is documented after Issue #115 as docs-only API boundary documentation.
+- PR #139 merged the minimal Next.js App Router TypeScript WebApp under `apps/web`.
+- Issue #138 is completed after implementing one mobile-first expense-entry page for the WebApp MVP.
+- PR #139 validation passed `npm install`, `npm run build`, and `git diff --cached --check`.
+- Hosted staging success request validation was not run for PR #139 because it requires private runtime/session values.
 - Production remains untouched.
 
 ## Local Environment Prerequisites
@@ -43,7 +47,7 @@ It is local-only operating documentation. It is not production deployment docume
 - No production database access.
 - No `service_role` key usage.
 - No remote Supabase linking.
-- No App, API, Dashboard, or Apple Shortcut work.
+- No broader App, Dashboard, or Apple Shortcut work beyond the approved minimal `apps/web` WebApp MVP.
 - No seed files.
 - No reporting objects, views, functions, triggers, or reporting tables.
 - No AI or Projection behavior.
@@ -758,7 +762,7 @@ Before a future issue may apply existing migrations to staging, safe evidence mu
 
 ### Next Safe Step
 
-The next smallest safe issue after the documented minimal mobile ingestion API boundary is to define minimal Edge Function implementation boundary.
+The next smallest safe issue after the Next.js WebApp MVP implementation docs sync is to define the Next.js WebApp runtime configuration and staging validation boundary.
 
 ## Minimal Mobile Ingestion API Boundary
 
@@ -851,6 +855,56 @@ Responses must not expose credentials, SQL internals, connection details, privat
 - Legacy Sheets/GAS work.
 - Version labels.
 - Production-ready claims.
+
+## Next.js WebApp MVP Expense Entry
+
+PR #139 merged the minimal Next.js App Router TypeScript WebApp under `apps/web`.
+
+Issue #138 completed with one mobile-first expense-entry page. The page includes amount input, description input, submit button, loading state, safe success message, and safe failure message.
+
+The WebApp sends one expense-shaped request to the existing `log-finance-activity` Edge Function boundary when runtime configuration and a browser session are available.
+
+Request behavior:
+
+- `activity_date` defaults to the current local date in `YYYY-MM-DD`.
+- `movement_type` is `expense`.
+- `currency` is `TWD`.
+- `amount` and `description` come from the operator inputs.
+- Account and category references come from approved runtime env names.
+- `source_indicator` is not sent because the current Edge Function allowed-field list does not include it.
+
+Runtime environment names are documented without values:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_FINANCE_FUNCTION_URL`
+- `NEXT_PUBLIC_DEFAULT_EXPENSE_ACCOUNT_ID`
+- `NEXT_PUBLIC_DEFAULT_EXPENSE_CATEGORY_ID`
+
+Validation recorded during PR #139:
+
+- `npm install` passed inside `apps/web`.
+- `npm run build` passed inside `apps/web`.
+- `git diff --cached --check` passed.
+
+Hosted staging success request validation was not run because it requires private runtime/session values.
+
+Scope confirmation:
+
+- No production access.
+- No schema, migration, or Supabase config change.
+- No Dashboard/reporting UI.
+- No AI/Projection.
+- No transfer or adjustment support.
+- No aliases.
+- No legacy Sheets/GAS work.
+- No sensitive value disclosure.
+- No versioning.
+- No production-ready claim.
+
+Next safe issue:
+
+Define Next.js WebApp runtime configuration and staging validation boundary.
 
 ## Verify Local Records
 
