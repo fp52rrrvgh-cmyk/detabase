@@ -250,6 +250,13 @@
 - The review panel displays TWD activity amounts and totals without decimal places.
 - The existing WebApp expense submit payload shape remains unchanged, the WebApp remains expense-only for input, and it still does not send `source_indicator`.
 - Issue #181 introduces no schema change, migration change, Supabase config change, reporting objects, write-capable Dashboard behavior, production access, deployment, historical data cleanup, sensitive value disclosure, versioning, or production-ready claim.
+- Issue #187 adds the first `finance_activity_corrections` migration for audit-preserving expense activity void correction events.
+- The correction model keeps original `finance_activities` rows traceable; it does not hard delete rows or silently overwrite original activity payload fields.
+- `finance_activity_corrections.correction_type` is initially limited to `void`, `reason` is required and non-empty after trimming, referenced activities must exist, and referenced activities must be same-owner expense activities.
+- Duplicate effective void events for one activity are rejected.
+- RLS is enabled on `finance_activity_corrections`; only an owner-scoped read policy is added, and broad direct client writes are not enabled by default.
+- Local validation for Issue #187 passed: local migration replay, expected table/fields, RLS enabled, owner-scoped read behavior, duplicate void rejection, empty reason rejection, unsupported correction type rejection, referenced activity enforcement, same-owner expense enforcement, and correction indexes all passed.
+- Issue #187 introduces no production access, hosted staging migration application, Supabase config change, `service_role` usage, Edge Function behavior, WebApp correction UI, active review/totals filtering change, write-capable Dashboard behavior, historical cleanup, sensitive value disclosure, versioning, or production-ready claim.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
@@ -269,7 +276,7 @@
 
 ## Unknowns
 
-- Next bounded post-TWD-integer-amount step.
+- Define expense activity void backend/API boundary.
 - Data model.
 - Deployment target.
 - Dashboard follow-up requirements.

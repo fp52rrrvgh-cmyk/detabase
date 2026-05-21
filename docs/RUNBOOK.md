@@ -55,6 +55,9 @@ It is not production deployment documentation and does not implement write-capab
 - The existing expense submit payload remains unchanged, and `apps/web/.env.local` remains local-only and uncommitted.
 - WebApp TWD amount input is positive whole-number only; decimal, zero, negative, blank, or invalid amounts are rejected.
 - The read-only review panel displays TWD activity amounts and totals without decimal places.
+- `finance_activity_corrections` exists as the first schema-level correction event table for expense activity void events.
+- Expense activity void corrections preserve audit trace by appending correction events; original `finance_activities` rows remain traceable and are not hard-deleted or silently overwritten.
+- Local validation for Issue #187 passed for migration replay, expected fields, RLS enabled, owner-scoped read behavior, duplicate void rejection, empty reason rejection, unsupported correction type rejection, referenced activity enforcement, same-owner expense enforcement, and correction indexes.
 - Production remains untouched.
 
 ## Local Environment Prerequisites
@@ -76,6 +79,7 @@ It is not production deployment documentation and does not implement write-capab
 - No reporting objects, views, functions, triggers, or reporting tables.
 - No AI or Projection behavior.
 - No transfer or adjustment support in reusable local logging unless a dedicated issue explicitly approves it.
+- No Edge Function write behavior, WebApp correction UI, active review/totals filtering changes, or production migration application for expense activity void corrections unless a dedicated issue explicitly approves it.
 
 ## Start Local Supabase Safely
 
@@ -1192,9 +1196,60 @@ The current WebApp MVP treats TWD amount entry as positive whole-number input.
 
 This boundary changes WebApp validation and display only. It does not change schema, migrations, Supabase config, the existing database `amount` type, historical data, production access, deployment, reporting objects, write-capable Dashboard behavior, or production-ready status.
 
+### Expense Activity Void Correction Events
+
+Issue #187 adds the initial `finance_activity_corrections` migration for expense-only void correction events.
+
+This table records correction events and keeps the original `finance_activities` row available for audit trace. It does not hard delete original rows, silently overwrite original activity payload fields, implement active review/totals filtering, or add any WebApp correction UI.
+
+Initial correction constraints:
+
+- `correction_type` is limited to `void`.
+- `reason` must be non-empty after trimming.
+- Referenced activity must exist.
+- Referenced activity must belong to the same owner.
+- Referenced activity must be an expense activity.
+- Duplicate effective void events for one activity are rejected.
+- `created_by` must match `owner_user_id` for the initial owner-scoped model.
+
+RLS and access boundary:
+
+- RLS is enabled.
+- Owner-scoped read behavior is allowed.
+- Broad direct client writes are not enabled by default.
+- No `service_role` usage is required for the migration or local validation.
+
+Local validation evidence:
+
+- Local migration replay passed.
+- Table and expected fields passed.
+- RLS enabled check passed.
+- Owner-scoped read and cross-owner read blocking passed.
+- Duplicate void rejection passed.
+- Empty reason rejection passed.
+- Unsupported correction type rejection passed.
+- Referenced activity enforcement passed.
+- Same-owner expense activity enforcement passed.
+- Correction indexes and read-policy-only checks passed.
+
+Deferred scope:
+
+- `replacement_activity_id`.
+- Replacement or correct-and-recreate behavior.
+- Non-expense correction expansion.
+- Edge Function write behavior.
+- WebApp correction UI.
+- Active review/totals filtering changes.
+- Hosted staging validation.
+- Production migration application.
+- Supabase config changes.
+- Reporting objects.
+- Write-capable Dashboard behavior.
+- Historical cleanup.
+
 Next safe issue:
 
-Define the next bounded post-TWD-integer-amount step without expanding into production, deployment, schema changes, reporting objects, write-capable Dashboard behavior, income/transfer/adjustment input expansion, or historical data cleanup.
+Define expense activity void backend/API boundary.
 
 ## Verify Local Records
 

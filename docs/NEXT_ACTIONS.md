@@ -3,14 +3,14 @@
 ## Pending
 
 - Define the initial project goal.
-- Define the next bounded post-TWD-integer-amount step.
+- Define expense activity void backend/API boundary.
 - Keep production migration application out of scope until explicitly approved.
-- Keep the next issue focused on the post-TWD-integer-amount boundary only, without expanding into production, deployment, schema changes, migration changes, Supabase config changes, reporting objects, write-capable Dashboard behavior, server routes, API or Edge Function changes, edit/delete/cleanup/pending-review management, account/category management, charts, exports, seed data, durable personal data, auth architecture expansion, alias implementation, wrapper, package script, AI, Projection, income, transfer or adjustment support, or legacy work.
-- Do not jump directly to production, deployment, reporting views/functions/triggers/tables, write-capable Dashboard behavior, income/transfer/adjustment flows, aliases, wrappers, package scripts, seed files, AI, Projection, unbounded remote Supabase work, schema changes, migration changes, Supabase config changes, or legacy Sheets/GAS work without explicit approval.
+- Keep the next issue focused on the backend/API boundary for expense activity void corrections only, without implementing Edge Function writes, WebApp correction UI, active review/totals filtering, edit/delete/cleanup/pending-review management, account/category management, production, deployment, hosted migration application, Supabase config changes, reporting objects, write-capable Dashboard behavior, income/transfer/adjustment expansion, aliases, wrappers, package scripts, seed files, AI, Projection, or legacy work.
+- Do not jump directly to production, deployment, reporting views/functions/triggers/tables, write-capable Dashboard behavior, correction UI, income/transfer/adjustment flows, aliases, wrappers, package scripts, seed files, AI, Projection, unbounded remote Supabase work, Supabase config changes, or legacy Sheets/GAS work without explicit approval.
 
 ## Not Started
 
-- Next bounded post-TWD-integer-amount step.
+- Expense activity void backend/API boundary.
 - Production database migration.
 - Supabase configuration.
 - Dashboard follow-up work.
