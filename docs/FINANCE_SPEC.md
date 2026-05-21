@@ -2093,9 +2093,75 @@ The review panel displays TWD activity amounts and totals without decimal places
 
 This boundary keeps the existing database `amount` type unchanged. It does not introduce schema changes, migrations, Supabase config changes, reporting objects, historical data cleanup, production access, deployment, write-capable Dashboard behavior, income/transfer/adjustment input expansion, AI/Projection, aliases, wrappers, package scripts, shortcut automation, legacy Sheets/GAS work, versioning, or production-ready claims.
 
-### Recommended Next Issue After TWD Integer Amount Boundary
+### Expense Activity Void Correction Table
 
-Define the next bounded post-TWD-integer-amount step without expanding into production, deployment, schema changes, reporting objects, write-capable Dashboard behavior, income/transfer/adjustment input expansion, or historical data cleanup.
+Issue #187 adds the first schema-level correction event table for expense activity void events.
+
+The `finance_activity_corrections` table preserves audit trace by appending correction events. Original `finance_activities` rows remain traceable; this boundary does not hard delete original rows and does not silently overwrite original activity payload fields.
+
+Initial correction scope:
+
+- `correction_type` is limited to `void`.
+- `reason` is required and must remain non-empty after trimming.
+- Referenced activity must exist.
+- Referenced activity must belong to the same owner.
+- Referenced activity must be an expense activity.
+- Duplicate effective void events for one activity are rejected.
+
+Initial correction fields:
+
+- `id`.
+- `activity_id`.
+- `owner_user_id`.
+- `correction_type`.
+- `reason`.
+- `created_by`.
+- `created_at`.
+- Generated `activity_movement_type` for expense-only foreign key enforcement.
+
+RLS is enabled on `finance_activity_corrections`. The initial policy scope is owner-scoped read only. Broad direct client writes are not enabled by default.
+
+The migration adds indexes for owner/activity lookup and future active review filtering:
+
+- One effective void event per activity.
+- Owner/activity lookup.
+- Activity lookup.
+- Owner/type/activity filtering.
+
+Local validation passed for Issue #187:
+
+- Migration replay applied locally.
+- Table exists with expected fields.
+- RLS is enabled.
+- Owner-scoped read behavior passed.
+- Duplicate void event rejection passed.
+- Empty reason rejection passed.
+- Unsupported `correction_type` rejection passed.
+- Referenced activity enforcement passed.
+- Same-owner expense activity enforcement passed.
+- Correction index and read-policy checks passed.
+
+Deferred scope:
+
+- `replacement_activity_id`.
+- Replacement or correct-and-recreate behavior.
+- Non-expense correction expansion.
+- Edge Function write behavior.
+- WebApp correction UI.
+- Active review/totals filtering changes.
+- Hosted staging validation.
+- Production migration application.
+- Supabase config changes.
+- `service_role` usage.
+- Reporting objects.
+- Write-capable Dashboard behavior.
+- Historical cleanup.
+- Version labels.
+- Production-ready claims.
+
+### Recommended Next Issue After Expense Activity Void Correction Migration
+
+Define expense activity void backend/API boundary.
 
 ## Remaining Open Questions
 
