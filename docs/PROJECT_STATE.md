@@ -437,6 +437,21 @@
 - Issue #261 validation confirmed empty, filtered-no-result, loading, and fetch/error states remained distinct and safe.
 - Issue #261 validation confirmed no mutation/write controls were present, no review/dashboard writes were performed, production was not accessed, repo files were not changed during validation, and private/runtime/session/access-granting values were not disclosed.
 - PR #260 and Issue #261 introduced no production access, write behavior, query semantic changes, schema/migration/config/API changes, Edge Function changes, package/env changes, new cards, charts, exports, pagination, drilldowns, filters, debt/budget/cashflow/account-balance behavior, AI/Projection, legacy Sheets/GAS work, versioning, or production-ready claim.
+- PR #267 is merged after Issue #266 implemented row-level WebApp expense void correction UI in the existing grouped review list.
+- PR #267 added a row-level void action for eligible active expense rows only.
+- PR #267 uses the existing `void-finance-activity` path and sends only `activity_id` plus `reason`.
+- PR #267 refreshes review data after a successful void so active review, selected totals, dashboard cards, and the non-default audit trail reflect the correction.
+- PR #267 introduced no schema, migration, Supabase config, Edge Function, API, package/env, production, direct correction-table write, edit/delete UI, correction-management UI, or active totals query semantic change.
+- Issue #268 is closed as completed after merged-main staging runtime validation passed for the WebApp expense void correction UI.
+- Issue #268 validation confirmed `npm run build` in `apps/web` passed and staging sign-in passed.
+- Issue #268 validation confirmed eligible active owned expense rows show the void action and non-eligible surfaces do not show mutation controls.
+- Issue #268 validation confirmed blank reason is rejected safely before request submission.
+- Issue #268 validation confirmed a valid owned expense void through the UI passed.
+- Issue #268 validation confirmed the request used the bounded `void-finance-activity` path, payload was limited to `activity_id` and `reason`, and client-provided `correction_type` was not sent or accepted.
+- Issue #268 validation confirmed original activity preservation, default active review exclusion after refresh, default totals/dashboard exclusion after refresh, and non-default read-only void audit context.
+- Issue #268 validation confirmed no review/dashboard writes other than one bounded void request, no edit/delete/unvoid/restore/correction-management UI, no production access, no repo file changes during validation, and no private/runtime/session/access-granting value disclosure.
+- Issue #268 validation noted missing/cross-owner rejection was not observed because no safe UI path existed without exposing or fabricating private references.
+- Issue #268 validation did not test direct client correction-table insert because direct client correction-table writes were not attempted.
 
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
