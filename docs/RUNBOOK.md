@@ -1251,6 +1251,54 @@ Next safe issue:
 
 Define expense activity void backend/API boundary.
 
+### Expense Activity Void RPC
+
+Issue #200 adds the narrow `void_finance_activity` RPC migration after Issue #199 selected the DB RPC fallback boundary.
+
+This RPC is the database-side write boundary for creating one expense activity void correction event. It keeps the existing correction-events model and does not add WebApp correction UI, active review/totals filtering, Dashboard write behavior, production behavior, Supabase config changes, or hosted staging validation.
+
+RPC behavior:
+
+- Resolves the caller from the authenticated database request context.
+- Validates that the target activity belongs to the caller.
+- Validates that the target activity is an expense.
+- Requires a non-empty reason after trimming.
+- Rejects missing or cross-owner activity references safely.
+- Rejects duplicate/already-voided activity.
+- Inserts one `finance_activity_corrections` row with `correction_type = void`.
+- Preserves the original `finance_activities` row.
+- Does not hard delete anything.
+- Does not overwrite original activity payload fields.
+- Returns safe status/code output only.
+
+Access boundary:
+
+- Authenticated callers may execute the RPC.
+- Direct client table writes to `finance_activity_corrections` remain blocked.
+- The correction table keeps owner-scoped read behavior separate from the RPC write boundary.
+- Broad correction table write policies are not added.
+
+Local validation evidence for Issue #200:
+
+- Local migration replay passed.
+- RPC exists.
+- Valid owned expense void passed.
+- Blank reason rejection passed.
+- Missing activity rejection passed safely.
+- Cross-owner activity rejection passed safely.
+- Non-expense activity rejection passed.
+- Duplicate/already-voided rejection passed.
+- Original activity remained present.
+- Original activity payload remained unchanged.
+- Correction event existed after valid void.
+- Direct client insert remained unavailable.
+- RPC execute grant checks passed.
+- Correction write-policy absence check passed.
+
+Next safe issue:
+
+Patch `void-finance-activity` to call `void_finance_activity`.
+
 ## Verify Local Records
 
 Use local SQL only when an issue explicitly allows validation or inspection.

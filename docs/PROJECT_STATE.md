@@ -257,6 +257,11 @@
 - RLS is enabled on `finance_activity_corrections`; only an owner-scoped read policy is added, and broad direct client writes are not enabled by default.
 - Local validation for Issue #187 passed: local migration replay, expected table/fields, RLS enabled, owner-scoped read behavior, duplicate void rejection, empty reason rejection, unsupported correction type rejection, referenced activity enforcement, same-owner expense enforcement, and correction indexes all passed.
 - Issue #187 introduces no production access, hosted staging migration application, Supabase config change, `service_role` usage, Edge Function behavior, WebApp correction UI, active review/totals filtering change, write-capable Dashboard behavior, historical cleanup, sensitive value disclosure, versioning, or production-ready claim.
+- Issue #200 adds a narrow `void_finance_activity` RPC migration for expense activity void correction creation after Issue #199 selected the DB RPC fallback boundary.
+- The RPC validates caller-owned target activity, expense-only movement type, non-empty trimmed reason, duplicate void state, and inserts one `finance_activity_corrections` void event while preserving the original `finance_activities` row.
+- Direct client table writes to `finance_activity_corrections` remain blocked; authenticated execution is granted only through the RPC boundary.
+- Local validation for Issue #200 passed: migration replay, RPC existence, valid owned expense void, blank reason rejection, missing activity rejection, cross-owner activity rejection, non-expense rejection, duplicate void rejection, original activity presence, original activity payload preservation, correction event creation, direct client insert blocking, RPC execute grants, and correction write-policy absence all passed.
+- Issue #200 introduces no Edge Function patch, hosted staging deploy, hosted staging validation rerun, production access, production migration application, Supabase config change, WebApp correction UI, active review/totals filtering, Dashboard write behavior, sensitive value disclosure, versioning, or production-ready claim.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.

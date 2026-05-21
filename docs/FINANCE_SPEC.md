@@ -2163,6 +2163,69 @@ Deferred scope:
 
 Define expense activity void backend/API boundary.
 
+### Expense Activity Void RPC Boundary
+
+Issue #200 adds a narrow database RPC migration after Issue #199 selected the DB RPC fallback boundary for hosted void activity lookup.
+
+The RPC is limited to expense activity void correction creation for the existing `finance_activity_corrections` event model.
+
+RPC behavior:
+
+- Resolves caller identity through the authenticated database request context.
+- Validates the target activity belongs to the caller.
+- Validates the target activity is an expense.
+- Validates the reason is non-empty after trimming.
+- Rejects missing or cross-owner activity references with a safe not-found result.
+- Rejects duplicate or already-voided activity.
+- Inserts one `finance_activity_corrections` record with database-owned `correction_type = void`.
+- Preserves the original `finance_activities` row.
+- Does not hard delete or overwrite original activity payload fields.
+- Returns safe status/code output, not raw row data.
+
+Access boundary:
+
+- Authenticated users may execute the RPC.
+- Direct client table writes to `finance_activity_corrections` remain blocked.
+- Broad table write grants and broad write policies are not added.
+- Owner-scoped read behavior for correction events remains separate from the write RPC.
+
+Deferred scope remains:
+
+- Edge Function patch to call the RPC.
+- Hosted staging deployment and validation rerun.
+- Replacement or correct-and-recreate behavior.
+- Non-expense correction expansion.
+- WebApp correction UI.
+- Active review/totals filtering changes.
+- Production migration application.
+- Supabase config changes.
+- Reporting objects.
+- Write-capable Dashboard behavior.
+- Historical cleanup.
+- Version labels.
+- Production-ready claims.
+
+Local validation passed for Issue #200:
+
+- Migration replay applied locally.
+- RPC exists.
+- Valid owned expense void succeeded.
+- Blank reason was rejected.
+- Missing activity was rejected safely.
+- Cross-owner activity was rejected safely.
+- Non-expense activity was rejected.
+- Duplicate/already-voided activity was rejected.
+- Original activity remained present.
+- Original activity payload remained unchanged.
+- Correction event existed after valid void.
+- Direct client insert remained unavailable.
+- RPC execute grants were limited to the intended boundary.
+- No correction table write policy was added.
+
+### Recommended Next Issue After Expense Activity Void RPC Migration
+
+Patch `void-finance-activity` to call `void_finance_activity`.
+
 ## Remaining Open Questions
 
 - What data model should represent these requirements?
