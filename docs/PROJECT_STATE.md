@@ -284,6 +284,28 @@
 - Issue #214 is closed as completed after main staging runtime validation passed for read-only void audit visibility.
 - Issue #214 validation confirmed `npm run build` in `apps/web` passed, staging sign-in passed, active-only review passed, active-only totals passed, intentional void audit toggle passed, read-only audit passed, and no mutation controls were present.
 - Issue #214 validation confirmed writes performed: no; sensitive values disclosed: no; production accessed: no; repo file changes during validation: no.
+- PR #219 implemented the read-only review state clarity strip in the existing WebApp finance review panel.
+- The review state strip is informational/read-only and does not change query semantics.
+- Default active-only review and totals remained unchanged after PR #219.
+- The intentional void audit visibility surface remains non-default.
+- The strip displays safe review state only: mode, selected date range, movement filter, void audit state, loaded active/audit counts, and no-writes wording.
+- The strip does not display UUID values, runtime values, tokens, session values, database URLs, function URLs, or secrets.
+- PR #219 introduced no mutation controls, no correction-management controls, no edit/delete controls, and no void creation flow.
+- Issue #220 closed as completed after main staging runtime validation for read-only review state clarity strip.
+- Issue #220 validation confirmed:
+  - `npm run build` passed.
+  - Staging sign-in passed.
+  - Active-only review passed.
+  - Active-only totals passed.
+  - Intentional void audit visibility passed.
+  - Review state strip visible and informational/read-only passed.
+  - Safe non-sensitive state passed.
+  - No mutation controls passed.
+  - Writes performed: no.
+  - Sensitive values disclosed: no.
+  - Production accessed: no.
+  - Repo file changes during validation: no.
+
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
