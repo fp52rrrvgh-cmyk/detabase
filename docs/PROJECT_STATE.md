@@ -409,6 +409,18 @@
 - Issue #249 validation confirmed no mutation controls were added.
 - Issue #249 validation confirmed dashboard/review validation performed no writes, production was not accessed, repo files were not changed during validation, and private/runtime values were not disclosed.
 - PR #248 and Issue #249 introduced no production access, write behavior, schema/migration/config/API changes, Edge Function changes, package/env changes, debt or budget behavior, AI/Projection, cashflow expansion, broader Dashboard buildout, legacy Sheets/GAS work, versioning, or production-ready claim.
+- PR #254 is merged after Issue #253 implemented dashboard card range-context and scanability wording in the existing WebApp.
+- PR #254 added concise Traditional Chinese context explaining dashboard cards use currently loaded review data only, added per-card date-range and expense-filter context lines, and improved card hierarchy and unavailable-state spacing for mobile scanability.
+- Issue #255 is closed as completed after staging runtime validation passed for the dashboard card range-context and scanability wording.
+- Issue #255 validation confirmed all five dashboard cards remain visible.
+- Issue #255 validation confirmed range/filter context wording is visible and safe, and loaded-review-data-only wording is clear.
+- Issue #255 validation confirmed insufficient loaded-range and movement-filter-excludes-expense states remain safe.
+- Issue #255 validation confirmed mobile/constrained-width scanability passed.
+- Issue #255 validation confirmed active-only expense semantics and void exclusion remain unchanged.
+- Issue #255 validation confirmed quick capture and the read-only review panel remain unchanged.
+- Issue #255 validation confirmed no mutation/write controls were present.
+- Issue #255 validation confirmed production was not accessed, repo files were not changed during validation, and private/runtime values were not disclosed.
+- PR #254 and Issue #255 introduced no production access, write behavior, query semantic changes, schema/migration/config/API changes, Edge Function changes, package/env changes, new cards, charts, exports, pagination, drilldowns, filters, debt/budget/cashflow/account-balance behavior, AI/Projection, legacy Sheets/GAS work, versioning, or production-ready claim.
 
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
@@ -429,7 +441,7 @@
 
 ## Unknowns
 
-- Define the next focused read-only dashboard card scanability and range-context boundary without expanding query semantics or write behavior.
+- Define the WebApp layout cleanup and information hierarchy boundary without expanding production, write behavior, schema/config/API, AI, Projection, or broader finance features.
 - Data model.
 - Deployment target.
 - Dashboard follow-up requirements.
