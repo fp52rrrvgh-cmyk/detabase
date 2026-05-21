@@ -67,6 +67,15 @@ created timestamp when needed for review ordering. It does not add audit totals.
 It does not provide correction management UI, edit/delete UI, mutation buttons,
 void creation flows, or write-capable Dashboard behavior.
 
+The review panel includes a compact read-only review state strip. The strip is
+informational only and uses existing loaded review state. It shows safe labels
+and counts such as active review mode, selected date range, movement filter,
+void audit hidden or intentionally shown state, loaded active activity count,
+void audit count when available, and read-only/no-writes status. It does not
+change query semantics, default active-only totals, or intentional void audit
+visibility, and it must not display UUID values, runtime values, tokens,
+session values, database URLs, function URLs, or secrets.
+
 Safe display fields are activity date, movement type, amount, currency, account
 display name, category display name, description, void reason, correction
 timestamp, and created timestamp when needed for review ordering. The panel must
@@ -151,7 +160,8 @@ Operator flow:
 7. Confirm the safe success message shows date, TWD amount, description, and
    ready-for-next-expense status.
 8. Confirm the read-only review panel loads recent active owned activities,
-   display names, filters, and active-only totals without performing writes.
+   display names, filters, active-only totals, and safe review state strip
+   labels without performing writes.
 9. Open the void audit trail only when intentional audit inspection is needed,
    and confirm it remains read-only.
 10. Repeat entry if needed.
