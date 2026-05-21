@@ -305,6 +305,26 @@
   - Sensitive values disclosed: no.
   - Production accessed: no.
   - Repo file changes during validation: no.
+- PR #226 is merged after Issue #225 implemented read-only review empty-state and filter feedback UI.
+- Issue #227 is closed as completed after main staging runtime validation of the review empty-state and filter-feedback behavior.
+- Issue #227 validation confirmed the review panel distinguishes:
+  - loading state,
+  - fetch/error state,
+  - no-activities empty state,
+  - filtered no-result state,
+  - and data-available state.
+- Filter feedback remains safe and human-readable only.
+- Active-only review remains default.
+- Active-only totals remain default.
+- Void audit visibility remains intentional and non-default.
+- Review state clarity strip remains informational/read-only and does not change query semantics.
+- Existing expense quick-capture remained unaffected during validation.
+- One staging quick-capture write was used only to validate existing quick-capture behavior and was not a review-panel write.
+- Review-panel validation performed no writes.
+- The issue confirmed no repo file changes during validation.
+- The issue confirmed no production access.
+- The issue confirmed no sensitive/access-granting values were disclosed.
+- PR #226 and Issue #227 introduced no production access, no schema/migration/config changes, no function changes, no new Dashboard reporting logic, no write behavior, no AI/Projection, no transfer/adjustment flows, no legacy Sheets/GAS work, no versioning, and no production-ready claim.
 
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
@@ -325,7 +345,7 @@
 
 ## Unknowns
 
-- Define the next read-only finance review usability boundary after validated void audit visibility.
+- Define the next focused read-only review usability boundary after validated empty-state/filter-feedback behavior and review state clarity strip.
 - Data model.
 - Deployment target.
 - Dashboard follow-up requirements.
