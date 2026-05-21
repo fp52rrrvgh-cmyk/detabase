@@ -76,6 +76,72 @@ textarea {
   margin-bottom: 0;
 }
 
+.dashboard-card-strip {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+}
+
+.dashboard-card {
+  min-height: 96px;
+  display: grid;
+  gap: 4px;
+  align-content: center;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.dashboard-card-label {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.dashboard-card strong {
+  color: var(--text);
+  font-size: 0.96rem;
+  line-height: 1.2;
+}
+
+.dashboard-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
+.dashboard-card--category {
+  grid-column: 1 / -1;
+}
+
+.dashboard-category-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 16px;
+  color: var(--muted);
+}
+
+.dashboard-category-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.dashboard-category-list li span {
+  overflow-wrap: anywhere;
+}
+
+.dashboard-category-list li strong {
+  font-size: 0.86rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
 .eyebrow {
   margin: 0;
   color: var(--accent);
