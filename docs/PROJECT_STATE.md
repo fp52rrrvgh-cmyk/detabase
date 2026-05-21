@@ -269,6 +269,13 @@
 - Hosted staging validation confirmed the original `finance_activities` row remains present, the original activity payload remains unchanged, one `finance_activity_corrections` void event is created, and direct client insert into `finance_activity_corrections` remains unavailable.
 - Non-expense void rejection was not validated on hosted staging because no safe owned non-expense fixture existed for the authenticated staging user.
 - Issue #194 validation introduced no repo file changes, Supabase config changes, WebApp correction UI, active review/totals filtering, production access, sensitive value disclosure, versioning, or production-ready claim.
+- PR #207 merged void-aware active-only filtering in the WebApp read-only finance review panel after Issue #206.
+- Voided activities are excluded from the default active review set before recent activity display and totals are built.
+- Default active-only filtering applies to recent active owned activities, selected date-range totals, totals by `movement_type`, totals by category, and totals by account.
+- Issue #208 is closed as completed after main staging runtime validation passed for void-aware review/totals filtering.
+- Issue #208 validation confirmed `npm run build` in `apps/web` passed, staging sign-in passed, and read-only reads passed for `finance_activities`, `finance_activity_corrections`, `finance_accounts`, and `finance_categories`.
+- Issue #208 validation confirmed active-only filtering passed, recent active owned activities excluded voided rows, selected range totals passed, totals by `movement_type`, category, and account passed, original `finance_activities` rows remain preserved, and `finance_activity_corrections` remains the audit trail.
+- Issue #208 validation performed no writes, disclosed no sensitive values, accessed no production, and introduced no repo file changes, Supabase config changes, schema/migration/RPC/view changes, Edge Function changes, versioning, or production-ready claim.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
@@ -288,7 +295,7 @@
 
 ## Unknowns
 
-- Define void-aware review/totals filtering boundary.
+- Define read-only void audit visibility boundary.
 - Data model.
 - Deployment target.
 - Dashboard follow-up requirements.
