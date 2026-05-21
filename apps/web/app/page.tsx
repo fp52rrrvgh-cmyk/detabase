@@ -61,6 +61,7 @@ type CorrectionRow = {
 };
 
 type DisplayActivity = {
+  id: string;
   activityDate: string;
   movementType: string;
   amount: number;
@@ -130,6 +131,13 @@ type ReviewState =
   | { status: "success"; data: ReviewData }
   | { status: "failure"; message: string };
 
+type VoidCorrectionState =
+  | { status: "idle" }
+  | { status: "confirming"; activityId: string; reason: string; message?: string }
+  | { status: "loading"; activityId: string }
+  | { status: "success"; message: string }
+  | { status: "failure"; message: string };
+
 const RUNTIME_ENVIRONMENT_FIELDS: Array<{
   name: string;
   key: keyof RuntimeConfig;
@@ -145,6 +153,10 @@ const REQUEST_FAILURE_MESSAGE =
   "網路或服務請求發生問題，請稍後再試。";
 const REVIEW_FAILURE_MESSAGE =
   "讀取資料時發生問題，請稍後再試。";
+const VOID_SUCCESS_MESSAGE =
+  "支出已作廢。預設檢視與合計已重新整理，原始紀錄仍保留於稽核紀錄。";
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MOVEMENT_FILTER_OPTIONS: Array<{ value: MovementFilter; label: string }> = [
   { value: "all", label: "全部類型" },
   { value: "income", label: "收入" },
@@ -239,6 +251,57 @@ function safeFailureMessage(code: string | null): string {
       return code
         ? `支出未儲存，安全錯誤代碼：${code}。`
         : "支出未儲存，請稍後重試。";
+  }
+}
+
+function safeVoidFailureMessage(code: string | null): string {
+  switch (code) {
+    case "invalid_reason":
+      return "請輸入作廢原因。";
+    case "invalid_activity_reference":
+      return "無法作廢這筆活動，請重新整理檢視後再試。";
+    case "activity_not_found":
+      return "找不到可作廢的支出活動，可能已不存在或不屬於目前登入者。";
+    case "activity_not_expense":
+      return "目前只支援作廢支出活動。";
+    case "activity_already_voided":
+      return "這筆支出已作廢，請重新整理檢視。";
+    case "void_not_allowed":
+      return "目前無法作廢這筆支出，請確認已登入 Staging 後再試。";
+    case "void_insert_failed":
+      return "作廢請求未完成，請稍後再試。";
+    case "invalid_request":
+      return "作廢請求格式不正確，請重新整理檢視後再試。";
+    default:
+      return "作廢請求未完成，請稍後再試。";
+  }
+}
+
+function deriveVoidFunctionUrl(functionUrl: string): string | null {
+  const trimmedUrl = functionUrl.trim();
+  if (!trimmedUrl) {
+    return null;
+  }
+
+  try {
+    const url = new URL(trimmedUrl);
+    const marker = "/functions/v1/";
+    const markerIndex = url.pathname.indexOf(marker);
+
+    if (markerIndex === -1) {
+      return null;
+    }
+
+    url.pathname = `${url.pathname.slice(
+      0,
+      markerIndex + marker.length,
+    )}void-finance-activity`;
+    url.search = "";
+    url.hash = "";
+
+    return url.toString();
+  } catch {
+    return null;
   }
 }
 
@@ -426,6 +489,7 @@ function buildReviewData(
       }
 
       return {
+        id: activity.id,
         activityDate: activity.activity_date,
         movementType: activity.movement_type,
         amount: normalizeAmount(activity.amount),
@@ -462,6 +526,7 @@ function buildReviewData(
   const mappedActivities = activeActivities
     .slice(0, 25)
     .map((activity) => ({
+      id: activity.id,
       activityDate: activity.activity_date,
       movementType: activity.movement_type,
       amount: normalizeAmount(activity.amount),
@@ -617,6 +682,9 @@ export default function ExpenseEntryPage() {
     status: "idle",
   });
   const [showVoidAudit, setShowVoidAudit] = useState(false);
+  const [voidState, setVoidState] = useState<VoidCorrectionState>({
+    status: "idle",
+  });
 
   const configReady = hasRuntimeConfig(runtimeConfig);
   const runtimeStatusItems = runtimeEnvironmentStatus(runtimeConfig);
@@ -882,6 +950,7 @@ export default function ExpenseEntryPage() {
     setSubmitState({ status: "idle" });
     setReviewState({ status: "idle" });
     setShowVoidAudit(false);
+    setVoidState({ status: "idle" });
     setAuthMessage({
       status: "success",
       message: "已登出。",
@@ -904,6 +973,131 @@ export default function ExpenseEntryPage() {
   function handleDescriptionChange(value: string) {
     setDescription(value);
     clearSettledSubmitState();
+  }
+
+  function handleBeginVoidCorrection(activityId: string) {
+    setVoidState({ status: "confirming", activityId, reason: "" });
+  }
+
+  function handleCancelVoidCorrection() {
+    setVoidState({ status: "idle" });
+  }
+
+  function handleVoidReasonChange(activityId: string, reason: string) {
+    setVoidState((current) =>
+      current.status === "confirming" && current.activityId === activityId
+        ? { status: "confirming", activityId, reason }
+        : current,
+    );
+  }
+
+  async function handleVoidCorrectionSubmit(
+    event: FormEvent<HTMLFormElement>,
+    activityId: string,
+    reason: string,
+  ) {
+    event.preventDefault();
+
+    const trimmedReason = reason.trim();
+    if (!trimmedReason) {
+      setVoidState({
+        status: "confirming",
+        activityId,
+        reason,
+        message: "請輸入作廢原因。",
+      });
+      return;
+    }
+
+    if (!UUID_PATTERN.test(activityId)) {
+      setVoidState({
+        status: "failure",
+        message: safeVoidFailureMessage("invalid_activity_reference"),
+      });
+      return;
+    }
+
+    if (!configReady || !supabase) {
+      setVoidState({
+        status: "failure",
+        message: "執行環境設定不完整，無法送出作廢請求。",
+      });
+      return;
+    }
+
+    const voidFunctionUrl = deriveVoidFunctionUrl(runtimeConfig.functionUrl);
+    if (!voidFunctionUrl) {
+      setVoidState({
+        status: "failure",
+        message: "無法找到作廢請求路徑，請檢查 Staging runtime 設定。",
+      });
+      return;
+    }
+
+    setVoidState({ status: "loading", activityId });
+
+    const {
+      data: { session: currentSession },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError || !currentSession?.access_token) {
+      setVoidState({
+        status: "failure",
+        message: "請先登入 Staging 後再作廢支出。",
+      });
+      return;
+    }
+
+    let response: Response;
+    let responseBody: unknown;
+
+    try {
+      response = await fetch(voidFunctionUrl, {
+        method: "POST",
+        headers: {
+          apikey: runtimeConfig.publishableKey,
+          authorization: `Bearer ${currentSession.access_token}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          activity_id: activityId,
+          reason: trimmedReason,
+        }),
+      });
+
+      responseBody = await readSafeJson(response);
+    } catch {
+      setVoidState({
+        status: "failure",
+        message: "作廢請求未完成，請檢查 Staging 網路或 runtime 設定。",
+      });
+      return;
+    }
+
+    const isSuccessful =
+      response.ok &&
+      typeof responseBody === "object" &&
+      responseBody !== null &&
+      "ok" in responseBody &&
+      responseBody.ok === true;
+
+    if (!isSuccessful) {
+      const code = extractSafeErrorCode(responseBody);
+      setVoidState({
+        status: "failure",
+        message: safeVoidFailureMessage(code),
+      });
+
+      if (code === "activity_already_voided") {
+        void loadReviewData();
+      }
+
+      return;
+    }
+
+    setVoidState({ status: "success", message: VOID_SUCCESS_MESSAGE });
+    await loadReviewData();
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -1150,14 +1344,19 @@ export default function ExpenseEntryPage() {
         canLoad={configReady && authStatus === "signed_in"}
         endDate={reviewEndDate}
         movementFilter={movementFilter}
+        onBeginVoidCorrection={handleBeginVoidCorrection}
+        onCancelVoidCorrection={handleCancelVoidCorrection}
         onEndDateChange={setReviewEndDate}
         onMovementFilterChange={setMovementFilter}
         onRefresh={() => void loadReviewData()}
         onStartDateChange={setReviewStartDate}
+        onVoidCorrectionSubmit={handleVoidCorrectionSubmit}
+        onVoidReasonChange={handleVoidReasonChange}
         onToggleVoidAudit={() => setShowVoidAudit((current) => !current)}
         reviewState={reviewState}
         showVoidAudit={showVoidAudit}
         startDate={reviewStartDate}
+        voidState={voidState}
       />
     </main>
   );
@@ -1291,26 +1490,40 @@ function FinanceReviewPanel({
   canLoad,
   endDate,
   movementFilter,
+  onBeginVoidCorrection,
+  onCancelVoidCorrection,
   onEndDateChange,
   onMovementFilterChange,
   onRefresh,
   onStartDateChange,
   onToggleVoidAudit,
+  onVoidCorrectionSubmit,
+  onVoidReasonChange,
   reviewState,
   showVoidAudit,
   startDate,
+  voidState,
 }: {
   canLoad: boolean;
   endDate: string;
   movementFilter: MovementFilter;
+  onBeginVoidCorrection: (activityId: string) => void;
+  onCancelVoidCorrection: () => void;
   onEndDateChange: (value: string) => void;
   onMovementFilterChange: (value: MovementFilter) => void;
   onRefresh: () => void;
   onStartDateChange: (value: string) => void;
   onToggleVoidAudit: () => void;
+  onVoidCorrectionSubmit: (
+    event: FormEvent<HTMLFormElement>,
+    activityId: string,
+    reason: string,
+  ) => void;
+  onVoidReasonChange: (activityId: string, reason: string) => void;
   reviewState: ReviewState;
   showVoidAudit: boolean;
   startDate: string;
+  voidState: VoidCorrectionState;
 }) {
   const isLoading = reviewState.status === "loading";
 
@@ -1403,11 +1616,16 @@ function FinanceReviewPanel({
       {reviewState.status === "success" ? (
         <ReviewContent
           data={reviewState.data}
+          onBeginVoidCorrection={onBeginVoidCorrection}
+          onCancelVoidCorrection={onCancelVoidCorrection}
           onToggleVoidAudit={onToggleVoidAudit}
+          onVoidCorrectionSubmit={onVoidCorrectionSubmit}
+          onVoidReasonChange={onVoidReasonChange}
           showVoidAudit={showVoidAudit}
           reviewMovementFilter={movementFilter}
           reviewStartDate={startDate}
           reviewEndDate={endDate}
+          voidState={voidState}
         />
       ) : null}
     </section>
@@ -1611,18 +1829,32 @@ function ReviewStateStrip({
 
 function ReviewContent({
   data,
+  onBeginVoidCorrection,
+  onCancelVoidCorrection,
   onToggleVoidAudit,
+  onVoidCorrectionSubmit,
+  onVoidReasonChange,
   reviewMovementFilter,
   reviewStartDate,
   reviewEndDate,
   showVoidAudit,
+  voidState,
 }: {
   data: ReviewData;
+  onBeginVoidCorrection: (activityId: string) => void;
+  onCancelVoidCorrection: () => void;
   onToggleVoidAudit: () => void;
+  onVoidCorrectionSubmit: (
+    event: FormEvent<HTMLFormElement>,
+    activityId: string,
+    reason: string,
+  ) => void;
+  onVoidReasonChange: (activityId: string, reason: string) => void;
   reviewMovementFilter: MovementFilter;
   reviewStartDate: string;
   reviewEndDate: string;
   showVoidAudit: boolean;
+  voidState: VoidCorrectionState;
 }) {
   const isDefaultFilter = reviewMovementFilter === "all";
   const dateRangeLabel =
@@ -1677,6 +1909,18 @@ function ReviewContent({
           </p>
         </div>
 
+        {voidState.status === "success" ? (
+          <p className="status-message status-success" role="status">
+            {voidState.message}
+          </p>
+        ) : null}
+
+        {voidState.status === "failure" ? (
+          <p className="status-message status-error" role="alert">
+            {voidState.message}
+          </p>
+        ) : null}
+
         {data.activityGroups.length > 0 ? (
           <div className="activity-groups">
             {data.activityGroups.map((group) => (
@@ -1687,31 +1931,99 @@ function ReviewContent({
                 </div>
 
                 <ul className="activity-list activity-list--grouped">
-                  {group.activities.map((activity, index) => (
-                    <li
-                      className="activity-item"
-                      key={`${activity.activityDate}-${activity.createdAt ?? "no-created-at"}-${index}`}
-                    >
-                      <div className="activity-main">
-                        <span className="activity-amount">
-                          {formatAmount(activity.amount, activity.currency)}
-                        </span>
-                        <strong className="activity-movement">
-                          {activity.movementType}
-                        </strong>
-                      </div>
+                  {group.activities.map((activity) => {
+                    const isExpense = activity.movementType === "expense";
+                    const isConfirmingVoid =
+                      voidState.status === "confirming" &&
+                      voidState.activityId === activity.id;
+                    const isLoadingVoid =
+                      voidState.status === "loading" &&
+                      voidState.activityId === activity.id;
+                    const isAnyVoidLoading = voidState.status === "loading";
 
-                      <p className="activity-description">{activity.description}</p>
+                    return (
+                      <li className="activity-item" key={activity.id}>
+                        <div className="activity-main">
+                          <span className="activity-amount">
+                            {formatAmount(activity.amount, activity.currency)}
+                          </span>
+                          <strong className="activity-movement">
+                            {activity.movementType}
+                          </strong>
+                        </div>
 
-                      <div className="activity-meta activity-meta--review">
-                        <span>{activity.accountName}</span>
-                        <span>{activity.categoryName}</span>
-                        <span className="activity-meta-created">
-                          建立 {formatOptionalTimestamp(activity.createdAt)}
-                        </span>
-                      </div>
-                    </li>
-                  ))}
+                        <p className="activity-description">
+                          {activity.description}
+                        </p>
+
+                        <div className="activity-meta activity-meta--review">
+                          <span>{activity.accountName}</span>
+                          <span>{activity.categoryName}</span>
+                          <span className="activity-meta-created">
+                            建立 {formatOptionalTimestamp(activity.createdAt)}
+                          </span>
+                        </div>
+
+                        {isExpense && !isConfirmingVoid ? (
+                          <div className="activity-actions">
+                            <button
+                              className="secondary-button void-action-button"
+                              disabled={isAnyVoidLoading}
+                              onClick={() => onBeginVoidCorrection(activity.id)}
+                              type="button"
+                            >
+                              {isLoadingVoid ? "作廢中..." : "作廢"}
+                            </button>
+                          </div>
+                        ) : null}
+
+                        {isConfirmingVoid ? (
+                          <form
+                            className="void-confirmation"
+                            onSubmit={(event) =>
+                              onVoidCorrectionSubmit(
+                                event,
+                                activity.id,
+                                voidState.reason,
+                              )
+                            }
+                          >
+                            <p>
+                              確認作廢這筆支出？原始紀錄會保留，預設檢視與合計會排除它。
+                            </p>
+                            <label className="field compact-field void-reason-field">
+                              <span>作廢原因</span>
+                              <textarea
+                                onChange={(event) =>
+                                  onVoidReasonChange(activity.id, event.target.value)
+                                }
+                                required
+                                rows={3}
+                                value={voidState.reason}
+                              />
+                            </label>
+                            {voidState.message ? (
+                              <p className="status-message status-error" role="alert">
+                                {voidState.message}
+                              </p>
+                            ) : null}
+                            <div className="void-confirmation-actions">
+                              <button
+                                className="secondary-button"
+                                onClick={onCancelVoidCorrection}
+                                type="button"
+                              >
+                                取消
+                              </button>
+                              <button className="submit-button" type="submit">
+                                確認作廢
+                              </button>
+                            </div>
+                          </form>
+                        ) : null}
+                      </li>
+                    );
+                  })}
                 </ul>
               </section>
             ))}
