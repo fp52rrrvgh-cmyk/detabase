@@ -326,6 +326,34 @@
 - The issue confirmed no sensitive/access-granting values were disclosed.
 - PR #226 and Issue #227 introduced no production access, no schema/migration/config changes, no function changes, no new Dashboard reporting logic, no write behavior, no AI/Projection, no transfer/adjustment flows, no legacy Sheets/GAS work, no versioning, and no production-ready claim.
 
+- PR #232 is merged after Issue #231 implemented minimal mobile-first read-only review list navigation and organization UX in the existing WebApp finance review panel.
+- Issue #233 is closed as completed after main staging runtime validation of PR #232.
+- PR #232 behavior added grouping by `activityDate` using already-fetched active review rows, with safe per-date row counts.
+- PR #232 did not change read query semantics.
+- Active-only review remains default after PR #232.
+- Active-only totals remain default after PR #232.
+- Void audit visibility remains intentional and non-default after PR #232.
+- Review state strip remains informational/read-only after PR #232.
+- Existing empty-state and filter-feedback behavior remained preserved after PR #232.
+- Issue #233 validation caveats were recorded for this implementation:
+  - Multi-date grouped sections were not observed because staging data returned only one `activity_date`.
+  - No-activities empty state was not directly UI-driven in this run; a safe zero-row date-range check was confirmed instead.
+- Issue #233 validation confirmed:
+  - `npm run build` passed.
+  - staging sign-in passed.
+  - read-only review loading passed.
+  - per-date count consistency passed for observed dates.
+  - safe row fields passed.
+  - constrained-width scanability appeared acceptable.
+  - filtered no-result behavior passed.
+  - fetch/error safety passed.
+  - no mutation controls.
+  - no review writes.
+  - no production access.
+  - no private/runtime value disclosure.
+- PR #232 and Issue #233 introduced no production access, no schema/migration/config changes, no function changes, no new Dashboard reporting logic, no write behavior, no AI/Projection, no transfer/adjustment flows, no legacy Sheets/GAS work, no versioning, and no production-ready claim.
+- PR #232 and Issue #233 validation were performed without repo file changes during validation.
+
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
@@ -345,7 +373,7 @@
 
 ## Unknowns
 
-- Define the next focused read-only review usability boundary after validated empty-state/filter-feedback behavior and review state clarity strip.
+- Define the next focused read-only review usability boundary for validating multi-date grouped review behavior and constrained-layout scanability confidence.
 - Data model.
 - Deployment target.
 - Dashboard follow-up requirements.
