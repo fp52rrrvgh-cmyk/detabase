@@ -1023,123 +1023,127 @@ export default function ExpenseEntryPage() {
           </p>
         </div>
 
-        <RuntimeReadiness
-          configured={configReady}
-          items={runtimeStatusItems}
-        />
+        <div className="setup-stack" aria-label="Staging 設定與登入狀態">
+          <RuntimeReadiness
+            configured={configReady}
+            items={runtimeStatusItems}
+          />
 
-        <section className="auth-section" aria-labelledby="auth-title">
-          <div className="section-heading">
-            <h2 id="auth-title">Staging 登入</h2>
-            <SessionStatus status={authStatus} hasSession={Boolean(session)} />
-          </div>
+          <section className="auth-section" aria-labelledby="auth-title">
+            <div className="section-heading">
+              <h2 id="auth-title">Staging 登入</h2>
+              <SessionStatus status={authStatus} hasSession={Boolean(session)} />
+            </div>
 
-          {authStatus === "signed_in" ? (
-            <button
-              className="secondary-button"
-              disabled={authLoading}
-              onClick={handleSignOut}
-              type="button"
-            >
-              {authLoading ? "登出中..." : "登出"}
-            </button>
-          ) : (
-            <form className="auth-form" onSubmit={handleSignIn}>
-              <label className="field">
-                <span>電子郵件</span>
-                <input
-                  autoComplete="email"
-                  inputMode="email"
-                  name="email"
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="staging 操作員信箱"
-                  required
-                  type="email"
-                  value={email}
-                />
-              </label>
-
-              <label className="field">
-                <span>密碼</span>
-                <input
-                  autoComplete="current-password"
-                  name="password"
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="staging 密碼"
-                  required
-                  type="password"
-                  value={password}
-                />
-              </label>
-
+            {authStatus === "signed_in" ? (
               <button
-                className="submit-button"
-                disabled={authLoading || !configReady}
-                type="submit"
+                className="secondary-button"
+                disabled={authLoading}
+                onClick={handleSignOut}
+                type="button"
               >
-                {authLoading ? "登入中..." : "登入"}
+                {authLoading ? "登出中..." : "登出"}
               </button>
-            </form>
-          )}
+            ) : (
+              <form className="auth-form" onSubmit={handleSignIn}>
+                <label className="field">
+                  <span>電子郵件</span>
+                  <input
+                    autoComplete="email"
+                    inputMode="email"
+                    name="email"
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder="staging 操作員信箱"
+                    required
+                    type="email"
+                    value={email}
+                  />
+                </label>
 
-          <AuthMessageView message={authMessage} />
-        </section>
+                <label className="field">
+                  <span>密碼</span>
+                  <input
+                    autoComplete="current-password"
+                    name="password"
+                    onChange={(event) => setPassword(event.target.value)}
+                    placeholder="staging 密碼"
+                    required
+                    type="password"
+                    value={password}
+                  />
+                </label>
 
-        <form className="entry-form" onSubmit={handleSubmit}>
-          <label className="field">
-            <span>金額</span>
-            <input
-              inputMode="numeric"
-              min="1"
-              name="amount"
-              onChange={(event) => handleAmountChange(event.target.value)}
-              placeholder="100"
-              required
-              step="1"
-              title="請輸入正整數 TWD 金額。"
-              type="number"
-              value={amount}
-            />
-          </label>
+                <button
+                  className="submit-button"
+                  disabled={authLoading || !configReady}
+                  type="submit"
+                >
+                  {authLoading ? "登入中..." : "登入"}
+                </button>
+              </form>
+            )}
 
-          <label className="field">
-            <span>描述</span>
-            <textarea
-              name="description"
-              onChange={(event) => handleDescriptionChange(event.target.value)}
-              placeholder="簡短支出備註"
-              required
-              rows={4}
-              value={description}
-            />
-          </label>
+            <AuthMessageView message={authMessage} />
+          </section>
+        </div>
 
-          <div className="fixed-details" aria-label="提交明細">
-            <span>支出</span>
-            <span>TWD</span>
-            <span>{activityDate || "本機目前日期"}</span>
-          </div>
+        <div className="quick-capture-block" aria-label="快速支出輸入">
+          <form className="entry-form" onSubmit={handleSubmit}>
+            <label className="field">
+              <span>金額</span>
+              <input
+                inputMode="numeric"
+                min="1"
+                name="amount"
+                onChange={(event) => handleAmountChange(event.target.value)}
+                placeholder="100"
+                required
+                step="1"
+                title="請輸入正整數 TWD 金額。"
+                type="number"
+                value={amount}
+              />
+            </label>
 
-          <button
-            className="submit-button"
-            disabled={
-              submitState.status === "loading" ||
-              authStatus !== "signed_in" ||
-              !configReady
-            }
-            type="submit"
-          >
-            {submitState.status === "loading"
-              ? "儲存中..."
-              : !configReady
-              ? "請先完成執行環境設定"
-              : authStatus === "signed_in"
-              ? "儲存支出"
-              : "請先登入後儲存"}
-          </button>
-        </form>
+            <label className="field">
+              <span>描述</span>
+              <textarea
+                name="description"
+                onChange={(event) => handleDescriptionChange(event.target.value)}
+                placeholder="簡短支出備註"
+                required
+                rows={4}
+                value={description}
+              />
+            </label>
 
-        <StatusMessage state={submitState} configReady={configReady} />
+            <div className="fixed-details" aria-label="提交明細">
+              <span>支出</span>
+              <span>TWD</span>
+              <span>{activityDate || "本機目前日期"}</span>
+            </div>
+
+            <button
+              className="submit-button"
+              disabled={
+                submitState.status === "loading" ||
+                authStatus !== "signed_in" ||
+                !configReady
+              }
+              type="submit"
+            >
+              {submitState.status === "loading"
+                ? "儲存中..."
+                : !configReady
+                ? "請先完成執行環境設定"
+                : authStatus === "signed_in"
+                ? "儲存支出"
+                : "請先登入後儲存"}
+            </button>
+          </form>
+
+          <StatusMessage state={submitState} configReady={configReady} />
+        </div>
       </section>
 
       <FinanceReviewPanel
@@ -1323,58 +1327,60 @@ function FinanceReviewPanel({
 
       <ReviewDashboardStrip reviewState={reviewState} canLoad={canLoad} />
 
-      <div className="review-filters" aria-label="檢視篩選">
-        <label className="field compact-field">
-          <span>開始日期</span>
-          <input
-            onChange={(event) => onStartDateChange(event.target.value)}
-            type="date"
-            value={startDate}
-          />
-        </label>
+      <div className="review-controls-stack">
+        <div className="review-filters" aria-label="檢視篩選">
+          <label className="field compact-field">
+            <span>開始日期</span>
+            <input
+              onChange={(event) => onStartDateChange(event.target.value)}
+              type="date"
+              value={startDate}
+            />
+          </label>
 
-        <label className="field compact-field">
-          <span>結束日期</span>
-          <input
-            onChange={(event) => onEndDateChange(event.target.value)}
-            type="date"
-            value={endDate}
-          />
-        </label>
+          <label className="field compact-field">
+            <span>結束日期</span>
+            <input
+              onChange={(event) => onEndDateChange(event.target.value)}
+              type="date"
+              value={endDate}
+            />
+          </label>
 
-        <label className="field compact-field">
-          <span>收支類型</span>
-          <select
-            onChange={(event) =>
-              onMovementFilterChange(event.target.value as MovementFilter)
-            }
-            value={movementFilter}
+          <label className="field compact-field">
+            <span>收支類型</span>
+            <select
+              onChange={(event) =>
+                onMovementFilterChange(event.target.value as MovementFilter)
+              }
+              value={movementFilter}
+            >
+              {MOVEMENT_FILTER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <button
+            className="secondary-button review-refresh"
+            disabled={!canLoad || isLoading}
+            onClick={onRefresh}
+            type="button"
           >
-            {MOVEMENT_FILTER_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            {isLoading ? "讀取中..." : "重新整理檢視"}
+          </button>
+        </div>
 
-        <button
-          className="secondary-button review-refresh"
-          disabled={!canLoad || isLoading}
-          onClick={onRefresh}
-          type="button"
-        >
-          {isLoading ? "讀取中..." : "重新整理檢視"}
-        </button>
+        <ReviewStateStrip
+          endDate={endDate}
+          movementFilter={movementFilter}
+          reviewState={reviewState}
+          showVoidAudit={showVoidAudit}
+          startDate={startDate}
+        />
       </div>
-
-      <ReviewStateStrip
-        endDate={endDate}
-        movementFilter={movementFilter}
-        reviewState={reviewState}
-        showVoidAudit={showVoidAudit}
-        startDate={startDate}
-      />
 
       {!canLoad ? (
         <p className="status-message status-muted" role="status">
@@ -1674,7 +1680,7 @@ function ReviewContent({
         {data.activityGroups.length > 0 ? (
           <div className="activity-groups">
             {data.activityGroups.map((group) => (
-              <section className="review-section" key={group.activityDate}>
+              <section className="activity-date-group" key={group.activityDate}>
                 <div className="date-group-header">
                   <h4>{group.activityDate}</h4>
                   <p className="empty-state">共 {group.activityCount} 筆</p>
