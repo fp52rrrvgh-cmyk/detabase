@@ -727,6 +727,54 @@ h1 {
   overflow: hidden;
 }
 
+.activity-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.void-action-button {
+  min-height: 36px;
+  width: auto;
+  padding: 0 12px;
+  color: var(--danger);
+}
+
+.void-action-button:hover:not(:disabled) {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.void-confirmation {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #f0c8c8;
+  border-radius: 8px;
+  background: #fff7f7;
+}
+
+.void-confirmation p {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.void-confirmation .status-message {
+  margin-top: 0;
+}
+
+.void-reason-field textarea {
+  min-height: 88px;
+}
+
+.void-confirmation-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
 @media (max-width: 430px) {
   .activity-main {
     flex-wrap: nowrap;
@@ -765,6 +813,18 @@ h1 {
 
   .date-group-header h4 {
     font-size: 0.84rem;
+  }
+
+  .activity-actions {
+    justify-content: stretch;
+  }
+
+  .void-action-button {
+    width: 100%;
+  }
+
+  .void-confirmation-actions {
+    grid-template-columns: 1fr;
   }
 }
 
