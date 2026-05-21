@@ -89,6 +89,25 @@ type TotalLine = {
   amount: number;
 };
 
+type CategorySpendingLine = {
+  label: string;
+  currency: string;
+  amount: number;
+};
+
+type DashboardSpendingCard = {
+  todaySpending: number;
+  todaySpendingCurrency: string;
+  thisMonthSpending: number;
+  thisMonthSpendingCurrency: string;
+  recent7DaySpending: number;
+  recent7DaySpendingCurrency: string;
+  topCategoryLabel: string;
+  topCategoryAmount: number;
+  topCategoryCurrency: string;
+  topCategoriesThisMonth: CategorySpendingLine[];
+};
+
 type ReviewData = {
   activities: DisplayActivity[];
   activityGroups: ActivityGroup[];
@@ -97,6 +116,7 @@ type ReviewData = {
   categoryTotals: TotalLine[];
   accountTotals: TotalLine[];
   voidAuditItems: VoidAuditItem[];
+  dashboard: DashboardSpendingCard;
 };
 
 type ReviewState =
@@ -295,6 +315,57 @@ function summarizeTotals(
   );
 }
 
+function summarizeTopCategoryTotals(
+  activities: FinanceActivityRow[],
+  getLabel: (activity: FinanceActivityRow) => string,
+): CategorySpendingLine[] {
+  const totals = new Map<string, CategorySpendingLine>();
+
+  for (const activity of activities) {
+    const label = getLabel(activity);
+    const currency = activity.currency || "TWD";
+    const key = `${label}\u0000${currency}`;
+    const current = totals.get(key);
+    const amount = normalizeAmount(activity.amount);
+
+    if (current) {
+      current.amount += amount;
+    } else {
+      totals.set(key, { label, currency, amount });
+    }
+  }
+
+  return Array.from(totals.values()).sort(
+    (left, right) =>
+      right.amount - left.amount || left.label.localeCompare(right.label),
+  );
+}
+
+function localMonthStartDate(): string {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  const localStart = new Date(start.getTime() - start.getTimezoneOffset() * 60000);
+  return localStart.toISOString().slice(0, 10);
+}
+
+function isDateWithinRange(
+  value: string,
+  startDate: string,
+  endDate: string,
+): boolean {
+  return value >= startDate && value <= endDate;
+}
+
+function sumAmountsByDateRange(
+  activities: FinanceActivityRow[],
+  startDate: string,
+  endDate: string,
+): number {
+  return activities
+    .filter((activity) => isDateWithinRange(activity.activity_date, startDate, endDate))
+    .reduce((sum, activity) => sum + normalizeAmount(activity.amount), 0);
+}
+
 function activeReviewActivities(
   activities: FinanceActivityRow[],
   corrections: CorrectionRow[],
@@ -401,6 +472,52 @@ function buildReviewData(
       createdAt: activity.created_at,
     }));
 
+  const activeExpenseActivities = activeActivities.filter(
+    (activity) => activity.movement_type === "expense",
+  );
+  const today = currentLocalDate();
+  const recent7DayStart = localDateDaysAgo(6);
+  const monthStart = localMonthStartDate();
+  const monthEnd = currentLocalDate();
+  const categoryTotalsThisMonth = summarizeTopCategoryTotals(
+    activeExpenseActivities.filter((activity) =>
+      isDateWithinRange(activity.activity_date, monthStart, monthEnd),
+    ),
+    (activity) =>
+      safeReferenceLabel(
+        categoryNames,
+        activity.category_id,
+        "No category",
+      ),
+  );
+  const topCategoryThisMonth = categoryTotalsThisMonth[0];
+  const dashboardCardData: DashboardSpendingCard = {
+    todaySpending: sumAmountsByDateRange(
+      activeExpenseActivities,
+      today,
+      today,
+    ),
+    todaySpendingCurrency: "TWD",
+    thisMonthSpending: sumAmountsByDateRange(
+      activeExpenseActivities,
+      monthStart,
+      monthEnd,
+    ),
+    thisMonthSpendingCurrency: "TWD",
+    recent7DaySpending: sumAmountsByDateRange(
+      activeExpenseActivities,
+      recent7DayStart,
+      today,
+    ),
+    recent7DaySpendingCurrency: "TWD",
+    topCategoryLabel: topCategoryThisMonth ? topCategoryThisMonth.label : "No category",
+    topCategoryAmount: topCategoryThisMonth ? topCategoryThisMonth.amount : 0,
+    topCategoryCurrency: topCategoryThisMonth
+      ? topCategoryThisMonth.currency
+      : "TWD",
+    topCategoriesThisMonth: categoryTotalsThisMonth.slice(0, 5),
+  };
+
   const groupedMap = new Map<string, DisplayActivity[]>();
   const orderedDateKeys: string[] = [];
 
@@ -436,6 +553,7 @@ function buildReviewData(
       safeReferenceLabel(accountNames, activity.account_id, "No account"),
     ),
     voidAuditItems,
+    dashboard: dashboardCardData,
   };
 }
 
@@ -1164,6 +1282,8 @@ function FinanceReviewPanel({
         </p>
       </div>
 
+      <ReviewDashboardStrip reviewState={reviewState} canLoad={canLoad} />
+
       <div className="review-filters" aria-label="Review filters">
         <label className="field compact-field">
           <span>Start date</span>
@@ -1246,6 +1366,94 @@ function FinanceReviewPanel({
           reviewEndDate={endDate}
         />
       ) : null}
+    </section>
+  );
+}
+
+function ReviewDashboardStrip({
+  canLoad,
+  reviewState,
+}: {
+  canLoad: boolean;
+  reviewState: ReviewState;
+}) {
+  const dashboardData =
+    reviewState.status === "success" ? reviewState.data.dashboard : null;
+  const currency = (value: string) => value || "TWD";
+
+  return (
+    <section className="review-section" aria-labelledby="dashboard-metrics-title">
+      <div className="section-heading">
+        <div>
+          <h3 id="dashboard-metrics-title">Read-only spend snapshot</h3>
+          <p className="empty-state">
+            Active-only expense cards from loaded review data.
+          </p>
+        </div>
+        <p className="session-status session-ready">Read-only</p>
+      </div>
+
+      {canLoad && !dashboardData ? (
+        <p className="status-message" role="status">
+          Loading read-only spend snapshot from cached review data...
+        </p>
+      ) : null}
+
+      {dashboardData ? (
+        <div className="dashboard-card-strip">
+          <article className="dashboard-card">
+            <span className="dashboard-card-label">Today spending</span>
+            <strong>{formatAmount(dashboardData.todaySpending, currency("TWD"))}</strong>
+          </article>
+
+          <article className="dashboard-card">
+            <span className="dashboard-card-label">This month spending</span>
+            <strong>{formatAmount(dashboardData.thisMonthSpending, currency("TWD"))}</strong>
+          </article>
+
+          <article className="dashboard-card">
+            <span className="dashboard-card-label">Recent 7-day spending</span>
+            <strong>{formatAmount(dashboardData.recent7DaySpending, currency("TWD"))}</strong>
+          </article>
+
+          <article className="dashboard-card dashboard-card--category">
+            <span className="dashboard-card-label">
+              Largest spending category this month
+            </span>
+            <strong>{dashboardData.topCategoryLabel}</strong>
+            <p>
+              {formatAmount(
+                dashboardData.topCategoryAmount,
+                currency(dashboardData.topCategoryCurrency),
+              )}
+            </p>
+          </article>
+
+          <article className="dashboard-card dashboard-card--category">
+            <span className="dashboard-card-label">
+              Category spending top 5 this month
+            </span>
+            {dashboardData.topCategoriesThisMonth.length > 0 ? (
+              <ol className="dashboard-category-list">
+                {dashboardData.topCategoriesThisMonth.map((category) => (
+                  <li key={category.label}>
+                    <span>{category.label}</span>
+                    <strong>{formatAmount(category.amount, currency(category.currency))}</strong>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="empty-state">No category spend in this month.</p>
+            )}
+          </article>
+        </div>
+      ) : (
+        !canLoad && (
+          <p className="status-message status-muted" role="status">
+            Sign in to load spend snapshot cards.
+          </p>
+        )
+      )}
     </section>
   );
 }
