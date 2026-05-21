@@ -12,6 +12,7 @@ type SubmitState =
       activityDate: string;
       amount: string;
       description: string;
+      movementType: QuickCaptureMode;
     }
   | { status: "failure"; message: string };
 
@@ -24,8 +25,10 @@ type RuntimeConfig = {
   supabaseUrl: string;
   publishableKey: string;
   functionUrl: string;
-  accountId: string;
-  categoryId: string;
+  expenseAccountId: string;
+  expenseCategoryId: string;
+  incomeAccountId: string;
+  incomeCategoryId: string;
 };
 
 type RuntimeStatusItem = {
@@ -35,6 +38,7 @@ type RuntimeStatusItem = {
 
 type MovementType = "income" | "expense" | "transfer" | "adjustment";
 type MovementFilter = "all" | MovementType;
+type QuickCaptureMode = "expense" | "income";
 
 type FinanceActivityRow = {
   id: string;
@@ -145,8 +149,26 @@ const RUNTIME_ENVIRONMENT_FIELDS: Array<{
   { name: "NEXT_PUBLIC_SUPABASE_URL", key: "supabaseUrl" },
   { name: "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", key: "publishableKey" },
   { name: "NEXT_PUBLIC_FINANCE_FUNCTION_URL", key: "functionUrl" },
-  { name: "NEXT_PUBLIC_DEFAULT_EXPENSE_ACCOUNT_ID", key: "accountId" },
-  { name: "NEXT_PUBLIC_DEFAULT_EXPENSE_CATEGORY_ID", key: "categoryId" },
+  { name: "NEXT_PUBLIC_DEFAULT_EXPENSE_ACCOUNT_ID", key: "expenseAccountId" },
+  { name: "NEXT_PUBLIC_DEFAULT_EXPENSE_CATEGORY_ID", key: "expenseCategoryId" },
+  { name: "NEXT_PUBLIC_DEFAULT_INCOME_ACCOUNT_ID", key: "incomeAccountId" },
+  { name: "NEXT_PUBLIC_DEFAULT_INCOME_CATEGORY_ID", key: "incomeCategoryId" },
+];
+
+const CORE_RUNTIME_KEYS: Array<keyof RuntimeConfig> = [
+  "supabaseUrl",
+  "publishableKey",
+  "functionUrl",
+];
+const EXPENSE_RUNTIME_KEYS: Array<keyof RuntimeConfig> = [
+  ...CORE_RUNTIME_KEYS,
+  "expenseAccountId",
+  "expenseCategoryId",
+];
+const INCOME_RUNTIME_KEYS: Array<keyof RuntimeConfig> = [
+  ...CORE_RUNTIME_KEYS,
+  "incomeAccountId",
+  "incomeCategoryId",
 ];
 
 const REQUEST_FAILURE_MESSAGE =
@@ -176,8 +198,10 @@ const runtimeConfig: RuntimeConfig = {
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
   publishableKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "",
   functionUrl: process.env.NEXT_PUBLIC_FINANCE_FUNCTION_URL ?? "",
-  accountId: process.env.NEXT_PUBLIC_DEFAULT_EXPENSE_ACCOUNT_ID ?? "",
-  categoryId: process.env.NEXT_PUBLIC_DEFAULT_EXPENSE_CATEGORY_ID ?? "",
+  expenseAccountId: process.env.NEXT_PUBLIC_DEFAULT_EXPENSE_ACCOUNT_ID ?? "",
+  expenseCategoryId: process.env.NEXT_PUBLIC_DEFAULT_EXPENSE_CATEGORY_ID ?? "",
+  incomeAccountId: process.env.NEXT_PUBLIC_DEFAULT_INCOME_ACCOUNT_ID ?? "",
+  incomeCategoryId: process.env.NEXT_PUBLIC_DEFAULT_INCOME_CATEGORY_ID ?? "",
 };
 
 function currentLocalDate(): string {
@@ -200,8 +224,11 @@ function defaultReviewDateRange() {
   };
 }
 
-function hasRuntimeConfig(config: RuntimeConfig): boolean {
-  return Object.values(config).every((value) => value.trim().length > 0);
+function hasRuntimeFields(
+  config: RuntimeConfig,
+  keys: Array<keyof RuntimeConfig>,
+): boolean {
+  return keys.every((key) => config[key].trim().length > 0);
 }
 
 function runtimeEnvironmentStatus(config: RuntimeConfig): RuntimeStatusItem[] {
@@ -219,6 +246,25 @@ function isPositiveIntegerAmount(value: string): boolean {
 
   const parsed = Number(trimmed);
   return Number.isSafeInteger(parsed) && parsed > 0;
+}
+
+function quickCaptureModeLabel(mode: QuickCaptureMode): string {
+  return mode === "income" ? "收入" : "支出";
+}
+
+function runtimeRefsForMode(
+  config: RuntimeConfig,
+  mode: QuickCaptureMode,
+): { accountId: string; categoryId: string } {
+  return mode === "income"
+    ? {
+        accountId: config.incomeAccountId,
+        categoryId: config.incomeCategoryId,
+      }
+    : {
+        accountId: config.expenseAccountId,
+        categoryId: config.expenseCategoryId,
+      };
 }
 
 function extractSafeErrorCode(body: unknown): string | null {
@@ -239,18 +285,23 @@ function extractSafeErrorCode(body: unknown): string | null {
   return code;
 }
 
-function safeFailureMessage(code: string | null): string {
+function safeFailureMessage(
+  code: string | null,
+  mode: QuickCaptureMode,
+): string {
+  const label = quickCaptureModeLabel(mode);
+
   switch (code) {
     case "invalid_account_reference":
-      return "支出未儲存：請確認預設支出帳戶設定為同一位 Staging 使用者的有效帳戶。";
+      return `${label}未儲存：請確認預設${label}帳戶設定為同一位 Staging 使用者的有效帳戶。`;
     case "invalid_category_reference":
-      return "支出未儲存：請確認預設支出分類設定為同一位 Staging 使用者的有效支出分類。";
+      return `${label}未儲存：請確認預設${label}分類設定為同一位 Staging 使用者的有效${label}分類。`;
     case "category_movement_mismatch":
-      return "支出未儲存：請確認預設支出分類與支出類型一致。";
+      return `${label}未儲存：請確認預設${label}分類與${label}類型一致。`;
     default:
       return code
-        ? `支出未儲存，安全錯誤代碼：${code}。`
-        : "支出未儲存，請稍後重試。";
+        ? `${label}未儲存，安全錯誤代碼：${code}。`
+        : `${label}未儲存，請稍後重試。`;
   }
 }
 
@@ -669,6 +720,8 @@ export default function ExpenseEntryPage() {
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [activityDate, setActivityDate] = useState("");
+  const [quickCaptureMode, setQuickCaptureMode] =
+    useState<QuickCaptureMode>("expense");
   const [submitState, setSubmitState] = useState<SubmitState>({
     status: "idle",
   });
@@ -686,8 +739,19 @@ export default function ExpenseEntryPage() {
     status: "idle",
   });
 
-  const configReady = hasRuntimeConfig(runtimeConfig);
   const runtimeStatusItems = runtimeEnvironmentStatus(runtimeConfig);
+  const runtimeReady = runtimeStatusItems.every((item) => item.configured);
+  const coreConfigReady = hasRuntimeFields(runtimeConfig, CORE_RUNTIME_KEYS);
+  const expenseConfigReady = hasRuntimeFields(
+    runtimeConfig,
+    EXPENSE_RUNTIME_KEYS,
+  );
+  const incomeConfigReady = hasRuntimeFields(
+    runtimeConfig,
+    INCOME_RUNTIME_KEYS,
+  );
+  const currentModeConfigReady =
+    quickCaptureMode === "income" ? incomeConfigReady : expenseConfigReady;
   const supabase = useMemo(() => {
     if (!runtimeConfig.supabaseUrl || !runtimeConfig.publishableKey) {
       return null;
@@ -753,7 +817,12 @@ export default function ExpenseEntryPage() {
   }, [supabase]);
 
   const loadReviewData = useCallback(async () => {
-    if (!configReady || !supabase || authStatus !== "signed_in" || !session) {
+    if (
+      !coreConfigReady ||
+      !supabase ||
+      authStatus !== "signed_in" ||
+      !session
+    ) {
       setReviewState({ status: "idle" });
       return;
     }
@@ -864,7 +933,7 @@ export default function ExpenseEntryPage() {
       });
   }, [
     authStatus,
-    configReady,
+    coreConfigReady,
     movementFilter,
     reviewEndDate,
     reviewStartDate,
@@ -873,20 +942,20 @@ export default function ExpenseEntryPage() {
   ]);
 
   useEffect(() => {
-    if (authStatus === "signed_in" && session && configReady) {
+    if (authStatus === "signed_in" && session && coreConfigReady) {
       void loadReviewData();
       return;
     }
 
     setReviewState({ status: "idle" });
-  }, [authStatus, configReady, loadReviewData, session]);
+  }, [authStatus, coreConfigReady, loadReviewData, session]);
 
   async function handleSignIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setAuthMessage(null);
 
     const trimmedEmail = email.trim();
-    if (!configReady || !supabase) {
+    if (!coreConfigReady || !supabase) {
       setAuthMessage({
         status: "failure",
         message: "執行環境設定不完整，先補齊設定後再試。",
@@ -975,6 +1044,11 @@ export default function ExpenseEntryPage() {
     clearSettledSubmitState();
   }
 
+  function handleQuickCaptureModeChange(mode: QuickCaptureMode) {
+    setQuickCaptureMode(mode);
+    clearSettledSubmitState();
+  }
+
   function handleBeginVoidCorrection(activityId: string) {
     setVoidState({ status: "confirming", activityId, reason: "" });
   }
@@ -1017,7 +1091,7 @@ export default function ExpenseEntryPage() {
       return;
     }
 
-    if (!configReady || !supabase) {
+    if (!coreConfigReady || !supabase) {
       setVoidState({
         status: "failure",
         message: "執行環境設定不完整，無法送出作廢請求。",
@@ -1107,14 +1181,24 @@ export default function ExpenseEntryPage() {
     const trimmedAmount = amount.trim();
     const trimmedDescription = description.trim();
     const requestDate = activityDate || currentLocalDate();
+    const modeLabel = quickCaptureModeLabel(quickCaptureMode);
+    const selectedRefs = runtimeRefsForMode(runtimeConfig, quickCaptureMode);
 
-      if (!configReady || !supabase) {
-        setSubmitState({
-          status: "failure",
-          message: "執行環境設定不完整，無法儲存。",
-        });
-        return;
-      }
+    if (!coreConfigReady || !supabase) {
+      setSubmitState({
+        status: "failure",
+        message: "執行環境設定不完整，無法儲存。",
+      });
+      return;
+    }
+
+    if (!currentModeConfigReady) {
+      setSubmitState({
+        status: "failure",
+        message: `${modeLabel}設定不完整，請先補齊缺少的 ${modeLabel} runtime env names。`,
+      });
+      return;
+    }
 
     if (!isPositiveIntegerAmount(trimmedAmount)) {
       setSubmitState({
@@ -1142,7 +1226,7 @@ export default function ExpenseEntryPage() {
     if (sessionError || !currentSession?.access_token) {
       setSubmitState({
         status: "failure",
-        message: "請先登入後再儲存支出。",
+        message: `請先登入後再儲存${modeLabel}。`,
       });
       return;
     }
@@ -1160,11 +1244,11 @@ export default function ExpenseEntryPage() {
         },
         body: JSON.stringify({
           activity_date: requestDate,
-          movement_type: "expense",
+          movement_type: quickCaptureMode,
           amount: trimmedAmount,
           currency: "TWD",
-          account_id: runtimeConfig.accountId,
-          category_id: runtimeConfig.categoryId,
+          account_id: selectedRefs.accountId,
+          category_id: selectedRefs.categoryId,
           description: trimmedDescription,
         }),
       });
@@ -1189,7 +1273,7 @@ export default function ExpenseEntryPage() {
       const code = extractSafeErrorCode(responseBody);
       setSubmitState({
         status: "failure",
-        message: safeFailureMessage(code),
+        message: safeFailureMessage(code, quickCaptureMode),
       });
       return;
     }
@@ -1202,24 +1286,27 @@ export default function ExpenseEntryPage() {
       activityDate: requestDate,
       amount: trimmedAmount,
       description: trimmedDescription,
+      movementType: quickCaptureMode,
     });
     void loadReviewData();
   }
+
+  const quickCaptureLabel = quickCaptureModeLabel(quickCaptureMode);
 
   return (
     <main className="app-shell" aria-labelledby="page-title">
       <section className="entry-panel">
         <div className="page-heading">
-          <p className="eyebrow">Staging 支出輸入</p>
-          <h1 id="page-title">財務支出記錄</h1>
+          <p className="eyebrow">Staging 快速輸入</p>
+          <h1 id="page-title">財務快速記錄</h1>
           <p className="summary">
-            透過 Staging 入口記錄一筆整數 TWD 支出。
+            支出為預設，可切換收入；每次送出一筆整數 TWD 紀錄。
           </p>
         </div>
 
         <div className="setup-stack" aria-label="Staging 設定與登入狀態">
           <RuntimeReadiness
-            configured={configReady}
+            configured={runtimeReady}
             items={runtimeStatusItems}
           />
 
@@ -1269,7 +1356,7 @@ export default function ExpenseEntryPage() {
 
                 <button
                   className="submit-button"
-                  disabled={authLoading || !configReady}
+                  disabled={authLoading || !coreConfigReady}
                   type="submit"
                 >
                   {authLoading ? "登入中..." : "登入"}
@@ -1281,8 +1368,33 @@ export default function ExpenseEntryPage() {
           </section>
         </div>
 
-        <div className="quick-capture-block" aria-label="快速支出輸入">
+        <div className="quick-capture-block" aria-label="快速財務輸入">
           <form className="entry-form" onSubmit={handleSubmit}>
+            <div
+              className="mode-control"
+              role="radiogroup"
+              aria-label="快速輸入模式"
+            >
+              <span>記錄類型</span>
+              <div className="mode-options">
+                {(["expense", "income"] as const).map((mode) => (
+                  <button
+                    aria-checked={quickCaptureMode === mode}
+                    className={`mode-option ${
+                      quickCaptureMode === mode ? "mode-option-active" : ""
+                    }`}
+                    disabled={submitState.status === "loading"}
+                    key={mode}
+                    onClick={() => handleQuickCaptureModeChange(mode)}
+                    role="radio"
+                    type="button"
+                  >
+                    {quickCaptureModeLabel(mode)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <label className="field">
               <span>金額</span>
               <input
@@ -1304,7 +1416,7 @@ export default function ExpenseEntryPage() {
               <textarea
                 name="description"
                 onChange={(event) => handleDescriptionChange(event.target.value)}
-                placeholder="簡短支出備註"
+                placeholder={`簡短${quickCaptureLabel}備註`}
                 required
                 rows={4}
                 value={description}
@@ -1312,7 +1424,7 @@ export default function ExpenseEntryPage() {
             </label>
 
             <div className="fixed-details" aria-label="提交明細">
-              <span>支出</span>
+              <span>{quickCaptureLabel}</span>
               <span>TWD</span>
               <span>{activityDate || "本機目前日期"}</span>
             </div>
@@ -1322,26 +1434,33 @@ export default function ExpenseEntryPage() {
               disabled={
                 submitState.status === "loading" ||
                 authStatus !== "signed_in" ||
-                !configReady
+                !currentModeConfigReady
               }
               type="submit"
             >
               {submitState.status === "loading"
                 ? "儲存中..."
-                : !configReady
+                : !coreConfigReady
                 ? "請先完成執行環境設定"
+                : !currentModeConfigReady
+                ? `請先完成${quickCaptureLabel}設定`
                 : authStatus === "signed_in"
-                ? "儲存支出"
+                ? `儲存${quickCaptureLabel}`
                 : "請先登入後儲存"}
             </button>
           </form>
 
-          <StatusMessage state={submitState} configReady={configReady} />
+          <StatusMessage
+            coreConfigReady={coreConfigReady}
+            mode={quickCaptureMode}
+            modeConfigReady={currentModeConfigReady}
+            state={submitState}
+          />
         </div>
       </section>
 
       <FinanceReviewPanel
-        canLoad={configReady && authStatus === "signed_in"}
+        canLoad={coreConfigReady && authStatus === "signed_in"}
         endDate={reviewEndDate}
         movementFilter={movementFilter}
         onBeginVoidCorrection={handleBeginVoidCorrection}
@@ -1440,13 +1559,19 @@ function AuthMessageView({ message }: { message: AuthMessage | null }) {
 }
 
 function StatusMessage({
+  coreConfigReady,
+  mode,
+  modeConfigReady,
   state,
-  configReady,
 }: {
+  coreConfigReady: boolean;
+  mode: QuickCaptureMode;
+  modeConfigReady: boolean;
   state: SubmitState;
-  configReady: boolean;
 }) {
-  if (!configReady) {
+  const label = quickCaptureModeLabel(mode);
+
+  if (!coreConfigReady) {
     return (
       <p className="status-message status-warning" role="status">
         執行環境設定不完整，送出前先補齊缺少的環境設定名稱。
@@ -1454,18 +1579,29 @@ function StatusMessage({
     );
   }
 
+  if (!modeConfigReady) {
+    return (
+      <p className="status-message status-warning" role="status">
+        {label}設定不完整，送出前先補齊缺少的 {label} runtime env names。
+      </p>
+    );
+  }
+
   if (state.status === "loading") {
     return (
-        <p className="status-message" role="status">
-        儲存支出中...
+      <p className="status-message" role="status">
+        儲存{label}中...
       </p>
     );
   }
 
   if (state.status === "success") {
+    const savedLabel = quickCaptureModeLabel(state.movementType);
+
     return (
       <p className="status-message status-success" role="status">
-        已儲存支出：{state.activityDate}，TWD {state.amount}，{state.description}。
+        已儲存{savedLabel}：{state.activityDate}，TWD {state.amount}，
+        {state.description}。
         可直接輸入下一筆。
       </p>
     );
@@ -1480,8 +1616,8 @@ function StatusMessage({
   }
 
   return (
-      <p className="status-message status-muted" role="status">
-        可直接輸入一筆支出。
+    <p className="status-message status-muted" role="status">
+      可直接輸入一筆{label}。
     </p>
   );
 }
