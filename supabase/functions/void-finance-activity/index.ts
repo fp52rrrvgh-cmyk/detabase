@@ -30,8 +30,6 @@ type CallerContext = {
   accessToken: string;
   supabaseUrl: string;
   publishableKey: string;
-  privilegedKey: string;
-  privilegedKeyKind: "jwt" | "secret";
 };
 
 type ValidatedInput = {
@@ -39,10 +37,9 @@ type ValidatedInput = {
   reason: string;
 };
 
-type FinanceActivity = {
-  id: string;
-  user_id: string;
-  movement_type: string;
+type VoidRpcResult = {
+  ok: boolean;
+  code: string;
 };
 
 function jsonResponse(status: number, body: JsonObject): Response {
@@ -187,53 +184,6 @@ function getPublishableKey(): string | null {
     null;
 }
 
-function readDefaultKeyFromDictionary(value: string | undefined): string | null {
-  if (!value) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(value);
-    if (isJsonObject(parsed) && typeof parsed.default === "string") {
-      return parsed.default;
-    }
-  } catch {
-    return null;
-  }
-
-  return null;
-}
-
-function isModernSecretKey(value: string): boolean {
-  return value.startsWith("sb_secret_");
-}
-
-function getPrivilegedKey():
-  | { value: string; kind: "jwt" | "secret" }
-  | null {
-  const hostedSecretKey = readDefaultKeyFromDictionary(
-    Deno.env.get("SUPABASE_SECRET_KEYS"),
-  );
-  if (hostedSecretKey) {
-    return { value: hostedSecretKey, kind: "secret" };
-  }
-
-  const explicitSecretKey = Deno.env.get("SUPABASE_SECRET_KEY");
-  if (explicitSecretKey) {
-    return { value: explicitSecretKey, kind: "secret" };
-  }
-
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (serviceRoleKey) {
-    return {
-      value: serviceRoleKey,
-      kind: isModernSecretKey(serviceRoleKey) ? "secret" : "jwt",
-    };
-  }
-
-  return null;
-}
-
 function enforceStagingRuntime(): Response | null {
   const environmentLabel = Deno.env.get("DETABASE_ENVIRONMENT");
 
@@ -274,14 +224,13 @@ function extractBearerToken(req: Request): string | Response {
 function createCallerContext(req: Request): CallerContext | Response {
   const rawSupabaseUrl = Deno.env.get("SUPABASE_URL");
   const publishableKey = getPublishableKey();
-  const privilegedCredential = getPrivilegedKey();
   const accessToken = extractBearerToken(req);
 
   if (accessToken instanceof Response) {
     return accessToken;
   }
 
-  if (!rawSupabaseUrl || !publishableKey || !privilegedCredential) {
+  if (!rawSupabaseUrl || !publishableKey) {
     return safeFailure(
       500,
       "void_not_allowed",
@@ -293,8 +242,6 @@ function createCallerContext(req: Request): CallerContext | Response {
     accessToken,
     supabaseUrl: normalizeSupabaseUrl(rawSupabaseUrl),
     publishableKey,
-    privilegedKey: privilegedCredential.value,
-    privilegedKeyKind: privilegedCredential.kind,
   };
 }
 
@@ -305,30 +252,12 @@ function callerHeaders(caller: CallerContext): Record<string, string> {
   };
 }
 
-function privilegedHeaders(caller: CallerContext): Record<string, string> {
-  const headers: Record<string, string> = {
-    apikey: caller.privilegedKey,
-  };
-
-  if (caller.privilegedKeyKind === "jwt") {
-    headers.Authorization = `Bearer ${caller.privilegedKey}`;
-  }
-
-  return headers;
-}
-
 async function readJson(response: Response): Promise<unknown> {
   try {
     return await response.json();
   } catch {
     return null;
   }
-}
-
-function restUrl(caller: CallerContext, table: string, select: string): URL {
-  const url = new URL(`${caller.supabaseUrl}/rest/v1/${table}`);
-  url.searchParams.set("select", select);
-  return url;
 }
 
 async function resolveUserId(
@@ -350,147 +279,118 @@ async function resolveUserId(
   return data.id;
 }
 
-async function findOwnedActivity(
-  caller: CallerContext,
-  userId: string,
-  activityId: string,
-): Promise<FinanceActivity | Response> {
-  const url = restUrl(
-    caller,
-    "finance_activities",
-    "id,user_id,movement_type",
-  );
-  url.searchParams.set("id", `eq.${activityId}`);
-  url.searchParams.set("user_id", `eq.${userId}`);
-  url.searchParams.set("limit", "1");
+function parseVoidRpcResult(data: unknown): VoidRpcResult | null {
+  const result = Array.isArray(data) ? data[0] : data;
 
-  const response = await fetch(url, {
-    headers: privilegedHeaders(caller),
-  });
-  const data = await readJson(response);
-
-  if (!response.ok || !Array.isArray(data)) {
-    return safeFailure(
-      403,
-      "void_not_allowed",
-      "Activity reference could not be checked safely.",
-    );
-  }
-
-  if (data.length === 0) {
-    return safeFailure(
-      404,
-      "activity_not_found",
-      "Activity was not found for this caller.",
-    );
-  }
-
-  const activity = data[0];
   if (
-    !isJsonObject(activity) ||
-    typeof activity.id !== "string" ||
-    typeof activity.user_id !== "string" ||
-    typeof activity.movement_type !== "string"
+    !isJsonObject(result) ||
+    typeof result.ok !== "boolean" ||
+    typeof result.code !== "string"
   ) {
-    return safeFailure(
-      403,
-      "void_not_allowed",
-      "Activity reference could not be checked safely.",
-    );
+    return null;
   }
 
-  return activity as FinanceActivity;
+  return {
+    ok: result.ok,
+    code: result.code,
+  };
 }
 
-async function hasExistingVoidCorrection(
-  caller: CallerContext,
-  userId: string,
-  activityId: string,
-): Promise<boolean | Response> {
-  const url = restUrl(
-    caller,
-    "finance_activity_corrections",
-    "correction_type",
-  );
-  url.searchParams.set("owner_user_id", `eq.${userId}`);
-  url.searchParams.set("activity_id", `eq.${activityId}`);
-  url.searchParams.set("correction_type", `eq.${CORRECTION_TYPE}`);
-  url.searchParams.set("limit", "1");
-
-  const response = await fetch(url, {
-    headers: privilegedHeaders(caller),
-  });
-  const data = await readJson(response);
-
-  if (!response.ok || !Array.isArray(data)) {
-    return safeFailure(
-      403,
-      "void_not_allowed",
-      "Void correction state could not be checked safely.",
-    );
-  }
-
-  return data.length > 0;
-}
-
-async function insertVoidCorrection(
-  caller: CallerContext,
-  userId: string,
-  activityId: string,
-  reason: string,
-): Promise<Response | null> {
-  const url = restUrl(
-    caller,
-    "finance_activity_corrections",
-    "correction_type",
-  );
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      ...privilegedHeaders(caller),
-      "content-type": "application/json",
-      prefer: "return=representation",
-    },
-    body: JSON.stringify({
-      activity_id: activityId,
-      owner_user_id: userId,
-      correction_type: CORRECTION_TYPE,
-      reason,
-      created_by: userId,
-    }),
-  });
-  const data = await readJson(response);
-
-  if (!response.ok) {
-    if (response.status === 409 || isDuplicateError(data)) {
+function failureForVoidRpcCode(code: string): Response {
+  switch (code) {
+    case "not_authenticated":
+      return safeFailure(
+        401,
+        "void_not_allowed",
+        "Authenticated request is required.",
+      );
+    case "invalid_activity_reference":
+      return safeFailure(
+        400,
+        "invalid_activity_reference",
+        "A valid activity reference is required.",
+      );
+    case "invalid_reason":
+      return safeFailure(
+        400,
+        "invalid_reason",
+        "A non-empty void reason is required.",
+      );
+    case "activity_not_found":
+      return safeFailure(
+        404,
+        "activity_not_found",
+        "Activity was not found for this caller.",
+      );
+    case "activity_not_expense":
+      return safeFailure(
+        422,
+        "activity_not_expense",
+        "Only expense activities can be voided.",
+      );
+    case "activity_already_voided":
       return safeFailure(
         409,
         "activity_already_voided",
         "Activity already has a void correction.",
       );
-    }
-
-    return safeFailure(
-      500,
-      "void_insert_failed",
-      "Void correction could not be saved safely.",
-    );
+    case "void_not_allowed":
+      return safeFailure(
+        403,
+        "void_not_allowed",
+        "Void correction is not allowed for this request.",
+      );
+    default:
+      return safeFailure(
+        500,
+        "void_insert_failed",
+        "Void correction could not be saved safely.",
+      );
   }
-
-  if (!Array.isArray(data) || data.length !== 1) {
-    return safeFailure(
-      500,
-      "void_insert_failed",
-      "Void correction could not be saved safely.",
-    );
-  }
-
-  return null;
 }
 
-function isDuplicateError(data: unknown): boolean {
-  return isJsonObject(data) && data.code === "23505";
+async function callVoidFinanceActivityRpc(
+  caller: CallerContext,
+  input: ValidatedInput,
+): Promise<Response | null> {
+  const response = await fetch(
+    `${caller.supabaseUrl}/rest/v1/rpc/void_finance_activity`,
+    {
+      method: "POST",
+      headers: {
+        ...callerHeaders(caller),
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        p_activity_id: input.activityId,
+        p_reason: input.reason,
+      }),
+    },
+  );
+  const data = await readJson(response);
+
+  if (!response.ok) {
+    return safeFailure(
+      500,
+      "void_insert_failed",
+      "Void correction could not be saved safely.",
+    );
+  }
+
+  const result = parseVoidRpcResult(data);
+  if (!result) {
+    return safeFailure(
+      500,
+      "void_insert_failed",
+      "Void correction could not be saved safely.",
+    );
+  }
+
+  if (result.ok && result.code === "void_created") {
+    return null;
+  }
+
+  return failureForVoidRpcCode(result.code);
 }
 
 async function handlePost(req: Request): Promise<Response> {
@@ -557,49 +457,14 @@ async function handlePost(req: Request): Promise<Response> {
     return caller;
   }
 
-  const userId = await resolveUserId(caller);
-  if (userId instanceof Response) {
-    return userId;
+  const resolvedUserId = await resolveUserId(caller);
+  if (resolvedUserId instanceof Response) {
+    return resolvedUserId;
   }
 
-  const activity = await findOwnedActivity(caller, userId, input.activityId);
-  if (activity instanceof Response) {
-    return activity;
-  }
-
-  if (activity.movement_type !== "expense") {
-    return safeFailure(
-      422,
-      "activity_not_expense",
-      "Only expense activities can be voided.",
-    );
-  }
-
-  const alreadyVoided = await hasExistingVoidCorrection(
-    caller,
-    userId,
-    input.activityId,
-  );
-  if (alreadyVoided instanceof Response) {
-    return alreadyVoided;
-  }
-
-  if (alreadyVoided) {
-    return safeFailure(
-      409,
-      "activity_already_voided",
-      "Activity already has a void correction.",
-    );
-  }
-
-  const insertFailure = await insertVoidCorrection(
-    caller,
-    userId,
-    input.activityId,
-    input.reason,
-  );
-  if (insertFailure) {
-    return insertFailure;
+  const rpcFailure = await callVoidFinanceActivityRpc(caller, input);
+  if (rpcFailure) {
+    return rpcFailure;
   }
 
   return jsonResponse(201, {
