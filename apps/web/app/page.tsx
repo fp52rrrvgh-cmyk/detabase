@@ -56,6 +56,8 @@ type ReferenceRow = {
 type CorrectionRow = {
   activity_id: string | null;
   correction_type: string | null;
+  reason: string | null;
+  created_at: string | null;
 };
 
 type DisplayActivity = {
@@ -67,6 +69,12 @@ type DisplayActivity = {
   categoryName: string;
   description: string;
   createdAt: string | null;
+};
+
+type VoidAuditItem = DisplayActivity & {
+  correctionType: string;
+  reason: string;
+  correctionCreatedAt: string | null;
 };
 
 type TotalLine = {
@@ -81,6 +89,7 @@ type ReviewData = {
   movementTotals: TotalLine[];
   categoryTotals: TotalLine[];
   accountTotals: TotalLine[];
+  voidAuditItems: VoidAuditItem[];
 };
 
 type ReviewState =
@@ -292,6 +301,7 @@ function activeReviewActivities(
 
 function buildReviewData(
   activities: FinanceActivityRow[],
+  corrections: CorrectionRow[],
   accounts: ReferenceRow[],
   categories: ReferenceRow[],
 ): ReviewData {
@@ -307,9 +317,57 @@ function buildReviewData(
       category.display_name?.trim() || "Unnamed category",
     ]),
   );
+  const activeActivities = activeReviewActivities(activities, corrections);
+  const activityById = new Map(
+    activities.map((activity) => [activity.id, activity]),
+  );
+  const voidAuditItems = corrections
+    .filter((correction) => correction.correction_type === "void")
+    .map((correction): VoidAuditItem | null => {
+      const activity = correction.activity_id
+        ? activityById.get(correction.activity_id)
+        : null;
+
+      if (!activity) {
+        return null;
+      }
+
+      return {
+        activityDate: activity.activity_date,
+        movementType: activity.movement_type,
+        amount: normalizeAmount(activity.amount),
+        currency: activity.currency || "TWD",
+        accountName: safeReferenceLabel(
+          accountNames,
+          activity.account_id,
+          "No account",
+        ),
+        categoryName: safeReferenceLabel(
+          categoryNames,
+          activity.category_id,
+          "No category",
+        ),
+        description: activity.description?.trim() || "No description",
+        createdAt: activity.created_at,
+        correctionType: "void",
+        reason: correction.reason?.trim() || "No reason shown",
+        correctionCreatedAt: correction.created_at,
+      };
+    })
+    .filter((item): item is VoidAuditItem => item !== null)
+    .sort((left, right) => {
+      const leftTime = left.correctionCreatedAt
+        ? new Date(left.correctionCreatedAt).getTime()
+        : 0;
+      const rightTime = right.correctionCreatedAt
+        ? new Date(right.correctionCreatedAt).getTime()
+        : 0;
+
+      return rightTime - leftTime;
+    });
 
   return {
-    activities: activities.slice(0, 25).map((activity) => ({
+    activities: activeActivities.slice(0, 25).map((activity) => ({
       activityDate: activity.activity_date,
       movementType: activity.movement_type,
       amount: normalizeAmount(activity.amount),
@@ -327,17 +385,18 @@ function buildReviewData(
       description: activity.description?.trim() || "No description",
       createdAt: activity.created_at,
     })),
-    dateRangeTotals: summarizeTotals(activities, () => "Selected range"),
+    dateRangeTotals: summarizeTotals(activeActivities, () => "Selected range"),
     movementTotals: summarizeTotals(
-      activities,
+      activeActivities,
       (activity) => activity.movement_type || "Unknown movement",
     ),
-    categoryTotals: summarizeTotals(activities, (activity) =>
+    categoryTotals: summarizeTotals(activeActivities, (activity) =>
       safeReferenceLabel(categoryNames, activity.category_id, "No category"),
     ),
-    accountTotals: summarizeTotals(activities, (activity) =>
+    accountTotals: summarizeTotals(activeActivities, (activity) =>
       safeReferenceLabel(accountNames, activity.account_id, "No account"),
     ),
+    voidAuditItems,
   };
 }
 
@@ -363,6 +422,7 @@ export default function ExpenseEntryPage() {
   const [reviewState, setReviewState] = useState<ReviewState>({
     status: "idle",
   });
+  const [showVoidAudit, setShowVoidAudit] = useState(false);
 
   const configReady = hasRuntimeConfig(runtimeConfig);
   const runtimeStatusItems = runtimeEnvironmentStatus(runtimeConfig);
@@ -497,7 +557,7 @@ export default function ExpenseEntryPage() {
     if (activityIds.length > 0) {
       correctionResult = await supabase
         .from("finance_activity_corrections")
-        .select("activity_id,correction_type")
+        .select("activity_id,correction_type,reason,created_at")
         .eq("correction_type", "void")
         .in("activity_id", activityIds)
         .limit(1000);
@@ -531,10 +591,8 @@ export default function ExpenseEntryPage() {
     setReviewState({
       status: "success",
       data: buildReviewData(
-        activeReviewActivities(
-          activities,
-          (correctionResult?.data ?? []) as CorrectionRow[],
-        ),
+        activities,
+        (correctionResult?.data ?? []) as CorrectionRow[],
         (accountResult.data ?? []) as ReferenceRow[],
         (categoryResult.data ?? []) as ReferenceRow[],
       ),
@@ -626,6 +684,7 @@ export default function ExpenseEntryPage() {
     setAuthStatus("signed_out");
     setSubmitState({ status: "idle" });
     setReviewState({ status: "idle" });
+    setShowVoidAudit(false);
     setAuthMessage({
       status: "success",
       message: "Signed out.",
@@ -894,7 +953,9 @@ export default function ExpenseEntryPage() {
         onMovementFilterChange={setMovementFilter}
         onRefresh={() => void loadReviewData()}
         onStartDateChange={setReviewStartDate}
+        onToggleVoidAudit={() => setShowVoidAudit((current) => !current)}
         reviewState={reviewState}
+        showVoidAudit={showVoidAudit}
         startDate={reviewStartDate}
       />
     </main>
@@ -1034,7 +1095,9 @@ function FinanceReviewPanel({
   onMovementFilterChange,
   onRefresh,
   onStartDateChange,
+  onToggleVoidAudit,
   reviewState,
+  showVoidAudit,
   startDate,
 }: {
   canLoad: boolean;
@@ -1044,7 +1107,9 @@ function FinanceReviewPanel({
   onMovementFilterChange: (value: MovementFilter) => void;
   onRefresh: () => void;
   onStartDateChange: (value: string) => void;
+  onToggleVoidAudit: () => void;
   reviewState: ReviewState;
+  showVoidAudit: boolean;
   startDate: string;
 }) {
   const isLoading = reviewState.status === "loading";
@@ -1125,13 +1190,25 @@ function FinanceReviewPanel({
       ) : null}
 
       {reviewState.status === "success" ? (
-        <ReviewContent data={reviewState.data} />
+        <ReviewContent
+          data={reviewState.data}
+          onToggleVoidAudit={onToggleVoidAudit}
+          showVoidAudit={showVoidAudit}
+        />
       ) : null}
     </section>
   );
 }
 
-function ReviewContent({ data }: { data: ReviewData }) {
+function ReviewContent({
+  data,
+  onToggleVoidAudit,
+  showVoidAudit,
+}: {
+  data: ReviewData;
+  onToggleVoidAudit: () => void;
+  showVoidAudit: boolean;
+}) {
   return (
     <div className="review-content">
       <section className="review-section" aria-labelledby="range-total-title">
@@ -1192,6 +1269,77 @@ function ReviewContent({ data }: { data: ReviewData }) {
             No active owned activities match the filters.
           </p>
         )}
+      </section>
+
+      <section className="review-section" aria-labelledby="void-audit-title">
+        <div className="section-heading">
+          <div>
+            <h3 id="void-audit-title">Void audit trail</h3>
+            <p className="empty-state">
+              Intentional read-only visibility for voided activity context.
+            </p>
+          </div>
+          <p className="session-status">
+            {data.voidAuditItems.length} available
+          </p>
+        </div>
+
+        <button
+          aria-controls="void-audit-content"
+          aria-expanded={showVoidAudit}
+          className="secondary-button"
+          onClick={onToggleVoidAudit}
+          type="button"
+        >
+          {showVoidAudit ? "Hide void audit" : "Show void audit"}
+        </button>
+
+        {showVoidAudit ? (
+          <div id="void-audit-content" className="review-content">
+            <p className="status-message status-muted" role="status">
+              Voided activities are excluded from default active review and
+              totals. This audit trail is read-only.
+            </p>
+
+            {data.voidAuditItems.length > 0 ? (
+              <ul className="activity-list">
+                {data.voidAuditItems.map((item, index) => (
+                  <li
+                    className="activity-item"
+                    key={`${item.activityDate}-${item.correctionCreatedAt ?? index}`}
+                  >
+                    <div className="activity-main">
+                      <span>{item.activityDate}</span>
+                      <strong>{formatAmount(item.amount, item.currency)}</strong>
+                    </div>
+                    <div className="activity-meta">
+                      <span>
+                        {item.correctionType === "void"
+                          ? "Voided"
+                          : "Correction"}
+                      </span>
+                      <span>{item.movementType}</span>
+                      <span>{item.accountName}</span>
+                      <span>{item.categoryName}</span>
+                    </div>
+                    <p>{item.description}</p>
+                    <p>Reason: {item.reason}</p>
+                    <small>
+                      Corrected {formatOptionalTimestamp(item.correctionCreatedAt)}
+                    </small>
+                    <small>
+                      Original created {formatOptionalTimestamp(item.createdAt)}
+                    </small>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="empty-state">
+                No void audit records match the selected review filters.
+              </p>
+            )}
+          </div>
+        ) : null}
       </section>
     </div>
   );

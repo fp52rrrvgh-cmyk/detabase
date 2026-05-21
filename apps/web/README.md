@@ -56,15 +56,23 @@ The panel can show:
 Default review and totals use active-only semantics. Activities with an
 effective `void` correction event are excluded from the default recent activity
 list and all default totals. Original `finance_activities` rows remain
-preserved, and `finance_activity_corrections` remains the audit trail. The
-WebApp does not provide audit mode, correction management UI, edit/delete UI,
-or write-capable Dashboard behavior.
+preserved, and `finance_activity_corrections` remains the audit trail.
+
+The WebApp includes intentional read-only void audit visibility inside the
+review panel. The audit trail is not the default view; the operator must
+explicitly open it. The audit trail can show voided activity context, void
+reason, correction timestamp, activity date, movement type, TWD amount,
+currency, account display name, category display name, description, and original
+created timestamp when needed for review ordering. It does not add audit totals.
+It does not provide correction management UI, edit/delete UI, mutation buttons,
+void creation flows, or write-capable Dashboard behavior.
 
 Safe display fields are activity date, movement type, amount, currency, account
-display name, category display name, description, and created timestamp when
-needed for review ordering. The panel must not display credentials, tokens, auth
-headers, runtime values, session values, function URLs containing secrets,
-database URLs, or UUID values from local runtime files.
+display name, category display name, description, void reason, correction
+timestamp, and created timestamp when needed for review ordering. The panel must
+not display credentials, tokens, auth headers, runtime values, session values,
+function URLs containing secrets, database URLs, user identifiers, or UUID
+values from local runtime files.
 
 TWD amount display is whole-number only. The review panel formats TWD activity
 amounts and totals without decimal places.
@@ -144,8 +152,10 @@ Operator flow:
    ready-for-next-expense status.
 8. Confirm the read-only review panel loads recent active owned activities,
    display names, filters, and active-only totals without performing writes.
-9. Repeat entry if needed.
-10. Stop the local server when finished.
+9. Open the void audit trail only when intentional audit inspection is needed,
+   and confirm it remains read-only.
+10. Repeat entry if needed.
+11. Stop the local server when finished.
 
 The request shape remains `activity_date`, `movement_type = expense`, positive
 whole TWD amount, `currency = TWD`, configured account/category UUID refs, and
