@@ -1209,6 +1209,9 @@ function FinanceReviewPanel({
           data={reviewState.data}
           onToggleVoidAudit={onToggleVoidAudit}
           showVoidAudit={showVoidAudit}
+          reviewMovementFilter={movementFilter}
+          reviewStartDate={startDate}
+          reviewEndDate={endDate}
         />
       ) : null}
     </section>
@@ -1270,12 +1273,34 @@ function ReviewStateStrip({
 function ReviewContent({
   data,
   onToggleVoidAudit,
+  reviewMovementFilter,
+  reviewStartDate,
+  reviewEndDate,
   showVoidAudit,
 }: {
   data: ReviewData;
   onToggleVoidAudit: () => void;
+  reviewMovementFilter: MovementFilter;
+  reviewStartDate: string;
+  reviewEndDate: string;
   showVoidAudit: boolean;
 }) {
+  const isDefaultFilter = reviewMovementFilter === "all";
+  const dateRangeLabel =
+    reviewStartDate && reviewEndDate
+      ? `${reviewStartDate} to ${reviewEndDate}`
+      : "the current date range";
+
+  const emptyStateTitle = isDefaultFilter
+    ? "No review activities found for this date range."
+    : "No activities match the current review filters.";
+
+  const emptyStateHint = isDefaultFilter
+    ? "This panel is read-only. Add a new expense from quick capture, then return here to review it."
+    : `Adjust the read-only filters to broaden the result (${dateRangeLabel}, movement ${movementFilterLabel(
+        reviewMovementFilter,
+      )}).`;
+
   return (
     <div className="review-content">
       <section className="review-section" aria-labelledby="range-total-title">
@@ -1333,12 +1358,14 @@ function ReviewContent({
           </ul>
         ) : (
           <p className="empty-state">
-            No active owned activities match the filters.
+            {emptyStateTitle}
+            <br />
+            {emptyStateHint}
           </p>
         )}
       </section>
 
-      <section className="review-section" aria-labelledby="void-audit-title">
+        <section className="review-section" aria-labelledby="void-audit-title">
         <div className="section-heading">
           <div>
             <h3 id="void-audit-title">Void audit trail</h3>
