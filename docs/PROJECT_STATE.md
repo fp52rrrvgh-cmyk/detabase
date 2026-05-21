@@ -353,6 +353,25 @@
   - no private/runtime value disclosure.
 - PR #232 and Issue #233 introduced no production access, no schema/migration/config changes, no function changes, no new Dashboard reporting logic, no write behavior, no AI/Projection, no transfer/adjustment flows, no legacy Sheets/GAS work, no versioning, and no production-ready claim.
 - PR #232 and Issue #233 validation were performed without repo file changes during validation.
+- Issue #236 is closed as completed after merged-main rerun validation for multi-date grouped review behavior.
+- Issue #236 validation confirmed:
+  - `npm run build` in `apps/web` passed.
+  - staging sign-in passed.
+  - read-only review list loaded from merged main and returned owned rows.
+  - multiple `activity_date` groups observed: `2026-05-20: 1 active row`, `2026-05-21: 7 active rows`.
+  - per-date row counts matched displayed rows.
+  - grouped section labels and counts used safe text only.
+  - row content used existing safe fields only.
+  - active-only review remained default.
+  - active-only totals remained default.
+  - void audit remained intentional and non-default.
+  - no mutation controls or void/edit flow were introduced.
+  - review-panel writes performed: no.
+  - operator-approved staging quick-capture prep write was used only to create sufficient date distribution.
+  - no production access.
+  - no repo file changes during validation.
+  - private/runtime values were not disclosed.
+- PRs related to #236 introduced no code/config/schema/API/function changes, no production access, no private-value disclosure, and no production-ready claim.
 
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
