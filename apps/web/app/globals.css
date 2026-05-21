@@ -85,9 +85,9 @@ textarea {
 .dashboard-card {
   min-height: 96px;
   display: grid;
-  gap: 4px;
-  align-content: center;
-  padding: 10px;
+  gap: 6px;
+  align-content: start;
+  padding: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
@@ -100,7 +100,8 @@ textarea {
   line-height: 1.2;
 }
 
-.dashboard-card strong {
+.dashboard-card strong,
+.dashboard-card-value {
   color: var(--text);
   font-size: 0.96rem;
   line-height: 1.2;
@@ -111,6 +112,22 @@ textarea {
   color: var(--muted);
   font-size: 0.82rem;
   line-height: 1.3;
+}
+
+.dashboard-card .status-message {
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 0.8rem;
+}
+
+.dashboard-card-context {
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.dashboard-card-amount {
+  font-weight: 700;
 }
 
 .dashboard-card--category {
