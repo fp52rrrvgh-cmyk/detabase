@@ -61,9 +61,15 @@ textarea {
   box-shadow: var(--shadow);
 }
 
-.review-panel {
+.entry-panel {
   display: grid;
   gap: 18px;
+}
+
+.review-panel {
+  width: min(100%, 680px);
+  display: grid;
+  gap: 20px;
 }
 
 .page-heading {
@@ -175,11 +181,28 @@ h1 {
   letter-spacing: 0;
 }
 
+.page-heading h2 {
+  margin: 0;
+  font-size: clamp(1.35rem, 5vw, 1.9rem);
+  line-height: 1.12;
+  letter-spacing: 0;
+}
+
 .summary {
   margin: 0;
   color: var(--muted);
   font-size: 0.98rem;
   line-height: 1.5;
+}
+
+.setup-stack,
+.quick-capture-block {
+  display: grid;
+  gap: 14px;
+}
+
+.setup-stack {
+  gap: 12px;
 }
 
 .auth-section,
@@ -189,6 +212,24 @@ h1 {
   margin-bottom: 20px;
   padding-bottom: 20px;
   border-bottom: 1px solid var(--line);
+}
+
+.setup-stack .auth-section,
+.setup-stack .runtime-section {
+  margin-bottom: 0;
+  padding-bottom: 16px;
+}
+
+.setup-stack .auth-section {
+  border-bottom: 0;
+}
+
+.quick-capture-block {
+  padding-top: 2px;
+}
+
+.quick-capture-block .status-message {
+  margin-top: 0;
 }
 
 .section-heading {
@@ -464,6 +505,19 @@ h1 {
   gap: 12px;
 }
 
+.review-controls-stack {
+  display: grid;
+  gap: 14px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.review-controls-stack .review-section {
+  padding-top: 0;
+  border-top: 0;
+}
+
 .review-refresh {
   align-self: end;
 }
@@ -627,6 +681,18 @@ h1 {
   gap: 14px;
 }
 
+.activity-date-group {
+  display: grid;
+  gap: 8px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line);
+}
+
+.activity-date-group:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
 .date-group-header {
   display: flex;
   align-items: center;
@@ -719,7 +785,7 @@ h1 {
 
 @media (min-width: 720px) {
   .app-shell {
-    grid-template-columns: minmax(320px, 460px) minmax(0, 620px);
+    grid-template-columns: minmax(320px, 440px) minmax(0, 680px);
     padding: 48px 24px;
   }
 
