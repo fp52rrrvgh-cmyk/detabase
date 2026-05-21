@@ -276,6 +276,14 @@
 - Issue #208 validation confirmed `npm run build` in `apps/web` passed, staging sign-in passed, and read-only reads passed for `finance_activities`, `finance_activity_corrections`, `finance_accounts`, and `finance_categories`.
 - Issue #208 validation confirmed active-only filtering passed, recent active owned activities excluded voided rows, selected range totals passed, totals by `movement_type`, category, and account passed, original `finance_activities` rows remain preserved, and `finance_activity_corrections` remains the audit trail.
 - Issue #208 validation performed no writes, disclosed no sensitive values, accessed no production, and introduced no repo file changes, Supabase config changes, schema/migration/RPC/view changes, Edge Function changes, versioning, or production-ready claim.
+- PR #213 implemented intentional read-only void audit visibility inside the existing WebApp finance review panel after Issue #212.
+- Default review and totals remain active-only after PR #213; voided activities remain excluded from recent active owned activities, selected range totals, totals by `movement_type`, totals by category, and totals by account.
+- The void audit surface is not visible by default and requires an intentional operator toggle.
+- Void audit visibility shows safe context only when available: voided activity context, void reason, correction timestamp, activity date, movement type, TWD amount, currency, account display name, category display name, description, and original created timestamp when needed.
+- The void audit surface remains read-only and introduces no audit totals, mutation buttons, correction management, edit/delete UI, or void creation flow.
+- Issue #214 is closed as completed after main staging runtime validation passed for read-only void audit visibility.
+- Issue #214 validation confirmed `npm run build` in `apps/web` passed, staging sign-in passed, active-only review passed, active-only totals passed, intentional void audit toggle passed, read-only audit passed, and no mutation controls were present.
+- Issue #214 validation confirmed writes performed: no; sensitive values disclosed: no; production accessed: no; repo file changes during validation: no.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
@@ -295,7 +303,7 @@
 
 ## Unknowns
 
-- Define read-only void audit visibility boundary.
+- Define the next read-only finance review usability boundary after validated void audit visibility.
 - Data model.
 - Deployment target.
 - Dashboard follow-up requirements.
