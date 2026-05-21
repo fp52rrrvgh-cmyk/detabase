@@ -36,6 +36,7 @@ publishable-key-compatible direct reads from existing Finance MVP tables only:
 - `finance_activities`
 - `finance_accounts`
 - `finance_categories`
+- `finance_activity_corrections`
 
 The review panel is read-only and limited to RLS-owned rows. It does not use
 `service_role`, server routes, Edge Functions, reporting views, reporting
@@ -51,6 +52,13 @@ The panel can show:
 - totals by movement type;
 - totals by category display name;
 - totals by account display name.
+
+Default review and totals use active-only semantics. Activities with an
+effective `void` correction event are excluded from the default recent activity
+list and all default totals. Original `finance_activities` rows remain
+preserved, and `finance_activity_corrections` remains the audit trail. The
+WebApp does not provide audit mode, correction management UI, edit/delete UI,
+or write-capable Dashboard behavior.
 
 Safe display fields are activity date, movement type, amount, currency, account
 display name, category display name, description, and created timestamp when
@@ -134,8 +142,8 @@ Operator flow:
 6. Submit one expense with a positive amount and description.
 7. Confirm the safe success message shows date, TWD amount, description, and
    ready-for-next-expense status.
-8. Confirm the read-only review panel loads recent owned activities, display
-   names, filters, and totals without performing writes.
+8. Confirm the read-only review panel loads recent active owned activities,
+   display names, filters, and active-only totals without performing writes.
 9. Repeat entry if needed.
 10. Stop the local server when finished.
 

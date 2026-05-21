@@ -53,6 +53,11 @@ type ReferenceRow = {
   display_name: string | null;
 };
 
+type CorrectionRow = {
+  activity_id: string | null;
+  correction_type: string | null;
+};
+
 type DisplayActivity = {
   activityDate: string;
   movementType: string;
@@ -267,6 +272,24 @@ function summarizeTotals(
   );
 }
 
+function activeReviewActivities(
+  activities: FinanceActivityRow[],
+  corrections: CorrectionRow[],
+): FinanceActivityRow[] {
+  const voidedActivityIds = new Set(
+    corrections
+      .filter((correction) => correction.correction_type === "void")
+      .map((correction) => correction.activity_id)
+      .filter((activityId): activityId is string => Boolean(activityId)),
+  );
+
+  if (voidedActivityIds.size === 0) {
+    return activities;
+  }
+
+  return activities.filter((activity) => !voidedActivityIds.has(activity.id));
+}
+
 function buildReviewData(
   activities: FinanceActivityRow[],
   accounts: ReferenceRow[],
@@ -451,8 +474,36 @@ export default function ExpenseEntryPage() {
       activityQuery = activityQuery.eq("movement_type", movementFilter);
     }
 
-    const [activityResult, accountResult, categoryResult] = await Promise.all([
-      activityQuery,
+    const activityResult = await activityQuery;
+
+    if (activityResult.error) {
+      setReviewState({
+        status: "failure",
+        message: REVIEW_FAILURE_MESSAGE,
+      });
+      return;
+    }
+
+    const activities = (activityResult.data ?? []) as FinanceActivityRow[];
+    const activityIds = activities.map((activity) => activity.id);
+
+    let correctionResult:
+      | {
+          data: unknown[] | null;
+          error: { message: string } | null;
+        }
+      | null = null;
+
+    if (activityIds.length > 0) {
+      correctionResult = await supabase
+        .from("finance_activity_corrections")
+        .select("activity_id,correction_type")
+        .eq("correction_type", "void")
+        .in("activity_id", activityIds)
+        .limit(1000);
+    }
+
+    const [accountResult, categoryResult] = await Promise.all([
       supabase
         .from("finance_accounts")
         .select("id,display_name")
@@ -465,7 +516,11 @@ export default function ExpenseEntryPage() {
         .limit(500),
     ]);
 
-    if (activityResult.error || accountResult.error || categoryResult.error) {
+    if (
+      correctionResult?.error ||
+      accountResult.error ||
+      categoryResult.error
+    ) {
       setReviewState({
         status: "failure",
         message: REVIEW_FAILURE_MESSAGE,
@@ -476,7 +531,10 @@ export default function ExpenseEntryPage() {
     setReviewState({
       status: "success",
       data: buildReviewData(
-        (activityResult.data ?? []) as FinanceActivityRow[],
+        activeReviewActivities(
+          activities,
+          (correctionResult?.data ?? []) as CorrectionRow[],
+        ),
         (accountResult.data ?? []) as ReferenceRow[],
         (categoryResult.data ?? []) as ReferenceRow[],
       ),
@@ -997,7 +1055,8 @@ function FinanceReviewPanel({
         <p className="eyebrow">Staging read-only review</p>
         <h2 id="review-title">Finance review</h2>
         <p className="summary">
-          Inspect RLS-owned staging records with direct browser reads only.
+          Inspect active RLS-owned staging records with direct browser reads
+          only.
         </p>
       </div>
 
@@ -1099,7 +1158,7 @@ function ReviewContent({ data }: { data: ReviewData }) {
 
       <section className="review-section" aria-labelledby="recent-activity-title">
         <div className="section-heading">
-          <h3 id="recent-activity-title">Recent owned activities</h3>
+          <h3 id="recent-activity-title">Recent active owned activities</h3>
           <p className="session-status session-ready">
             {data.activities.length} shown
           </p>
@@ -1129,7 +1188,9 @@ function ReviewContent({ data }: { data: ReviewData }) {
             ))}
           </ul>
         ) : (
-          <p className="empty-state">No owned activities match the filters.</p>
+          <p className="empty-state">
+            No active owned activities match the filters.
+          </p>
         )}
       </section>
     </div>
