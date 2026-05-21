@@ -421,6 +421,22 @@
 - Issue #255 validation confirmed no mutation/write controls were present.
 - Issue #255 validation confirmed production was not accessed, repo files were not changed during validation, and private/runtime values were not disclosed.
 - PR #254 and Issue #255 introduced no production access, write behavior, query semantic changes, schema/migration/config/API changes, Edge Function changes, package/env changes, new cards, charts, exports, pagination, drilldowns, filters, debt/budget/cashflow/account-balance behavior, AI/Projection, legacy Sheets/GAS work, versioning, or production-ready claim.
+- PR #260 is merged after Issue #259 implemented WebApp mobile layout and information hierarchy cleanup in the existing WebApp.
+- PR #260 grouped runtime readiness and staging sign-in as a compact setup/session context.
+- PR #260 visually separated expense quick capture as the primary daily action.
+- PR #260 grouped review filters with the read-only review state strip.
+- PR #260 adjusted review layout rhythm for dashboard cards, grouped rows, and mobile scanability.
+- Issue #261 is closed as completed after staging runtime validation passed for the merged-main WebApp mobile layout and information hierarchy cleanup.
+- Issue #261 validation confirmed `npm run build` in `apps/web` passed and staging sign-in passed.
+- Issue #261 validation confirmed setup/session context was visible and compact.
+- Issue #261 validation confirmed expense quick capture remained visible, primary, and behavior-unchanged.
+- Issue #261 validation confirmed dashboard cards retained loaded-review-data-only semantics.
+- Issue #261 validation confirmed review filters and the review state strip remained visible, usable, and read-only.
+- Issue #261 validation confirmed review query semantics, active-only review/totals, void exclusion, and void audit non-default behavior remained unchanged.
+- Issue #261 validation confirmed grouped review list mobile scanability passed.
+- Issue #261 validation confirmed empty, filtered-no-result, loading, and fetch/error states remained distinct and safe.
+- Issue #261 validation confirmed no mutation/write controls were present, no review/dashboard writes were performed, production was not accessed, repo files were not changed during validation, and private/runtime/session/access-granting values were not disclosed.
+- PR #260 and Issue #261 introduced no production access, write behavior, query semantic changes, schema/migration/config/API changes, Edge Function changes, package/env changes, new cards, charts, exports, pagination, drilldowns, filters, debt/budget/cashflow/account-balance behavior, AI/Projection, legacy Sheets/GAS work, versioning, or production-ready claim.
 
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
@@ -441,7 +457,7 @@
 
 ## Unknowns
 
-- Define the WebApp layout cleanup and information hierarchy boundary without expanding production, write behavior, schema/config/API, AI, Projection, or broader finance features.
+- Define Finance MVP exit criteria and functional expansion boundary without expanding production, write behavior, schema/config/API, AI, Projection, or broader finance features.
 - Data model.
 - Deployment target.
 - Dashboard follow-up requirements.
