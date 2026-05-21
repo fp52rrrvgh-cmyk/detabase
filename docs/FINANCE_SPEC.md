@@ -2189,10 +2189,14 @@ Access boundary:
 - Broad table write grants and broad write policies are not added.
 - Owner-scoped read behavior for correction events remains separate from the write RPC.
 
+Completed follow-up:
+
+- PR #201 merged the RPC migration.
+- PR #203 merged the `void-finance-activity` Edge Function patch to call the RPC.
+- Issue #194 is closed as completed after hosted staging validation passed.
+
 Deferred scope remains:
 
-- Edge Function patch to call the RPC.
-- Hosted staging deployment and validation rerun.
 - Replacement or correct-and-recreate behavior.
 - Non-expense correction expansion.
 - WebApp correction UI.
@@ -2222,9 +2226,32 @@ Local validation passed for Issue #200:
 - RPC execute grants were limited to the intended boundary.
 - No correction table write policy was added.
 
-### Recommended Next Issue After Expense Activity Void RPC Migration
+### Hosted Staging Validation Result
 
-Patch `void-finance-activity` to call `void_finance_activity`.
+Issue #194 closed after hosted staging validation passed for the expense activity void RPC path.
+
+Hosted staging validation confirmed:
+
+- The already-merged RPC migration from PR #201 is present on staging.
+- The latest `void-finance-activity` Edge Function from PR #203 is deployed to staging.
+- Authenticated owned expense void succeeds.
+- Blank reason is rejected.
+- Malformed activity reference is rejected.
+- Missing or cross-owner activity is rejected safely.
+- Duplicate or already-voided activity is rejected.
+- Client-provided `correction_type` is rejected.
+- The original `finance_activities` row remains present.
+- The original activity payload remains unchanged.
+- A `finance_activity_corrections` void event exists after a valid void.
+- Direct client insert into `finance_activity_corrections` remains unavailable.
+
+Non-expense activity rejection was not validated on hosted staging because no safe owned non-expense fixture existed for the authenticated staging user.
+
+This validation introduced no code changes, migration changes, Supabase config changes, WebApp correction UI, active review/totals filtering, production access, sensitive value disclosure, versioning, or production-ready claim.
+
+### Recommended Next Issue After Hosted Void Validation
+
+Define void-aware review/totals filtering boundary.
 
 ## Remaining Open Questions
 

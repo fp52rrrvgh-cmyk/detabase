@@ -262,6 +262,13 @@
 - Direct client table writes to `finance_activity_corrections` remain blocked; authenticated execution is granted only through the RPC boundary.
 - Local validation for Issue #200 passed: migration replay, RPC existence, valid owned expense void, blank reason rejection, missing activity rejection, cross-owner activity rejection, non-expense rejection, duplicate void rejection, original activity presence, original activity payload preservation, correction event creation, direct client insert blocking, RPC execute grants, and correction write-policy absence all passed.
 - Issue #200 introduces no Edge Function patch, hosted staging deploy, hosted staging validation rerun, production access, production migration application, Supabase config change, WebApp correction UI, active review/totals filtering, Dashboard write behavior, sensitive value disclosure, versioning, or production-ready claim.
+- PR #201 merged the narrow `void_finance_activity` RPC migration.
+- PR #203 merged the `void-finance-activity` Edge Function patch to call `void_finance_activity`.
+- Issue #194 is closed as completed after hosted staging validation passed for the expense activity void RPC path.
+- Hosted staging validation confirmed an authenticated owned expense void succeeds, blank reason is rejected, malformed activity references are rejected, missing or cross-owner activity is rejected safely, duplicate or already-voided activity is rejected, and client-provided `correction_type` is rejected.
+- Hosted staging validation confirmed the original `finance_activities` row remains present, the original activity payload remains unchanged, one `finance_activity_corrections` void event is created, and direct client insert into `finance_activity_corrections` remains unavailable.
+- Non-expense void rejection was not validated on hosted staging because no safe owned non-expense fixture existed for the authenticated staging user.
+- Issue #194 validation introduced no repo file changes, Supabase config changes, WebApp correction UI, active review/totals filtering, production access, sensitive value disclosure, versioning, or production-ready claim.
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
 - No `service_role` key has been used.
@@ -281,7 +288,7 @@
 
 ## Unknowns
 
-- Define expense activity void backend/API boundary.
+- Define void-aware review/totals filtering boundary.
 - Data model.
 - Deployment target.
 - Dashboard follow-up requirements.
