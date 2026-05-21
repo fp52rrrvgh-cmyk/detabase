@@ -452,6 +452,17 @@
 - Issue #268 validation confirmed no review/dashboard writes other than one bounded void request, no edit/delete/unvoid/restore/correction-management UI, no production access, no repo file changes during validation, and no private/runtime/session/access-granting value disclosure.
 - Issue #268 validation noted missing/cross-owner rejection was not observed because no safe UI path existed without exposing or fabricating private references.
 - Issue #268 validation did not test direct client correction-table insert because direct client correction-table writes were not attempted.
+- Issue #271 is closed as completed after defining the WebApp income input boundary.
+- Issue #272 is closed as completed after defining the WebApp income runtime reference boundary.
+- Income input is not implemented yet.
+- Approved income runtime env names are `NEXT_PUBLIC_DEFAULT_INCOME_ACCOUNT_ID` and `NEXT_PUBLIC_DEFAULT_INCOME_CATEGORY_ID`.
+- These income runtime env names are approved names only; runtime values must remain local-only and must not be committed, posted, logged, or recorded.
+- Existing expense runtime names remain unchanged, and expense mode remains the default for a future income implementation.
+- A dedicated income category runtime ref is required.
+- A dedicated income account runtime ref is required at the WebApp runtime boundary; it may point to the same underlying staging account as expense if active, same-owner, and intentionally chosen by the operator, without recording values.
+- Runtime readiness must display income env names only and configured/missing state only.
+- Future income implementation should use the existing `log-finance-activity` path, authenticated browser session, `movement_type = income`, positive integer TWD amount, local activity date, description, configured income refs, and continue not sending `source_indicator`.
+- Future income validation must confirm income refs are active, same-owner, and income-compatible without recording UUID values.
 
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
