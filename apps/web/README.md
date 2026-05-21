@@ -58,6 +58,9 @@ needed for review ordering. The panel must not display credentials, tokens, auth
 headers, runtime values, session values, function URLs containing secrets,
 database URLs, or UUID values from local runtime files.
 
+TWD amount display is whole-number only. The review panel formats TWD activity
+amounts and totals without decimal places.
+
 If read-only review data cannot load, inspect staging auth, RLS, and table
 grant setup locally without pasting private values into issues, PRs, docs, or
 logs. Stop if troubleshooting would require writes, schema/config changes,
@@ -137,8 +140,9 @@ Operator flow:
 10. Stop the local server when finished.
 
 The request shape remains `activity_date`, `movement_type = expense`, positive
-amount, `currency = TWD`, configured account/category UUID refs, and
-description. The WebApp still does not send `source_indicator`.
+whole TWD amount, `currency = TWD`, configured account/category UUID refs, and
+description. Decimal, zero, negative, blank, or invalid amounts are rejected.
+The WebApp still does not send `source_indicator`.
 
 Stop if the target could be production, runtime values are missing, credentials
 or UUID values would need to be recorded, or the workflow expands into
@@ -161,4 +165,4 @@ The MVP signs in with an existing staging auth user, keeps session material in
 the browser session path handled by `@supabase/supabase-js`, and sends one
 expense request with `movement_type = expense`, `currency = TWD`, the current
 local `activity_date`, the configured account/category UUIDs, and the entered
-amount and description. It does not send `source_indicator`.
+positive whole TWD amount and description. It does not send `source_indicator`.
