@@ -326,6 +326,29 @@
 - The issue confirmed no sensitive/access-granting values were disclosed.
 - PR #226 and Issue #227 introduced no production access, no schema/migration/config changes, no function changes, no new Dashboard reporting logic, no write behavior, no AI/Projection, no transfer/adjustment flows, no legacy Sheets/GAS work, no versioning, and no production-ready claim.
 
+- PR #241 implemented compact mobile scanability row hierarchy and label rhythm in the existing read-only review list.
+- Issue #242 is closed as completed after merged-main staging runtime validation.
+- Issue #242 validation confirmed:
+  - `npm run build` in `apps/web` passed.
+  - staging sign-in passed.
+  - read-only review list loaded using merged main.
+  - active review data was observed with grouped date sections.
+  - observed grouped active rows: `2026-05-21: 7`, `2026-05-20: 1`.
+  - compact row hierarchy passed with amount + movement primary line, description compact body, and account/category/created timestamp supporting metadata.
+  - grouped-date sections remained readable.
+  - row content used existing safe fields only.
+  - existing no-activities and filtered no-result branches remained represented.
+  - fetch/error states remained distinct from loading states.
+  - review state clarity strip remained informational/read-only.
+  - active-only review remained default.
+  - active-only totals remained default.
+  - void audit remained intentional and non-default.
+  - no new mutation controls were found.
+  - review validation writes performed: no.
+  - production accessed: no.
+  - repo file changes during validation: no.
+  - private/runtime values disclosed: no.
+
 - PR #232 is merged after Issue #231 implemented minimal mobile-first read-only review list navigation and organization UX in the existing WebApp finance review panel.
 - Issue #233 is closed as completed after main staging runtime validation of PR #232.
 - PR #232 behavior added grouping by `activityDate` using already-fetched active review rows, with safe per-date row counts.
