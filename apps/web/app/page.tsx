@@ -96,15 +96,20 @@ type CategorySpendingLine = {
 };
 
 type DashboardSpendingCard = {
-  todaySpending: number;
+  todaySpending: number | null;
   todaySpendingCurrency: string;
-  thisMonthSpending: number;
+  todaySpendingUnavailableMessage: string | null;
+  thisMonthSpending: number | null;
   thisMonthSpendingCurrency: string;
-  recent7DaySpending: number;
+  thisMonthSpendingUnavailableMessage: string | null;
+  recent7DaySpending: number | null;
   recent7DaySpendingCurrency: string;
+  recent7DaySpendingUnavailableMessage: string | null;
   topCategoryLabel: string;
-  topCategoryAmount: number;
+  topCategoryAmount: number | null;
   topCategoryCurrency: string;
+  topCategoryUnavailableMessage: string | null;
+  topCategoriesThisMonthUnavailableMessage: string | null;
   topCategoriesThisMonth: CategorySpendingLine[];
 };
 
@@ -137,15 +142,15 @@ const RUNTIME_ENVIRONMENT_FIELDS: Array<{
 ];
 
 const REQUEST_FAILURE_MESSAGE =
-  "Expense was not saved. Network or runtime request failed; inspect staging setup locally.";
+  "網路或服務請求發生問題，請稍後再試。";
 const REVIEW_FAILURE_MESSAGE =
-  "Review data could not be loaded. Inspect staging read-only access locally.";
+  "讀取資料時發生問題，請稍後再試。";
 const MOVEMENT_FILTER_OPTIONS: Array<{ value: MovementFilter; label: string }> = [
-  { value: "all", label: "All movement types" },
-  { value: "income", label: "Income" },
-  { value: "expense", label: "Expense" },
-  { value: "transfer", label: "Transfer" },
-  { value: "adjustment", label: "Adjustment" },
+  { value: "all", label: "全部類型" },
+  { value: "income", label: "收入" },
+  { value: "expense", label: "支出" },
+  { value: "transfer", label: "轉帳" },
+  { value: "adjustment", label: "調整" },
 ];
 
 function movementFilterLabel(value: MovementFilter): string {
@@ -225,15 +230,15 @@ function extractSafeErrorCode(body: unknown): string | null {
 function safeFailureMessage(code: string | null): string {
   switch (code) {
     case "invalid_account_reference":
-      return "Expense was not saved. Check NEXT_PUBLIC_DEFAULT_EXPENSE_ACCOUNT_ID in apps/web/.env.local against an active same-owner staging account.";
+      return "支出未儲存：請確認預設支出帳戶設定為同一位 Staging 使用者的有效帳戶。";
     case "invalid_category_reference":
-      return "Expense was not saved. Check NEXT_PUBLIC_DEFAULT_EXPENSE_CATEGORY_ID in apps/web/.env.local against an active same-owner staging expense category.";
+      return "支出未儲存：請確認預設支出分類設定為同一位 Staging 使用者的有效支出分類。";
     case "category_movement_mismatch":
-      return "Expense was not saved. Check that NEXT_PUBLIC_DEFAULT_EXPENSE_CATEGORY_ID points to an active same-owner staging expense category.";
+      return "支出未儲存：請確認預設支出分類與支出類型一致。";
     default:
       return code
-        ? `Expense was not saved. Safe error: ${code}. Inspect staging setup locally.`
-        : "Expense was not saved. Inspect staging separately if needed.";
+        ? `支出未儲存，安全錯誤代碼：${code}。`
+        : "支出未儲存，請稍後重試。";
   }
 }
 
@@ -264,7 +269,7 @@ function safeReferenceLabel(
     return fallback;
   }
 
-  return references.get(id) ?? "Unavailable reference";
+  return references.get(id) ?? fallback;
 }
 
 function formatAmount(amount: number, currency: string): string {
@@ -276,12 +281,12 @@ function formatAmount(amount: number, currency: string): string {
 
 function formatOptionalTimestamp(value: string | null): string {
   if (!value) {
-    return "Not shown";
+    return "未顯示";
   }
 
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
-    return "Not shown";
+    return "未顯示";
   }
 
   return parsed.toLocaleString(undefined, {
@@ -389,17 +394,20 @@ function buildReviewData(
   corrections: CorrectionRow[],
   accounts: ReferenceRow[],
   categories: ReferenceRow[],
+  reviewStartDate: string,
+  reviewEndDate: string,
+  movementFilter: MovementFilter,
 ): ReviewData {
   const accountNames = new Map(
     accounts.map((account) => [
       account.id,
-      account.display_name?.trim() || "Unnamed account",
+      account.display_name?.trim() || "未命名帳戶",
     ]),
   );
   const categoryNames = new Map(
     categories.map((category) => [
       category.id,
-      category.display_name?.trim() || "Unnamed category",
+      category.display_name?.trim() || "未命名分類",
     ]),
   );
   const activeActivities = activeReviewActivities(activities, corrections);
@@ -425,17 +433,17 @@ function buildReviewData(
         accountName: safeReferenceLabel(
           accountNames,
           activity.account_id,
-          "No account",
+          "未命名帳戶",
         ),
         categoryName: safeReferenceLabel(
           categoryNames,
           activity.category_id,
-          "No category",
+          "未命名分類",
         ),
-        description: activity.description?.trim() || "No description",
+        description: activity.description?.trim() || "未提供描述",
         createdAt: activity.created_at,
         correctionType: "void",
-        reason: correction.reason?.trim() || "No reason shown",
+        reason: correction.reason?.trim() || "未提供原因",
         correctionCreatedAt: correction.created_at,
       };
     })
@@ -461,14 +469,14 @@ function buildReviewData(
       accountName: safeReferenceLabel(
         accountNames,
         activity.account_id,
-        "No account",
+        "未命名帳戶",
       ),
       categoryName: safeReferenceLabel(
         categoryNames,
         activity.category_id,
-        "No category",
+        "未命名分類",
       ),
-      description: activity.description?.trim() || "No description",
+      description: activity.description?.trim() || "未提供描述",
       createdAt: activity.created_at,
     }));
 
@@ -487,34 +495,62 @@ function buildReviewData(
       safeReferenceLabel(
         categoryNames,
         activity.category_id,
-        "No category",
+        "未命名分類",
       ),
   );
   const topCategoryThisMonth = categoryTotalsThisMonth[0];
+  const includeExpense = movementFilter === "all" || movementFilter === "expense";
+  const todayCovered = reviewStartDate <= today && reviewEndDate >= today;
+  const thisMonthCovered =
+    reviewStartDate <= monthStart && reviewEndDate >= monthEnd;
+  const recent7DayCovered =
+    reviewStartDate <= recent7DayStart && reviewEndDate >= today;
+  const expenseFilterBlocked = !includeExpense;
+  const getBlockingMessage = (
+    rangeCovered: boolean,
+    requiresMonthWindow = false,
+  ): string | null => {
+    if (expenseFilterBlocked) {
+      return "目前篩選不包含支出";
+    }
+
+    if (!rangeCovered) {
+      return "目前範圍不足，請調整檢視日期範圍";
+    }
+
+    return null;
+  };
+  const todayUnavail = getBlockingMessage(todayCovered);
+  const thisMonthUnavail = getBlockingMessage(thisMonthCovered);
+  const recent7DayUnavail = getBlockingMessage(recent7DayCovered);
+  const topCategoryUnavailableMessage = getBlockingMessage(thisMonthCovered, true);
+  const topCategoriesThisMonthUnavailableMessage = getBlockingMessage(thisMonthCovered, true);
+
   const dashboardCardData: DashboardSpendingCard = {
-    todaySpending: sumAmountsByDateRange(
+    todaySpending: todayUnavail ? null : sumAmountsByDateRange(
       activeExpenseActivities,
       today,
       today,
     ),
     todaySpendingCurrency: "TWD",
-    thisMonthSpending: sumAmountsByDateRange(
-      activeExpenseActivities,
-      monthStart,
-      monthEnd,
-    ),
+    todaySpendingUnavailableMessage: todayUnavail,
+    thisMonthSpending: thisMonthUnavail
+      ? null
+      : sumAmountsByDateRange(activeExpenseActivities, monthStart, monthEnd),
     thisMonthSpendingCurrency: "TWD",
-    recent7DaySpending: sumAmountsByDateRange(
-      activeExpenseActivities,
-      recent7DayStart,
-      today,
-    ),
+    thisMonthSpendingUnavailableMessage: thisMonthUnavail,
+    recent7DaySpending: recent7DayUnavail
+      ? null
+      : sumAmountsByDateRange(activeExpenseActivities, recent7DayStart, today),
     recent7DaySpendingCurrency: "TWD",
-    topCategoryLabel: topCategoryThisMonth ? topCategoryThisMonth.label : "No category",
+    recent7DaySpendingUnavailableMessage: recent7DayUnavail,
+    topCategoryLabel: topCategoryThisMonth ? topCategoryThisMonth.label : "無分類",
     topCategoryAmount: topCategoryThisMonth ? topCategoryThisMonth.amount : 0,
     topCategoryCurrency: topCategoryThisMonth
       ? topCategoryThisMonth.currency
       : "TWD",
+    topCategoryUnavailableMessage,
+    topCategoriesThisMonthUnavailableMessage,
     topCategoriesThisMonth: categoryTotalsThisMonth.slice(0, 5),
   };
 
@@ -541,16 +577,17 @@ function buildReviewData(
   return {
     activities: mappedActivities,
     activityGroups,
-    dateRangeTotals: summarizeTotals(activeActivities, () => "Selected range"),
+    dateRangeTotals: summarizeTotals(activeActivities, () => "所選範圍"),
     movementTotals: summarizeTotals(
       activeActivities,
-      (activity) => activity.movement_type || "Unknown movement",
+      (activity) =>
+        movementFilterLabel((activity.movement_type as MovementType) ?? "all"),
     ),
     categoryTotals: summarizeTotals(activeActivities, (activity) =>
-      safeReferenceLabel(categoryNames, activity.category_id, "No category"),
+      safeReferenceLabel(categoryNames, activity.category_id, "未命名分類"),
     ),
     accountTotals: summarizeTotals(activeActivities, (activity) =>
-      safeReferenceLabel(accountNames, activity.account_id, "No account"),
+      safeReferenceLabel(accountNames, activity.account_id, "未命名帳戶"),
     ),
     voidAuditItems,
     dashboard: dashboardCardData,
@@ -624,10 +661,10 @@ export default function ExpenseEntryPage() {
 
         setSession(null);
         setAuthStatus("signed_out");
-        setAuthMessage({
-          status: "failure",
-          message: "Session status could not be checked safely.",
-        });
+      setAuthMessage({
+        status: "failure",
+        message: "無法安全確認 Session 狀態。",
+      });
       });
 
     const {
@@ -656,7 +693,7 @@ export default function ExpenseEntryPage() {
     if (!reviewStartDate || !reviewEndDate || reviewStartDate > reviewEndDate) {
       setReviewState({
         status: "failure",
-        message: "Choose a valid review date range.",
+        message: "請選擇有效的檢視日期區間。",
       });
       return;
     }
@@ -671,7 +708,7 @@ export default function ExpenseEntryPage() {
     if (sessionError || !currentSession) {
       setReviewState({
         status: "failure",
-        message: "Sign in before loading review data.",
+        message: "請先登入再載入檢視資料。",
       });
       return;
     }
@@ -745,15 +782,18 @@ export default function ExpenseEntryPage() {
       return;
     }
 
-    setReviewState({
-      status: "success",
-      data: buildReviewData(
-        activities,
-        (correctionResult?.data ?? []) as CorrectionRow[],
-        (accountResult.data ?? []) as ReferenceRow[],
-        (categoryResult.data ?? []) as ReferenceRow[],
-      ),
-    });
+      setReviewState({
+        status: "success",
+        data: buildReviewData(
+          activities,
+          (correctionResult?.data ?? []) as CorrectionRow[],
+          (accountResult.data ?? []) as ReferenceRow[],
+          (categoryResult.data ?? []) as ReferenceRow[],
+          reviewStartDate,
+          reviewEndDate,
+          movementFilter,
+        ),
+      });
   }, [
     authStatus,
     configReady,
@@ -781,7 +821,7 @@ export default function ExpenseEntryPage() {
     if (!configReady || !supabase) {
       setAuthMessage({
         status: "failure",
-        message: "Runtime configuration is incomplete.",
+        message: "執行環境設定不完整，先補齊設定後再試。",
       });
       return;
     }
@@ -789,7 +829,7 @@ export default function ExpenseEntryPage() {
     if (!trimmedEmail || !password) {
       setAuthMessage({
         status: "failure",
-        message: "Enter staging email and password.",
+        message: "請輸入 Staging 帳號與密碼。",
       });
       return;
     }
@@ -806,7 +846,7 @@ export default function ExpenseEntryPage() {
       setAuthStatus("signed_out");
       setAuthMessage({
         status: "failure",
-        message: "Sign in failed. Check staging credentials locally.",
+        message: "登入失敗，請檢查 Staging 帳號與密碼。",
       });
       return;
     }
@@ -816,7 +856,7 @@ export default function ExpenseEntryPage() {
     setAuthStatus("signed_in");
     setAuthMessage({
       status: "success",
-      message: "Signed in for staging expense entry.",
+      message: "已完成 Staging 登入。",
     });
   }
 
@@ -832,7 +872,7 @@ export default function ExpenseEntryPage() {
     if (error) {
       setAuthMessage({
         status: "failure",
-        message: "Sign out failed. Retry locally.",
+        message: "登出失敗，請稍後再試。",
       });
       return;
     }
@@ -844,7 +884,7 @@ export default function ExpenseEntryPage() {
     setShowVoidAudit(false);
     setAuthMessage({
       status: "success",
-      message: "Signed out.",
+      message: "已登出。",
     });
   }
 
@@ -874,18 +914,18 @@ export default function ExpenseEntryPage() {
     const trimmedDescription = description.trim();
     const requestDate = activityDate || currentLocalDate();
 
-    if (!configReady || !supabase) {
-      setSubmitState({
-        status: "failure",
-        message: "Runtime configuration is incomplete.",
-      });
-      return;
-    }
+      if (!configReady || !supabase) {
+        setSubmitState({
+          status: "failure",
+          message: "執行環境設定不完整，無法儲存。",
+        });
+        return;
+      }
 
     if (!isPositiveIntegerAmount(trimmedAmount)) {
       setSubmitState({
         status: "failure",
-        message: "Enter a positive whole TWD amount before submitting.",
+        message: "請輸入正整數的 TWD 金額。",
       });
       return;
     }
@@ -893,7 +933,7 @@ export default function ExpenseEntryPage() {
     if (!trimmedDescription) {
       setSubmitState({
         status: "failure",
-        message: "Enter a description before submitting.",
+        message: "請輸入描述後再送出。",
       });
       return;
     }
@@ -908,7 +948,7 @@ export default function ExpenseEntryPage() {
     if (sessionError || !currentSession?.access_token) {
       setSubmitState({
         status: "failure",
-        message: "Sign in before saving an expense.",
+        message: "請先登入後再儲存支出。",
       });
       return;
     }
@@ -976,10 +1016,10 @@ export default function ExpenseEntryPage() {
     <main className="app-shell" aria-labelledby="page-title">
       <section className="entry-panel">
         <div className="page-heading">
-          <p className="eyebrow">Staging expense entry</p>
-          <h1 id="page-title">Finance expense entry</h1>
+          <p className="eyebrow">Staging 支出輸入</p>
+          <h1 id="page-title">財務支出記錄</h1>
           <p className="summary">
-            Record one whole TWD expense through the staging ingestion endpoint.
+            透過 Staging 入口記錄一筆整數 TWD 支出。
           </p>
         </div>
 
@@ -990,7 +1030,7 @@ export default function ExpenseEntryPage() {
 
         <section className="auth-section" aria-labelledby="auth-title">
           <div className="section-heading">
-            <h2 id="auth-title">Staging sign in</h2>
+            <h2 id="auth-title">Staging 登入</h2>
             <SessionStatus status={authStatus} hasSession={Boolean(session)} />
           </div>
 
@@ -1001,18 +1041,18 @@ export default function ExpenseEntryPage() {
               onClick={handleSignOut}
               type="button"
             >
-              {authLoading ? "Signing out..." : "Sign out"}
+              {authLoading ? "登出中..." : "登出"}
             </button>
           ) : (
             <form className="auth-form" onSubmit={handleSignIn}>
               <label className="field">
-                <span>Email</span>
+                <span>電子郵件</span>
                 <input
                   autoComplete="email"
                   inputMode="email"
                   name="email"
                   onChange={(event) => setEmail(event.target.value)}
-                  placeholder="staging operator email"
+                  placeholder="staging 操作員信箱"
                   required
                   type="email"
                   value={email}
@@ -1020,12 +1060,12 @@ export default function ExpenseEntryPage() {
               </label>
 
               <label className="field">
-                <span>Password</span>
+                <span>密碼</span>
                 <input
                   autoComplete="current-password"
                   name="password"
                   onChange={(event) => setPassword(event.target.value)}
-                  placeholder="staging password"
+                  placeholder="staging 密碼"
                   required
                   type="password"
                   value={password}
@@ -1037,7 +1077,7 @@ export default function ExpenseEntryPage() {
                 disabled={authLoading || !configReady}
                 type="submit"
               >
-                {authLoading ? "Signing in..." : "Sign in"}
+                {authLoading ? "登入中..." : "登入"}
               </button>
             </form>
           )}
@@ -1047,7 +1087,7 @@ export default function ExpenseEntryPage() {
 
         <form className="entry-form" onSubmit={handleSubmit}>
           <label className="field">
-            <span>Amount</span>
+            <span>金額</span>
             <input
               inputMode="numeric"
               min="1"
@@ -1056,28 +1096,28 @@ export default function ExpenseEntryPage() {
               placeholder="100"
               required
               step="1"
-              title="Enter a positive whole TWD amount."
+              title="請輸入正整數 TWD 金額。"
               type="number"
               value={amount}
             />
           </label>
 
           <label className="field">
-            <span>Description</span>
+            <span>描述</span>
             <textarea
               name="description"
               onChange={(event) => handleDescriptionChange(event.target.value)}
-              placeholder="Short expense note"
+              placeholder="簡短支出備註"
               required
               rows={4}
               value={description}
             />
           </label>
 
-          <div className="fixed-details" aria-label="Fixed request details">
-            <span>Expense</span>
+          <div className="fixed-details" aria-label="提交明細">
+            <span>支出</span>
             <span>TWD</span>
-            <span>{activityDate || "Current local date"}</span>
+            <span>{activityDate || "本機目前日期"}</span>
           </div>
 
           <button
@@ -1090,12 +1130,12 @@ export default function ExpenseEntryPage() {
             type="submit"
           >
             {submitState.status === "loading"
-              ? "Saving..."
+              ? "儲存中..."
               : !configReady
-              ? "Complete runtime setup"
+              ? "請先完成執行環境設定"
               : authStatus === "signed_in"
-              ? "Save expense"
-              : "Sign in to save"}
+              ? "儲存支出"
+              : "請先登入後儲存"}
           </button>
         </form>
 
@@ -1129,21 +1169,21 @@ function RuntimeReadiness({
   return (
     <section className="runtime-section" aria-labelledby="runtime-title">
       <div className="section-heading">
-        <h2 id="runtime-title">Runtime readiness</h2>
+        <h2 id="runtime-title">執行環境狀態</h2>
         <p
           className={`session-status ${
             configured ? "session-ready" : "session-warning"
           }`}
         >
-          {configured ? "Configured" : "Missing"}
+          {configured ? "已設定" : "缺少"}
         </p>
       </div>
 
       <p className="runtime-note">
-        Values stay local in apps/web/.env.local and are not displayed here.
+        值保留於 apps/web/.env.local，不會顯示在此畫面。
       </p>
 
-      <ul className="runtime-list" aria-label="Runtime environment status">
+      <ul className="runtime-list" aria-label="執行環境狀態">
         {items.map((item) => (
           <li key={item.name}>
             <code>{item.name}</code>
@@ -1152,7 +1192,7 @@ function RuntimeReadiness({
                 item.configured ? "runtime-ready" : "runtime-missing"
               }`}
             >
-              {item.configured ? "Configured" : "Missing"}
+              {item.configured ? "已設定" : "缺少"}
             </span>
           </li>
         ))}
@@ -1169,14 +1209,14 @@ function SessionStatus({
   hasSession: boolean;
 }) {
   if (status === "checking") {
-    return <p className="session-status">Checking session</p>;
+    return <p className="session-status">檢查中</p>;
   }
 
   if (status === "signed_in" && hasSession) {
-    return <p className="session-status session-ready">Signed in</p>;
+    return <p className="session-status session-ready">已登入</p>;
   }
 
-  return <p className="session-status">Signed out</p>;
+  return <p className="session-status">已登出</p>;
 }
 
 function AuthMessageView({ message }: { message: AuthMessage | null }) {
@@ -1206,16 +1246,15 @@ function StatusMessage({
   if (!configReady) {
     return (
       <p className="status-message status-warning" role="status">
-        Runtime configuration is incomplete. Review the missing env names above
-        before submitting.
+        執行環境設定不完整，送出前先補齊缺少的環境設定名稱。
       </p>
     );
   }
 
   if (state.status === "loading") {
     return (
-      <p className="status-message" role="status">
-        Saving expense...
+        <p className="status-message" role="status">
+        儲存支出中...
       </p>
     );
   }
@@ -1223,8 +1262,8 @@ function StatusMessage({
   if (state.status === "success") {
     return (
       <p className="status-message status-success" role="status">
-        Expense saved for {state.activityDate}: TWD {state.amount} -{" "}
-        {state.description}. Ready for next expense.
+        已儲存支出：{state.activityDate}，TWD {state.amount}，{state.description}。
+        可直接輸入下一筆。
       </p>
     );
   }
@@ -1238,8 +1277,8 @@ function StatusMessage({
   }
 
   return (
-    <p className="status-message status-muted" role="status">
-      Ready for one expense record.
+      <p className="status-message status-muted" role="status">
+        可直接輸入一筆支出。
     </p>
   );
 }
@@ -1274,19 +1313,19 @@ function FinanceReviewPanel({
   return (
     <section className="review-panel" aria-labelledby="review-title">
       <div className="page-heading review-heading">
-        <p className="eyebrow">Staging read-only review</p>
-        <h2 id="review-title">Finance review</h2>
+        <p className="eyebrow">Staging 唯讀檢視</p>
+        <h2 id="review-title">財務檢視</h2>
         <p className="summary">
-          Inspect active RLS-owned staging records with direct browser reads
-          only.
+          只透過瀏覽器直接讀取，顯示已登入 Staging 使用者的
+          RLS 擁有資料。
         </p>
       </div>
 
       <ReviewDashboardStrip reviewState={reviewState} canLoad={canLoad} />
 
-      <div className="review-filters" aria-label="Review filters">
+      <div className="review-filters" aria-label="檢視篩選">
         <label className="field compact-field">
-          <span>Start date</span>
+          <span>開始日期</span>
           <input
             onChange={(event) => onStartDateChange(event.target.value)}
             type="date"
@@ -1295,7 +1334,7 @@ function FinanceReviewPanel({
         </label>
 
         <label className="field compact-field">
-          <span>End date</span>
+          <span>結束日期</span>
           <input
             onChange={(event) => onEndDateChange(event.target.value)}
             type="date"
@@ -1304,7 +1343,7 @@ function FinanceReviewPanel({
         </label>
 
         <label className="field compact-field">
-          <span>Movement type</span>
+          <span>收支類型</span>
           <select
             onChange={(event) =>
               onMovementFilterChange(event.target.value as MovementFilter)
@@ -1325,7 +1364,7 @@ function FinanceReviewPanel({
           onClick={onRefresh}
           type="button"
         >
-          {isLoading ? "Loading..." : "Refresh review"}
+          {isLoading ? "讀取中..." : "重新整理檢視"}
         </button>
       </div>
 
@@ -1339,14 +1378,13 @@ function FinanceReviewPanel({
 
       {!canLoad ? (
         <p className="status-message status-muted" role="status">
-          Sign in with complete runtime configuration to load read-only review
-          data.
+          請先完成執行環境設定並登入後，才能載入唯讀檢視資料。
         </p>
       ) : null}
 
       {reviewState.status === "loading" ? (
         <p className="status-message" role="status">
-          Loading read-only review data...
+          讀取唯讀檢視資料中...
         </p>
       ) : null}
 
@@ -1385,72 +1423,106 @@ function ReviewDashboardStrip({
     <section className="review-section" aria-labelledby="dashboard-metrics-title">
       <div className="section-heading">
         <div>
-          <h3 id="dashboard-metrics-title">Read-only spend snapshot</h3>
+          <h3 id="dashboard-metrics-title">唯讀支出快照</h3>
           <p className="empty-state">
-            Active-only expense cards from loaded review data.
+            僅顯示載入資料中的支出活動，作廢紀錄預設不納入。
           </p>
         </div>
-        <p className="session-status session-ready">Read-only</p>
+        <p className="session-status session-ready">唯讀</p>
       </div>
 
       {canLoad && !dashboardData ? (
         <p className="status-message" role="status">
-          Loading read-only spend snapshot from cached review data...
+          從快取資料載入唯讀支出快照中...
         </p>
       ) : null}
 
       {dashboardData ? (
         <div className="dashboard-card-strip">
           <article className="dashboard-card">
-            <span className="dashboard-card-label">Today spending</span>
-            <strong>{formatAmount(dashboardData.todaySpending, currency("TWD"))}</strong>
+            <span className="dashboard-card-label">今日支出</span>
+            {dashboardData.todaySpendingUnavailableMessage ? (
+              <p className="status-message status-muted">
+                {dashboardData.todaySpendingUnavailableMessage}
+              </p>
+            ) : (
+              <strong>{formatAmount(dashboardData.todaySpending ?? 0, currency("TWD"))}</strong>
+            )}
           </article>
 
           <article className="dashboard-card">
-            <span className="dashboard-card-label">This month spending</span>
-            <strong>{formatAmount(dashboardData.thisMonthSpending, currency("TWD"))}</strong>
+            <span className="dashboard-card-label">本月支出</span>
+            {dashboardData.thisMonthSpendingUnavailableMessage ? (
+              <p className="status-message status-muted">
+                {dashboardData.thisMonthSpendingUnavailableMessage}
+              </p>
+            ) : (
+               <strong>{formatAmount(dashboardData.thisMonthSpending ?? 0, currency("TWD"))}</strong>
+            )}
           </article>
 
           <article className="dashboard-card">
-            <span className="dashboard-card-label">Recent 7-day spending</span>
-            <strong>{formatAmount(dashboardData.recent7DaySpending, currency("TWD"))}</strong>
+            <span className="dashboard-card-label">近 7 日支出</span>
+            {dashboardData.recent7DaySpendingUnavailableMessage ? (
+              <p className="status-message status-muted">
+                {dashboardData.recent7DaySpendingUnavailableMessage}
+              </p>
+            ) : (
+              <strong>
+                {formatAmount(dashboardData.recent7DaySpending ?? 0, currency("TWD"))}
+              </strong>
+            )}
           </article>
 
           <article className="dashboard-card dashboard-card--category">
             <span className="dashboard-card-label">
-              Largest spending category this month
+              本月最大支出分類
             </span>
-            <strong>{dashboardData.topCategoryLabel}</strong>
-            <p>
-              {formatAmount(
-                dashboardData.topCategoryAmount,
-                currency(dashboardData.topCategoryCurrency),
-              )}
-            </p>
+            {dashboardData.topCategoryUnavailableMessage ? (
+              <p className="status-message status-muted">
+                {dashboardData.topCategoryUnavailableMessage}
+              </p>
+            ) : (
+              <>
+                <strong>{dashboardData.topCategoryLabel}</strong>
+                <p>
+                  {formatAmount(
+                    dashboardData.topCategoryAmount ?? 0,
+                    currency(dashboardData.topCategoryCurrency),
+                  )}
+                </p>
+              </>
+            )}
           </article>
 
           <article className="dashboard-card dashboard-card--category">
             <span className="dashboard-card-label">
-              Category spending top 5 this month
+              本月分類支出 Top 5
             </span>
-            {dashboardData.topCategoriesThisMonth.length > 0 ? (
+            {dashboardData.topCategoriesThisMonthUnavailableMessage ? (
+              <p className="status-message status-muted">
+                {dashboardData.topCategoriesThisMonthUnavailableMessage}
+              </p>
+            ) : dashboardData.topCategoriesThisMonth.length > 0 ? (
               <ol className="dashboard-category-list">
                 {dashboardData.topCategoriesThisMonth.map((category) => (
                   <li key={category.label}>
                     <span>{category.label}</span>
-                    <strong>{formatAmount(category.amount, currency(category.currency))}</strong>
+                    <strong>
+                      {formatAmount(category.amount, currency(category.currency))}
+                    </strong>
                   </li>
                 ))}
               </ol>
             ) : (
-              <p className="empty-state">No category spend in this month.</p>
+              <p className="empty-state">本月無分類支出。</p>
             )}
           </article>
         </div>
       ) : (
         !canLoad && (
           <p className="status-message status-muted" role="status">
-            Sign in to load spend snapshot cards.
+            請先登入 Staging 才能載入支出快照卡片。
           </p>
         )
       )}
@@ -1474,37 +1546,36 @@ function ReviewStateStrip({
   const loadedData =
     reviewState.status === "success" ? reviewState.data : undefined;
   const rangeLabel =
-    startDate && endDate ? `${startDate} to ${endDate}` : "Select dates";
+    startDate && endDate ? `${startDate} ~ ${endDate}` : "請選擇日期";
   const activeCountLabel = loadedData
-    ? `${loadedData.activities.length} active shown`
-    : "Loads with review";
+    ? `${loadedData.activities.length} 筆已顯示`
+    : "載入中";
   const auditCountLabel = loadedData
-    ? `${loadedData.voidAuditItems.length} audit records available`
-    : "Loads with review";
+    ? `${loadedData.voidAuditItems.length} 筆可見紀錄`
+    : "載入中";
 
   return (
     <section className="review-section" aria-labelledby="review-state-title">
       <div className="section-heading">
         <div>
-          <h3 id="review-state-title">Review state</h3>
+          <h3 id="review-state-title">檢視狀態</h3>
           <p className="empty-state">
-            Active-only review and totals. Voided activities stay excluded from
-            default totals.
+            預設為 active-only 檢視與匯總，作廢活動預設不納入。
           </p>
         </div>
-        <p className="session-status session-ready">Read-only</p>
+        <p className="session-status session-ready">唯讀</p>
       </div>
 
-      <div className="activity-meta" aria-label="Current review state">
-        <span>Mode: Active review</span>
-        <span>Range: {rangeLabel}</span>
-        <span>Movement: {movementFilterLabel(movementFilter)}</span>
+      <div className="activity-meta" aria-label="目前檢視狀態">
+        <span>模式：唯讀活動檢視</span>
+        <span>日期：{rangeLabel}</span>
+        <span>收支：{movementFilterLabel(movementFilter)}</span>
         <span>
-          Void audit: {showVoidAudit ? "Shown intentionally" : "Hidden"}
+          作廢稽核：{showVoidAudit ? "已啟用" : "隱藏"}
         </span>
-        <span>Active count: {activeCountLabel}</span>
-        <span>Audit count: {auditCountLabel}</span>
-        <span>No writes</span>
+        <span>有效紀錄：{activeCountLabel}</span>
+        <span>稽核紀錄：{auditCountLabel}</span>
+        <span>不會寫入</span>
       </div>
     </section>
   );
@@ -1528,49 +1599,53 @@ function ReviewContent({
   const isDefaultFilter = reviewMovementFilter === "all";
   const dateRangeLabel =
     reviewStartDate && reviewEndDate
-      ? `${reviewStartDate} to ${reviewEndDate}`
-      : "the current date range";
+      ? `${reviewStartDate} ~ ${reviewEndDate}`
+      : "目前檢視區間";
 
   const emptyStateTitle = isDefaultFilter
-    ? "No review activities found for this date range."
-    : "No activities match the current review filters.";
+    ? "此日期區間沒有可檢視活動。"
+    : "目前篩選條件未命中任何結果。";
 
   const emptyStateHint = isDefaultFilter
-    ? "This panel is read-only. Add a new expense from quick capture, then return here to review it."
-    : `Adjust the read-only filters to broaden the result (${dateRangeLabel}, movement ${movementFilterLabel(
+    ? "本區域為唯讀。請先在快速輸入新增支出後，再回到此處檢視。"
+    : `請調整檢視篩選條件以擴大結果（${dateRangeLabel}，收支類型 ${movementFilterLabel(
         reviewMovementFilter,
       )}).`;
 
   return (
     <div className="review-content">
       <section className="review-section" aria-labelledby="range-total-title">
-        <h3 id="range-total-title">Totals for selected range</h3>
-        <TotalList emptyLabel="No activity in range." totals={data.dateRangeTotals} />
+        <h3 id="range-total-title">所選範圍合計</h3>
+        <TotalList
+          emptyLabel="此區間沒有活動。"
+          totals={data.dateRangeTotals}
+        />
       </section>
 
       <div className="totals-grid">
         <section className="review-section" aria-labelledby="movement-total-title">
-          <h3 id="movement-total-title">By movement type</h3>
-          <TotalList emptyLabel="No movement totals." totals={data.movementTotals} />
+          <h3 id="movement-total-title">依收支類型</h3>
+          <TotalList emptyLabel="無收支合計。" totals={data.movementTotals} />
         </section>
 
         <section className="review-section" aria-labelledby="category-total-title">
-          <h3 id="category-total-title">By category</h3>
-          <TotalList emptyLabel="No category totals." totals={data.categoryTotals} />
+          <h3 id="category-total-title">依分類</h3>
+          <TotalList emptyLabel="無分類合計。" totals={data.categoryTotals} />
         </section>
 
         <section className="review-section" aria-labelledby="account-total-title">
-          <h3 id="account-total-title">By account</h3>
-          <TotalList emptyLabel="No account totals." totals={data.accountTotals} />
+          <h3 id="account-total-title">依帳戶</h3>
+          <TotalList emptyLabel="無帳戶合計。" totals={data.accountTotals} />
         </section>
       </div>
 
       <section className="review-section" aria-labelledby="recent-activity-title">
         <div className="section-heading">
-          <h3 id="recent-activity-title">Recent active owned activities</h3>
+          <h3 id="recent-activity-title">最近有效紀錄</h3>
           <p className="session-status session-ready">
+            顯示
             {data.activityGroups.reduce((total, group) => total + group.activityCount, 0)}{" "}
-            shown
+            筆
           </p>
         </div>
 
@@ -1580,7 +1655,7 @@ function ReviewContent({
               <section className="review-section" key={group.activityDate}>
                 <div className="date-group-header">
                   <h4>{group.activityDate}</h4>
-                  <p className="empty-state">Rows: {group.activityCount}</p>
+                  <p className="empty-state">共 {group.activityCount} 筆</p>
                 </div>
 
                 <ul className="activity-list activity-list--grouped">
@@ -1604,7 +1679,7 @@ function ReviewContent({
                         <span>{activity.accountName}</span>
                         <span>{activity.categoryName}</span>
                         <span className="activity-meta-created">
-                          Created {formatOptionalTimestamp(activity.createdAt)}
+                          建立 {formatOptionalTimestamp(activity.createdAt)}
                         </span>
                       </div>
                     </li>
@@ -1625,13 +1700,13 @@ function ReviewContent({
         <section className="review-section" aria-labelledby="void-audit-title">
         <div className="section-heading">
           <div>
-            <h3 id="void-audit-title">Void audit trail</h3>
+            <h3 id="void-audit-title">作廢稽核紀錄</h3>
             <p className="empty-state">
-              Intentional read-only visibility for voided activity context.
+              僅提供作廢活動背景的唯讀說明，不提供任何異動行為。
             </p>
           </div>
           <p className="session-status">
-            {data.voidAuditItems.length} available
+            {data.voidAuditItems.length} 筆作廢稽核
           </p>
         </div>
 
@@ -1642,14 +1717,13 @@ function ReviewContent({
           onClick={onToggleVoidAudit}
           type="button"
         >
-          {showVoidAudit ? "Hide void audit" : "Show void audit"}
+          {showVoidAudit ? "隱藏作廢稽核" : "顯示作廢稽核"}
         </button>
 
         {showVoidAudit ? (
           <div id="void-audit-content" className="review-content">
             <p className="status-message status-muted" role="status">
-              Voided activities are excluded from default active review and
-              totals. This audit trail is read-only.
+              預設檢視與合計會排除作廢活動，該紀錄區塊為唯讀。
             </p>
 
             {data.voidAuditItems.length > 0 ? (
@@ -1666,28 +1740,28 @@ function ReviewContent({
                     <div className="activity-meta">
                       <span>
                         {item.correctionType === "void"
-                          ? "Voided"
-                          : "Correction"}
+                          ? "已作廢"
+                          : "更正紀錄"}
                       </span>
                       <span>{item.movementType}</span>
                       <span>{item.accountName}</span>
                       <span>{item.categoryName}</span>
                     </div>
                     <p>{item.description}</p>
-                    <p>Reason: {item.reason}</p>
+                    <p>原因：{item.reason}</p>
                     <small>
-                      Corrected {formatOptionalTimestamp(item.correctionCreatedAt)}
+                      更正時間：{formatOptionalTimestamp(item.correctionCreatedAt)}
                     </small>
                     <small>
-                      Original created {formatOptionalTimestamp(item.createdAt)}
+                      原始建立：{formatOptionalTimestamp(item.createdAt)}
                     </small>
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="empty-state">
-                No void audit records match the selected review filters.
-              </p>
+                <p className="empty-state">
+                  無符合目前篩選條件的作廢稽核紀錄。
+                </p>
             )}
           </div>
         ) : null}
