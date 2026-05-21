@@ -31,6 +31,7 @@ type CallerContext = {
   supabaseUrl: string;
   publishableKey: string;
   privilegedKey: string;
+  privilegedKeyKind: "jwt" | "secret";
 };
 
 type ValidatedInput = {
@@ -186,10 +187,51 @@ function getPublishableKey(): string | null {
     null;
 }
 
-function getPrivilegedKey(): string | null {
-  return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ??
-    Deno.env.get("SUPABASE_SECRET_KEY") ??
-    null;
+function readDefaultKeyFromDictionary(value: string | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+    if (isJsonObject(parsed) && typeof parsed.default === "string") {
+      return parsed.default;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+function isModernSecretKey(value: string): boolean {
+  return value.startsWith("sb_secret_");
+}
+
+function getPrivilegedKey():
+  | { value: string; kind: "jwt" | "secret" }
+  | null {
+  const hostedSecretKey = readDefaultKeyFromDictionary(
+    Deno.env.get("SUPABASE_SECRET_KEYS"),
+  );
+  if (hostedSecretKey) {
+    return { value: hostedSecretKey, kind: "secret" };
+  }
+
+  const explicitSecretKey = Deno.env.get("SUPABASE_SECRET_KEY");
+  if (explicitSecretKey) {
+    return { value: explicitSecretKey, kind: "secret" };
+  }
+
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (serviceRoleKey) {
+    return {
+      value: serviceRoleKey,
+      kind: isModernSecretKey(serviceRoleKey) ? "secret" : "jwt",
+    };
+  }
+
+  return null;
 }
 
 function enforceStagingRuntime(): Response | null {
@@ -232,14 +274,14 @@ function extractBearerToken(req: Request): string | Response {
 function createCallerContext(req: Request): CallerContext | Response {
   const rawSupabaseUrl = Deno.env.get("SUPABASE_URL");
   const publishableKey = getPublishableKey();
-  const privilegedKey = getPrivilegedKey();
+  const privilegedCredential = getPrivilegedKey();
   const accessToken = extractBearerToken(req);
 
   if (accessToken instanceof Response) {
     return accessToken;
   }
 
-  if (!rawSupabaseUrl || !publishableKey || !privilegedKey) {
+  if (!rawSupabaseUrl || !publishableKey || !privilegedCredential) {
     return safeFailure(
       500,
       "void_not_allowed",
@@ -251,7 +293,8 @@ function createCallerContext(req: Request): CallerContext | Response {
     accessToken,
     supabaseUrl: normalizeSupabaseUrl(rawSupabaseUrl),
     publishableKey,
-    privilegedKey,
+    privilegedKey: privilegedCredential.value,
+    privilegedKeyKind: privilegedCredential.kind,
   };
 }
 
@@ -263,10 +306,15 @@ function callerHeaders(caller: CallerContext): Record<string, string> {
 }
 
 function privilegedHeaders(caller: CallerContext): Record<string, string> {
-  return {
+  const headers: Record<string, string> = {
     apikey: caller.privilegedKey,
-    Authorization: `Bearer ${caller.privilegedKey}`,
   };
+
+  if (caller.privilegedKeyKind === "jwt") {
+    headers.Authorization = `Bearer ${caller.privilegedKey}`;
+  }
+
+  return headers;
 }
 
 async function readJson(response: Response): Promise<unknown> {
