@@ -447,8 +447,8 @@ h1 {
 
 .activity-item {
   display: grid;
-  gap: 8px;
-  padding: 12px;
+  gap: 7px;
+  padding: 11px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
@@ -458,13 +458,32 @@ h1 {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .activity-main span {
   color: var(--muted);
   font-size: 0.84rem;
   font-weight: 700;
+}
+
+.activity-main .activity-amount {
+  color: var(--text);
+  font-size: 0.96rem;
+  font-weight: 800;
+  min-width: 0;
+}
+
+.activity-main .activity-movement {
+  background: #eff3f6;
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  white-space: nowrap;
+  text-transform: capitalize;
 }
 
 .activity-main strong {
@@ -477,6 +496,27 @@ h1 {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.activity-meta--review {
+  gap: 6px 8px;
+}
+
+.activity-description {
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.activity-meta-created {
+  margin-left: auto;
+  background: transparent;
+  border: 1px dashed var(--line);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 650;
+  border-radius: 999px;
 }
 
 .activity-meta span {
@@ -520,6 +560,78 @@ h1 {
 
 .activity-list--grouped {
   gap: 6px;
+}
+
+.activity-list--grouped .activity-item {
+  gap: 6px;
+}
+
+.activity-list--grouped .activity-main {
+  min-height: 34px;
+}
+
+.activity-list--grouped .activity-description {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  max-height: 2.6em;
+  overflow: hidden;
+}
+
+@media (max-width: 430px) {
+  .activity-main {
+    flex-wrap: nowrap;
+    align-items: flex-start;
+  }
+
+  .activity-main .activity-movement {
+    max-width: 110px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .activity-description {
+    max-width: 100%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
+  .activity-meta--review span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .activity-meta-created {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .date-group-header {
+    gap: 6px;
+  }
+
+  .date-group-header h4 {
+    font-size: 0.84rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .date-group-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .date-group-header .empty-state {
+    margin: 0;
+  }
+
+  .activity-main {
+    column-gap: 8px;
+  }
 }
 
 @media (min-width: 720px) {

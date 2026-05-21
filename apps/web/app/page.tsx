@@ -1382,15 +1382,23 @@ function ReviewContent({
                       key={`${activity.activityDate}-${activity.createdAt ?? "no-created-at"}-${index}`}
                     >
                       <div className="activity-main">
-                        <span>{formatAmount(activity.amount, activity.currency)}</span>
-                        <strong>{activity.movementType}</strong>
+                        <span className="activity-amount">
+                          {formatAmount(activity.amount, activity.currency)}
+                        </span>
+                        <strong className="activity-movement">
+                          {activity.movementType}
+                        </strong>
                       </div>
-                      <div className="activity-meta">
+
+                      <p className="activity-description">{activity.description}</p>
+
+                      <div className="activity-meta activity-meta--review">
                         <span>{activity.accountName}</span>
                         <span>{activity.categoryName}</span>
-                        <span>Created {formatOptionalTimestamp(activity.createdAt)}</span>
+                        <span className="activity-meta-created">
+                          Created {formatOptionalTimestamp(activity.createdAt)}
+                        </span>
                       </div>
-                      <p>{activity.description}</p>
                     </li>
                   ))}
                 </ul>
