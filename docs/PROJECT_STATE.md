@@ -395,6 +395,20 @@
   - no repo file changes during validation.
   - private/runtime values were not disclosed.
 - PRs related to #236 introduced no code/config/schema/API/function changes, no production access, no private-value disclosure, and no production-ready claim.
+- PR #248 implemented the first minimal read-only finance dashboard card strip in the existing WebApp.
+- The dashboard card strip includes `今日支出` / Today spending, `本月支出` / This month spending, `近 7 日支出` / Recent 7-day spending, `本月最大支出分類` / Largest category this month, and `本月分類支出 Top 5` / Category Top 5 this month.
+- The dashboard card strip uses already-loaded review data only and does not introduce new query semantics, schema, API, RPC, view, function, table, or Supabase config changes.
+- Dashboard calculations use active-only expense semantics, and voided activities do not pollute dashboard totals.
+- Dashboard cards show safe Traditional Chinese unavailable states when the loaded review range is insufficient or when the movement filter excludes expense rows.
+- Dashboard values do not present partial loaded data as complete dashboard truth.
+- Issue #249 is closed as completed after merged-main staging runtime validation of the minimal finance dashboard card strip.
+- Issue #249 validation confirmed `npm run build` in `apps/web` passed, staging sign-in passed, and Traditional Chinese dashboard labels were readable.
+- Issue #249 validation confirmed the dashboard card strip was visible after sign-in and all five dashboard cards were visible and safe.
+- Issue #249 validation confirmed existing review panel loading still passed and existing expense quick capture remained unchanged.
+- Issue #249 validation confirmed active-only review remained default, active-only totals remained default, and void audit remained intentional and non-default.
+- Issue #249 validation confirmed no mutation controls were added.
+- Issue #249 validation confirmed dashboard/review validation performed no writes, production was not accessed, repo files were not changed during validation, and private/runtime values were not disclosed.
+- PR #248 and Issue #249 introduced no production access, write behavior, schema/migration/config/API changes, Edge Function changes, package/env changes, debt or budget behavior, AI/Projection, cashflow expansion, broader Dashboard buildout, legacy Sheets/GAS work, versioning, or production-ready claim.
 
 - Local Supabase DB uses port `55432`.
 - Production database is untouched.
@@ -415,7 +429,7 @@
 
 ## Unknowns
 
-- Define the next focused read-only review usability boundary for validating multi-date grouped review behavior and constrained-layout scanability confidence.
+- Define the next focused read-only dashboard card scanability and range-context boundary without expanding query semantics or write behavior.
 - Data model.
 - Deployment target.
 - Dashboard follow-up requirements.
