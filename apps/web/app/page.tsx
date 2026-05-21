@@ -71,6 +71,12 @@ type DisplayActivity = {
   createdAt: string | null;
 };
 
+type ActivityGroup = {
+  activityDate: string;
+  activityCount: number;
+  activities: DisplayActivity[];
+};
+
 type VoidAuditItem = DisplayActivity & {
   correctionType: string;
   reason: string;
@@ -85,6 +91,7 @@ type TotalLine = {
 
 type ReviewData = {
   activities: DisplayActivity[];
+  activityGroups: ActivityGroup[];
   dateRangeTotals: TotalLine[];
   movementTotals: TotalLine[];
   categoryTotals: TotalLine[];
@@ -373,8 +380,9 @@ function buildReviewData(
       return rightTime - leftTime;
     });
 
-  return {
-    activities: activeActivities.slice(0, 25).map((activity) => ({
+  const mappedActivities = activeActivities
+    .slice(0, 25)
+    .map((activity) => ({
       activityDate: activity.activity_date,
       movementType: activity.movement_type,
       amount: normalizeAmount(activity.amount),
@@ -391,7 +399,31 @@ function buildReviewData(
       ),
       description: activity.description?.trim() || "No description",
       createdAt: activity.created_at,
-    })),
+    }));
+
+  const groupedMap = new Map<string, DisplayActivity[]>();
+  const orderedDateKeys: string[] = [];
+
+  for (const mappedActivity of mappedActivities) {
+    if (!groupedMap.has(mappedActivity.activityDate)) {
+      groupedMap.set(mappedActivity.activityDate, []);
+      orderedDateKeys.push(mappedActivity.activityDate);
+    }
+
+    groupedMap.get(mappedActivity.activityDate)?.push(mappedActivity);
+  }
+
+  const activityGroups: ActivityGroup[] = orderedDateKeys
+    .map((activityDate) => ({
+      activityDate,
+      activityCount: groupedMap.get(activityDate)?.length ?? 0,
+      activities: groupedMap.get(activityDate) ?? [],
+    }))
+    .filter((group) => group.activityCount > 0);
+
+  return {
+    activities: mappedActivities,
+    activityGroups,
     dateRangeTotals: summarizeTotals(activeActivities, () => "Selected range"),
     movementTotals: summarizeTotals(
       activeActivities,
@@ -1329,33 +1361,42 @@ function ReviewContent({
         <div className="section-heading">
           <h3 id="recent-activity-title">Recent active owned activities</h3>
           <p className="session-status session-ready">
-            {data.activities.length} shown
+            {data.activityGroups.reduce((total, group) => total + group.activityCount, 0)}{" "}
+            shown
           </p>
         </div>
 
-        {data.activities.length > 0 ? (
-          <ul className="activity-list">
-            {data.activities.map((activity, index) => (
-              <li
-                className="activity-item"
-                key={`${activity.activityDate}-${activity.createdAt ?? index}`}
-              >
-                <div className="activity-main">
-                  <span>{activity.activityDate}</span>
-                  <strong>
-                    {formatAmount(activity.amount, activity.currency)}
-                  </strong>
+        {data.activityGroups.length > 0 ? (
+          <div className="activity-groups">
+            {data.activityGroups.map((group) => (
+              <section className="review-section" key={group.activityDate}>
+                <div className="date-group-header">
+                  <h4>{group.activityDate}</h4>
+                  <p className="empty-state">Rows: {group.activityCount}</p>
                 </div>
-                <div className="activity-meta">
-                  <span>{activity.movementType}</span>
-                  <span>{activity.accountName}</span>
-                  <span>{activity.categoryName}</span>
-                </div>
-                <p>{activity.description}</p>
-                <small>Created {formatOptionalTimestamp(activity.createdAt)}</small>
-              </li>
+
+                <ul className="activity-list activity-list--grouped">
+                  {group.activities.map((activity, index) => (
+                    <li
+                      className="activity-item"
+                      key={`${activity.activityDate}-${activity.createdAt ?? "no-created-at"}-${index}`}
+                    >
+                      <div className="activity-main">
+                        <span>{formatAmount(activity.amount, activity.currency)}</span>
+                        <strong>{activity.movementType}</strong>
+                      </div>
+                      <div className="activity-meta">
+                        <span>{activity.accountName}</span>
+                        <span>{activity.categoryName}</span>
+                        <span>Created {formatOptionalTimestamp(activity.createdAt)}</span>
+                      </div>
+                      <p>{activity.description}</p>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             ))}
-          </ul>
+          </div>
         ) : (
           <p className="empty-state">
             {emptyStateTitle}
