@@ -121,6 +121,13 @@ const MOVEMENT_FILTER_OPTIONS: Array<{ value: MovementFilter; label: string }> =
   { value: "adjustment", label: "Adjustment" },
 ];
 
+function movementFilterLabel(value: MovementFilter): string {
+  return (
+    MOVEMENT_FILTER_OPTIONS.find((option) => option.value === value)?.label ??
+    value
+  );
+}
+
 const runtimeConfig: RuntimeConfig = {
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
   publishableKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "",
@@ -1170,6 +1177,14 @@ function FinanceReviewPanel({
         </button>
       </div>
 
+      <ReviewStateStrip
+        endDate={endDate}
+        movementFilter={movementFilter}
+        reviewState={reviewState}
+        showVoidAudit={showVoidAudit}
+        startDate={startDate}
+      />
+
       {!canLoad ? (
         <p className="status-message status-muted" role="status">
           Sign in with complete runtime configuration to load read-only review
@@ -1196,6 +1211,58 @@ function FinanceReviewPanel({
           showVoidAudit={showVoidAudit}
         />
       ) : null}
+    </section>
+  );
+}
+
+function ReviewStateStrip({
+  endDate,
+  movementFilter,
+  reviewState,
+  showVoidAudit,
+  startDate,
+}: {
+  endDate: string;
+  movementFilter: MovementFilter;
+  reviewState: ReviewState;
+  showVoidAudit: boolean;
+  startDate: string;
+}) {
+  const loadedData =
+    reviewState.status === "success" ? reviewState.data : undefined;
+  const rangeLabel =
+    startDate && endDate ? `${startDate} to ${endDate}` : "Select dates";
+  const activeCountLabel = loadedData
+    ? `${loadedData.activities.length} active shown`
+    : "Loads with review";
+  const auditCountLabel = loadedData
+    ? `${loadedData.voidAuditItems.length} audit records available`
+    : "Loads with review";
+
+  return (
+    <section className="review-section" aria-labelledby="review-state-title">
+      <div className="section-heading">
+        <div>
+          <h3 id="review-state-title">Review state</h3>
+          <p className="empty-state">
+            Active-only review and totals. Voided activities stay excluded from
+            default totals.
+          </p>
+        </div>
+        <p className="session-status session-ready">Read-only</p>
+      </div>
+
+      <div className="activity-meta" aria-label="Current review state">
+        <span>Mode: Active review</span>
+        <span>Range: {rangeLabel}</span>
+        <span>Movement: {movementFilterLabel(movementFilter)}</span>
+        <span>
+          Void audit: {showVoidAudit ? "Shown intentionally" : "Hidden"}
+        </span>
+        <span>Active count: {activeCountLabel}</span>
+        <span>Audit count: {auditCountLabel}</span>
+        <span>No writes</span>
+      </div>
     </section>
   );
 }
