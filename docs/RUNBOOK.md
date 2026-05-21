@@ -58,6 +58,10 @@ It is not production deployment documentation and does not implement write-capab
 - `finance_activity_corrections` exists as the first schema-level correction event table for expense activity void events.
 - Expense activity void corrections preserve audit trace by appending correction events; original `finance_activities` rows remain traceable and are not hard-deleted or silently overwritten.
 - Local validation for Issue #187 passed for migration replay, expected fields, RLS enabled, owner-scoped read behavior, duplicate void rejection, empty reason rejection, unsupported correction type rejection, referenced activity enforcement, same-owner expense enforcement, and correction indexes.
+- PR #201 merged the narrow `void_finance_activity` RPC migration.
+- PR #203 merged the `void-finance-activity` Edge Function patch to call `void_finance_activity`.
+- Issue #194 is closed as completed after hosted staging validation passed for the expense activity void RPC path.
+- Hosted staging validation confirmed authenticated owned expense void, safe rejection paths, original activity preservation, correction event creation, and direct client insert blocking.
 - Production remains untouched.
 
 ## Local Environment Prerequisites
@@ -79,7 +83,7 @@ It is not production deployment documentation and does not implement write-capab
 - No reporting objects, views, functions, triggers, or reporting tables.
 - No AI or Projection behavior.
 - No transfer or adjustment support in reusable local logging unless a dedicated issue explicitly approves it.
-- No Edge Function write behavior, WebApp correction UI, active review/totals filtering changes, or production migration application for expense activity void corrections unless a dedicated issue explicitly approves it.
+- No WebApp correction UI, active review/totals filtering changes, or production migration application for expense activity void corrections unless a dedicated issue explicitly approves it.
 
 ## Start Local Supabase Safely
 
@@ -1255,7 +1259,7 @@ Define expense activity void backend/API boundary.
 
 Issue #200 adds the narrow `void_finance_activity` RPC migration after Issue #199 selected the DB RPC fallback boundary.
 
-This RPC is the database-side write boundary for creating one expense activity void correction event. It keeps the existing correction-events model and does not add WebApp correction UI, active review/totals filtering, Dashboard write behavior, production behavior, Supabase config changes, or hosted staging validation.
+This RPC is the database-side write boundary for creating one expense activity void correction event. It keeps the existing correction-events model and does not add WebApp correction UI, active review/totals filtering, Dashboard write behavior, production behavior, or Supabase config changes.
 
 RPC behavior:
 
@@ -1297,7 +1301,40 @@ Local validation evidence for Issue #200:
 
 Next safe issue:
 
-Patch `void-finance-activity` to call `void_finance_activity`.
+Define void-aware review/totals filtering boundary.
+
+### Hosted Expense Void Validation
+
+Issue #194 is closed as completed after hosted staging validation passed for the expense activity void RPC path.
+
+Validated hosted staging state:
+
+- PR #201 merged the `void_finance_activity` RPC migration.
+- PR #203 merged the `void-finance-activity` Edge Function patch to call `void_finance_activity`.
+- The RPC migration is present on `detabase-staging`.
+- The latest `void-finance-activity` function is deployed to `detabase-staging`.
+- Production was not selected, accessed, deployed to, or modified.
+
+Validated behavior:
+
+- Authenticated owned expense void succeeds.
+- Blank reason is rejected.
+- Malformed activity reference is rejected.
+- Missing or cross-owner activity is rejected safely.
+- Duplicate or already-voided activity is rejected.
+- Client-provided `correction_type` is rejected.
+- The original `finance_activities` row remains present.
+- The original activity payload remains unchanged.
+- A `finance_activity_corrections` void event exists after a valid void.
+- Direct client insert into `finance_activity_corrections` remains unavailable.
+
+Non-expense activity rejection was not validated on hosted staging because no safe owned non-expense fixture existed for the authenticated staging user.
+
+This validation did not introduce repo file changes, migration changes, Supabase config changes, WebApp correction UI, active review/totals filtering, Dashboard write behavior, production access, sensitive value disclosure, versioning, or production-ready claims.
+
+Next safe issue:
+
+Define void-aware review/totals filtering boundary.
 
 ## Verify Local Records
 
