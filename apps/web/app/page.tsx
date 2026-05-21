@@ -1425,7 +1425,8 @@ function ReviewDashboardStrip({
         <div>
           <h3 id="dashboard-metrics-title">唯讀支出快照</h3>
           <p className="empty-state">
-            僅顯示載入資料中的支出活動，作廢紀錄預設不納入。
+            依目前檢視日期與收支篩選的已載入資料計算，不代表完整財務總覽。
+            作廢紀錄預設不納入。
           </p>
         </div>
         <p className="session-status session-ready">唯讀</p>
@@ -1446,8 +1447,13 @@ function ReviewDashboardStrip({
                 {dashboardData.todaySpendingUnavailableMessage}
               </p>
             ) : (
-              <strong>{formatAmount(dashboardData.todaySpending ?? 0, currency("TWD"))}</strong>
+              <strong className="dashboard-card-value">
+                {formatAmount(dashboardData.todaySpending ?? 0, currency("TWD"))}
+              </strong>
             )}
+            <p className="dashboard-card-context">
+              需涵蓋今日，且目前篩選需包含支出。
+            </p>
           </article>
 
           <article className="dashboard-card">
@@ -1457,8 +1463,13 @@ function ReviewDashboardStrip({
                 {dashboardData.thisMonthSpendingUnavailableMessage}
               </p>
             ) : (
-               <strong>{formatAmount(dashboardData.thisMonthSpending ?? 0, currency("TWD"))}</strong>
+              <strong className="dashboard-card-value">
+                {formatAmount(dashboardData.thisMonthSpending ?? 0, currency("TWD"))}
+              </strong>
             )}
+            <p className="dashboard-card-context">
+              需涵蓋本月起至今日，且目前篩選需包含支出。
+            </p>
           </article>
 
           <article className="dashboard-card">
@@ -1468,10 +1479,13 @@ function ReviewDashboardStrip({
                 {dashboardData.recent7DaySpendingUnavailableMessage}
               </p>
             ) : (
-              <strong>
+              <strong className="dashboard-card-value">
                 {formatAmount(dashboardData.recent7DaySpending ?? 0, currency("TWD"))}
               </strong>
             )}
+            <p className="dashboard-card-context">
+              需涵蓋近 7 日，且目前篩選需包含支出。
+            </p>
           </article>
 
           <article className="dashboard-card dashboard-card--category">
@@ -1484,8 +1498,10 @@ function ReviewDashboardStrip({
               </p>
             ) : (
               <>
-                <strong>{dashboardData.topCategoryLabel}</strong>
-                <p>
+                <strong className="dashboard-card-value">
+                  {dashboardData.topCategoryLabel}
+                </strong>
+                <p className="dashboard-card-amount">
                   {formatAmount(
                     dashboardData.topCategoryAmount ?? 0,
                     currency(dashboardData.topCategoryCurrency),
@@ -1493,6 +1509,9 @@ function ReviewDashboardStrip({
                 </p>
               </>
             )}
+            <p className="dashboard-card-context">
+              依本月已載入支出分類計算，需涵蓋本月起至今日。
+            </p>
           </article>
 
           <article className="dashboard-card dashboard-card--category">
@@ -1517,6 +1536,9 @@ function ReviewDashboardStrip({
             ) : (
               <p className="empty-state">本月無分類支出。</p>
             )}
+            <p className="dashboard-card-context">
+              依本月已載入支出分類排序，需涵蓋本月起至今日。
+            </p>
           </article>
         </div>
       ) : (
