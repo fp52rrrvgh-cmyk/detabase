@@ -79,6 +79,12 @@ import {
   summarizeTotals,
 } from "./lib/review";
 
+import { AuthMessageView } from "./components/AuthMessageView";
+import { RuntimeReadiness } from "./components/RuntimeReadiness";
+import { SessionStatus } from "./components/SessionStatus";
+import { StatusMessage } from "./components/StatusMessage";
+import { TotalList } from "./components/TotalList";
+
 async function readSafeJson(response: Response): Promise<unknown> {
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) {
@@ -864,147 +870,6 @@ export default function ExpenseEntryPage() {
   );
 }
 
-function RuntimeReadiness({
-  configured,
-  items,
-}: {
-  configured: boolean;
-  items: RuntimeStatusItem[];
-}) {
-  return (
-    <section className="runtime-section" aria-labelledby="runtime-title">
-      <div className="section-heading">
-        <h2 id="runtime-title">執行環境狀態</h2>
-        <p
-          className={`session-status ${
-            configured ? "session-ready" : "session-warning"
-          }`}
-        >
-          {configured ? "已設定" : "缺少"}
-        </p>
-      </div>
-
-      <p className="runtime-note">
-        值保留於 apps/web/.env.local，不會顯示在此畫面。
-      </p>
-
-      <ul className="runtime-list" aria-label="執行環境狀態">
-        {items.map((item) => (
-          <li key={item.name}>
-            <code>{item.name}</code>
-            <span
-              className={`runtime-state ${
-                item.configured ? "runtime-ready" : "runtime-missing"
-              }`}
-            >
-              {item.configured ? "已設定" : "缺少"}
-            </span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-function SessionStatus({
-  status,
-  hasSession,
-}: {
-  status: AuthStatus;
-  hasSession: boolean;
-}) {
-  if (status === "checking") {
-    return <p className="session-status">檢查中</p>;
-  }
-
-  if (status === "signed_in" && hasSession) {
-    return <p className="session-status session-ready">已登入</p>;
-  }
-
-  return <p className="session-status">已登出</p>;
-}
-
-function AuthMessageView({ message }: { message: AuthMessage | null }) {
-  if (!message) {
-    return null;
-  }
-
-  return (
-    <p
-      className={`status-message ${
-        message.status === "success" ? "status-success" : "status-error"
-      }`}
-      role={message.status === "success" ? "status" : "alert"}
-    >
-      {message.message}
-    </p>
-  );
-}
-
-function StatusMessage({
-  coreConfigReady,
-  mode,
-  modeConfigReady,
-  state,
-}: {
-  coreConfigReady: boolean;
-  mode: QuickCaptureMode;
-  modeConfigReady: boolean;
-  state: SubmitState;
-}) {
-  const label = quickCaptureModeLabel(mode);
-
-  if (!coreConfigReady) {
-    return (
-      <p className="status-message status-warning" role="status">
-        執行環境設定不完整，送出前先補齊缺少的環境設定名稱。
-      </p>
-    );
-  }
-
-  if (!modeConfigReady) {
-    return (
-      <p className="status-message status-warning" role="status">
-        {label}設定不完整，送出前先補齊缺少的 {label} runtime env names。
-      </p>
-    );
-  }
-
-  if (state.status === "loading") {
-    return (
-      <p className="status-message" role="status">
-        儲存{label}中...
-      </p>
-    );
-  }
-
-  if (state.status === "success") {
-    const savedLabel = quickCaptureModeLabel(state.movementType);
-
-    return (
-      <p className="status-message status-success" role="status">
-        已儲存{savedLabel}：{state.activityDate}，TWD {state.amount}，
-        {state.description}。
-        可直接輸入下一筆。
-      </p>
-    );
-  }
-
-  if (state.status === "failure") {
-    return (
-      <p className="status-message status-error" role="alert">
-        {state.message}
-      </p>
-    );
-  }
-
-  return (
-    <p className="status-message status-muted" role="status">
-      可直接輸入一筆{label}。
-    </p>
-  );
-}
-
 function FinanceReviewPanel({
   canLoad,
   endDate,
@@ -1629,25 +1494,3 @@ function ReviewContent({
   );
 }
 
-function TotalList({
-  emptyLabel,
-  totals,
-}: {
-  emptyLabel: string;
-  totals: TotalLine[];
-}) {
-  if (totals.length === 0) {
-    return <p className="empty-state">{emptyLabel}</p>;
-  }
-
-  return (
-    <ul className="total-list">
-      {totals.map((total) => (
-        <li key={`${total.label}-${total.currency}`}>
-          <span>{total.label}</span>
-          <strong>{formatAmount(total.amount, total.currency)}</strong>
-        </li>
-      ))}
-    </ul>
-  );
-}
