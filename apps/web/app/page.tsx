@@ -4,225 +4,59 @@ import { createClient, type Session } from "@supabase/supabase-js";
 import type { FormEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-type SubmitState =
-  | { status: "idle" }
-  | { status: "loading" }
-  | {
-      status: "success";
-      activityDate: string;
-      amount: string;
-      description: string;
-      movementType: QuickCaptureMode;
-    }
-  | { status: "failure"; message: string };
+import type {
+  ActivityGroup,
+  AuthMessage,
+  AuthStatus,
+  CategorySpendingLine,
+  CorrectionRow,
+  DashboardSpendingCard,
+  DisplayActivity,
+  FinanceActivityRow,
+  MovementFilter,
+  MovementType,
+  QuickCaptureMode,
+  ReferenceRow,
+  ReviewData,
+  ReviewState,
+  RuntimeConfig,
+  RuntimeStatusItem,
+  SubmitState,
+  TotalLine,
+  VoidAuditItem,
+  VoidCorrectionState,
+} from "./types";
 
-type AuthStatus = "checking" | "signed_out" | "signed_in";
-type AuthMessage =
-  | { status: "success"; message: string }
-  | { status: "failure"; message: string };
+import {
+  CORE_RUNTIME_KEYS,
+  EXPENSE_RUNTIME_KEYS,
+  INCOME_RUNTIME_KEYS,
+  MOVEMENT_FILTER_OPTIONS,
+  REQUEST_FAILURE_MESSAGE,
+  REVIEW_FAILURE_MESSAGE,
+  RUNTIME_ENVIRONMENT_FIELDS,
+  UUID_PATTERN,
+  VOID_SUCCESS_MESSAGE,
+  movementFilterLabel,
+  runtimeConfig,
+} from "./constants";
 
-type RuntimeConfig = {
-  supabaseUrl: string;
-  publishableKey: string;
-  functionUrl: string;
-  expenseAccountId: string;
-  expenseCategoryId: string;
-  incomeAccountId: string;
-  incomeCategoryId: string;
-};
+import {
+  currentLocalDate,
+  defaultReviewDateRange,
+  isDateWithinRange,
+  localDateDaysAgo,
+  localMonthStartDate,
+} from "./lib/date";
 
-type RuntimeStatusItem = {
-  name: string;
-  configured: boolean;
-};
-
-type MovementType = "income" | "expense" | "transfer" | "adjustment";
-type MovementFilter = "all" | MovementType;
-type QuickCaptureMode = "expense" | "income";
-
-type FinanceActivityRow = {
-  id: string;
-  activity_date: string;
-  movement_type: MovementType | string;
-  amount: string | number;
-  currency: string;
-  account_id: string | null;
-  category_id: string | null;
-  description: string | null;
-  created_at: string | null;
-};
-
-type ReferenceRow = {
-  id: string;
-  display_name: string | null;
-};
-
-type CorrectionRow = {
-  activity_id: string | null;
-  correction_type: string | null;
-  reason: string | null;
-  created_at: string | null;
-};
-
-type DisplayActivity = {
-  id: string;
-  activityDate: string;
-  movementType: string;
-  amount: number;
-  currency: string;
-  accountName: string;
-  categoryName: string;
-  description: string;
-  createdAt: string | null;
-};
-
-type ActivityGroup = {
-  activityDate: string;
-  activityCount: number;
-  activities: DisplayActivity[];
-};
-
-type VoidAuditItem = DisplayActivity & {
-  correctionType: string;
-  reason: string;
-  correctionCreatedAt: string | null;
-};
-
-type TotalLine = {
-  label: string;
-  currency: string;
-  amount: number;
-};
-
-type CategorySpendingLine = {
-  label: string;
-  currency: string;
-  amount: number;
-};
-
-type DashboardSpendingCard = {
-  todaySpending: number | null;
-  todaySpendingCurrency: string;
-  todaySpendingUnavailableMessage: string | null;
-  thisMonthSpending: number | null;
-  thisMonthSpendingCurrency: string;
-  thisMonthSpendingUnavailableMessage: string | null;
-  recent7DaySpending: number | null;
-  recent7DaySpendingCurrency: string;
-  recent7DaySpendingUnavailableMessage: string | null;
-  topCategoryLabel: string;
-  topCategoryAmount: number | null;
-  topCategoryCurrency: string;
-  topCategoryUnavailableMessage: string | null;
-  topCategoriesThisMonthUnavailableMessage: string | null;
-  topCategoriesThisMonth: CategorySpendingLine[];
-};
-
-type ReviewData = {
-  activities: DisplayActivity[];
-  activityGroups: ActivityGroup[];
-  dateRangeTotals: TotalLine[];
-  movementTotals: TotalLine[];
-  categoryTotals: TotalLine[];
-  accountTotals: TotalLine[];
-  voidAuditItems: VoidAuditItem[];
-  dashboard: DashboardSpendingCard;
-};
-
-type ReviewState =
-  | { status: "idle" }
-  | { status: "loading" }
-  | { status: "success"; data: ReviewData }
-  | { status: "failure"; message: string };
-
-type VoidCorrectionState =
-  | { status: "idle" }
-  | { status: "confirming"; activityId: string; reason: string; message?: string }
-  | { status: "loading"; activityId: string }
-  | { status: "success"; message: string }
-  | { status: "failure"; message: string };
-
-const RUNTIME_ENVIRONMENT_FIELDS: Array<{
-  name: string;
-  key: keyof RuntimeConfig;
-}> = [
-  { name: "NEXT_PUBLIC_SUPABASE_URL", key: "supabaseUrl" },
-  { name: "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", key: "publishableKey" },
-  { name: "NEXT_PUBLIC_FINANCE_FUNCTION_URL", key: "functionUrl" },
-  { name: "NEXT_PUBLIC_DEFAULT_EXPENSE_ACCOUNT_ID", key: "expenseAccountId" },
-  { name: "NEXT_PUBLIC_DEFAULT_EXPENSE_CATEGORY_ID", key: "expenseCategoryId" },
-  { name: "NEXT_PUBLIC_DEFAULT_INCOME_ACCOUNT_ID", key: "incomeAccountId" },
-  { name: "NEXT_PUBLIC_DEFAULT_INCOME_CATEGORY_ID", key: "incomeCategoryId" },
-];
-
-const CORE_RUNTIME_KEYS: Array<keyof RuntimeConfig> = [
-  "supabaseUrl",
-  "publishableKey",
-  "functionUrl",
-];
-const EXPENSE_RUNTIME_KEYS: Array<keyof RuntimeConfig> = [
-  ...CORE_RUNTIME_KEYS,
-  "expenseAccountId",
-  "expenseCategoryId",
-];
-const INCOME_RUNTIME_KEYS: Array<keyof RuntimeConfig> = [
-  ...CORE_RUNTIME_KEYS,
-  "incomeAccountId",
-  "incomeCategoryId",
-];
-
-const REQUEST_FAILURE_MESSAGE =
-  "網路或服務請求發生問題，請稍後再試。";
-const REVIEW_FAILURE_MESSAGE =
-  "讀取資料時發生問題，請稍後再試。";
-const VOID_SUCCESS_MESSAGE =
-  "支出已作廢。預設檢視與合計已重新整理，原始紀錄仍保留於稽核紀錄。";
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const MOVEMENT_FILTER_OPTIONS: Array<{ value: MovementFilter; label: string }> = [
-  { value: "all", label: "全部類型" },
-  { value: "income", label: "收入" },
-  { value: "expense", label: "支出" },
-  { value: "transfer", label: "轉帳" },
-  { value: "adjustment", label: "調整" },
-];
-
-function movementFilterLabel(value: MovementFilter): string {
-  return (
-    MOVEMENT_FILTER_OPTIONS.find((option) => option.value === value)?.label ??
-    value
-  );
-}
-
-const runtimeConfig: RuntimeConfig = {
-  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-  publishableKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "",
-  functionUrl: process.env.NEXT_PUBLIC_FINANCE_FUNCTION_URL ?? "",
-  expenseAccountId: process.env.NEXT_PUBLIC_DEFAULT_EXPENSE_ACCOUNT_ID ?? "",
-  expenseCategoryId: process.env.NEXT_PUBLIC_DEFAULT_EXPENSE_CATEGORY_ID ?? "",
-  incomeAccountId: process.env.NEXT_PUBLIC_DEFAULT_INCOME_ACCOUNT_ID ?? "",
-  incomeCategoryId: process.env.NEXT_PUBLIC_DEFAULT_INCOME_CATEGORY_ID ?? "",
-};
-
-function currentLocalDate(): string {
-  const now = new Date();
-  const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  return localDate.toISOString().slice(0, 10);
-}
-
-function localDateDaysAgo(days: number): string {
-  const now = new Date();
-  now.setDate(now.getDate() - days);
-  const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  return localDate.toISOString().slice(0, 10);
-}
-
-function defaultReviewDateRange() {
-  return {
-    startDate: localDateDaysAgo(30),
-    endDate: currentLocalDate(),
-  };
-}
+import {
+  formatAmount,
+  formatOptionalTimestamp,
+  isPositiveIntegerAmount,
+  normalizeAmount,
+  quickCaptureModeLabel,
+  safeReferenceLabel,
+} from "./lib/format";
 
 function hasRuntimeFields(
   config: RuntimeConfig,
@@ -238,19 +72,6 @@ function runtimeEnvironmentStatus(config: RuntimeConfig): RuntimeStatusItem[] {
   }));
 }
 
-function isPositiveIntegerAmount(value: string): boolean {
-  const trimmed = value.trim();
-  if (!/^[1-9]\d*$/.test(trimmed)) {
-    return false;
-  }
-
-  const parsed = Number(trimmed);
-  return Number.isSafeInteger(parsed) && parsed > 0;
-}
-
-function quickCaptureModeLabel(mode: QuickCaptureMode): string {
-  return mode === "income" ? "收入" : "支出";
-}
 
 function runtimeRefsForMode(
   config: RuntimeConfig,
@@ -369,45 +190,6 @@ async function readSafeJson(response: Response): Promise<unknown> {
   }
 }
 
-function normalizeAmount(value: string | number): number {
-  const amount = Number(value);
-  return Number.isFinite(amount) ? amount : 0;
-}
-
-function safeReferenceLabel(
-  references: Map<string, string>,
-  id: string | null,
-  fallback: string,
-): string {
-  if (!id) {
-    return fallback;
-  }
-
-  return references.get(id) ?? fallback;
-}
-
-function formatAmount(amount: number, currency: string): string {
-  return `${currency} ${amount.toLocaleString(undefined, {
-    maximumFractionDigits: 0,
-    minimumFractionDigits: 0,
-  })}`;
-}
-
-function formatOptionalTimestamp(value: string | null): string {
-  if (!value) {
-    return "未顯示";
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return "未顯示";
-  }
-
-  return parsed.toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
-}
 
 function summarizeTotals(
   activities: FinanceActivityRow[],
@@ -460,20 +242,6 @@ function summarizeTopCategoryTotals(
   );
 }
 
-function localMonthStartDate(): string {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), 1);
-  const localStart = new Date(start.getTime() - start.getTimezoneOffset() * 60000);
-  return localStart.toISOString().slice(0, 10);
-}
-
-function isDateWithinRange(
-  value: string,
-  startDate: string,
-  endDate: string,
-): boolean {
-  return value >= startDate && value <= endDate;
-}
 
 function sumAmountsByDateRange(
   activities: FinanceActivityRow[],
