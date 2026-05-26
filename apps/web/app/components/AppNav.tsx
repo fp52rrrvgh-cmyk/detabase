@@ -9,8 +9,8 @@ export function AppNav() {
   return (
     <nav className="app-nav">
       <Link
-        href="/"
-        className={`app-nav-link ${pathname === "/" ? "app-nav-link--active" : ""}`}
+        href="/quick-capture"
+        className={`app-nav-link ${pathname === "/quick-capture" ? "app-nav-link--active" : ""}`}
       >
         快速記錄
       </Link>
