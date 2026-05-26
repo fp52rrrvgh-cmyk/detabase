@@ -1,0 +1,54 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install)",
+      "Bash(npm run build)",
+      "Bash(npm run build:*)",
+      "Bash(node --check scripts/local/*.js)",
+      "Bash(node scripts/local/setup-references.js*)",
+      "Bash(node scripts/local/manual-log.js*)",
+      "Bash(git status)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git add apps/web/app/*)",
+      "Bash(git add apps/web/next*)",
+      "Bash(git add apps/web/tsconfig*)",
+      "Bash(git add apps/web/package*)",
+      "Bash(git add supabase/migrations/*)",
+      "Bash(git add scripts/local/*)",
+      "Bash(git add CLAUDE.md)",
+      "Bash(git add .claude/*)",
+      "Bash(git commit*)",
+      "Bash(find . -not -path '*/.git/*' -not -path '*/node_modules/*'*)",
+      "Bash(rg *)"
+    ],
+    "deny": [
+      "Bash(git add apps/web/.env*)",
+      "Bash(git add .env*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_TOOL_INPUT_FILE_PATH\" | grep -q '\\.env'; then echo '[BLOCK] .env 檔案禁止透過 Claude 寫入，請自行編輯 apps/web/.env.local'; exit 1; fi"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_TOOL_INPUT_FILE_PATH\" | grep -q '\\.env'; then echo '[BLOCK] .env 檔案禁止透過 Claude 編輯，請自行編輯 apps/web/.env.local'; exit 1; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
