@@ -937,3 +937,35 @@ input, button, select, textarea {
 body {
   overscroll-behavior: none;
 }
+
+/* App navigation */
+.app-nav {
+  display: flex;
+  gap: 0;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.app-nav-link {
+  flex: 1;
+  text-align: center;
+  padding: 14px 8px;
+  font-size: 0.92rem;
+  font-weight: 650;
+  color: var(--muted);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: color 140ms ease, border-color 140ms ease;
+}
+
+.app-nav-link:hover {
+  color: var(--text);
+}
+
+.app-nav-link--active {
+  color: var(--accent-strong);
+  border-bottom-color: var(--accent);
+}

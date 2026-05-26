@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { AppNav } from "./components/AppNav";
 
 const APP_NAME = "Detabase";
 const APP_DESCRIPTION = "個人財務作戰系統";
@@ -36,7 +37,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-Hant">
-      <body>{children}</body>
+      <body>
+        <AppNav />
+        {children}
+      </body>
     </html>
   );
 }
