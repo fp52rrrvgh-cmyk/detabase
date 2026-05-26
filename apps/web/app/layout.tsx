@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { AppNav } from "./components/AppNav";
+import { Sidebar } from "./components/Sidebar";
 
 export const dynamic = "force-dynamic";
 
@@ -40,8 +40,10 @@ export default function RootLayout({
   return (
     <html lang="zh-Hant">
       <body>
-        <AppNav />
-        {children}
+        <div className="app-shell-with-sidebar">
+          <Sidebar />
+          <main className="app-main-content">{children}</main>
+        </div>
       </body>
     </html>
   );
