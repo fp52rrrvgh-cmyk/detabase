@@ -5,8 +5,6 @@ import { useCallback, useEffect, useState } from "react";
 
 import { formatAmount } from "../lib/format";
 
-export const dynamic = "force-dynamic";
-
 type MonthlyRow = {
   month: number;
   movement_type: string;

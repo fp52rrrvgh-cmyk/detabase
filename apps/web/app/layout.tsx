@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AppNav } from "./components/AppNav";
 
+export const dynamic = "force-dynamic";
+
 const APP_NAME = "Detabase";
 const APP_DESCRIPTION = "個人財務作戰系統";
 
