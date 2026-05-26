@@ -61,11 +61,11 @@ export function movementFilterLabel(value: MovementFilter): string {
 }
 
 export const runtimeConfig: RuntimeConfig = {
-  supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
-  publishableKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "",
-  functionUrl: process.env.NEXT_PUBLIC_FINANCE_FUNCTION_URL ?? "",
-  expenseAccountId: process.env.NEXT_PUBLIC_DEFAULT_EXPENSE_ACCOUNT_ID ?? "",
-  expenseCategoryId: process.env.NEXT_PUBLIC_DEFAULT_EXPENSE_CATEGORY_ID ?? "",
-  incomeAccountId: process.env.NEXT_PUBLIC_DEFAULT_INCOME_ACCOUNT_ID ?? "",
-  incomeCategoryId: process.env.NEXT_PUBLIC_DEFAULT_INCOME_CATEGORY_ID ?? "",
+  supabaseUrl: typeof process !== "undefined" ? (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "") : "",
+  publishableKey: typeof process !== "undefined" ? (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "") : "",
+  functionUrl: typeof process !== "undefined" ? (process.env.NEXT_PUBLIC_FINANCE_FUNCTION_URL ?? "") : "",
+  expenseAccountId: typeof process !== "undefined" ? (process.env.NEXT_PUBLIC_DEFAULT_EXPENSE_ACCOUNT_ID ?? "") : "",
+  expenseCategoryId: typeof process !== "undefined" ? (process.env.NEXT_PUBLIC_DEFAULT_EXPENSE_CATEGORY_ID ?? "") : "",
+  incomeAccountId: typeof process !== "undefined" ? (process.env.NEXT_PUBLIC_DEFAULT_INCOME_ACCOUNT_ID ?? "") : "",
+  incomeCategoryId: typeof process !== "undefined" ? (process.env.NEXT_PUBLIC_DEFAULT_INCOME_CATEGORY_ID ?? "") : "",
 };
