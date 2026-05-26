@@ -15,7 +15,7 @@ type CategoryRow = {
 
 type PageState =
   | { status: "loading" }
-  | { status: "success"; items: CategoryRow[]; message?: string }
+  | { status: "success"; items: CategoryRow[] }
   | { status: "failure"; message: string };
 
 export default function CategoriesPage() {
@@ -29,6 +29,7 @@ export default function CategoriesPage() {
   const [editName, setEditName] = useState("");
   const [newName, setNewName] = useState("");
   const [newPurpose, setNewPurpose] = useState("");
+  const [toast, setToast] = useState<string | null>(null);
 
   const loadCategories = useCallback(async () => {
     if (!supabase) {
@@ -58,29 +59,57 @@ export default function CategoriesPage() {
     void loadCategories();
   }, [loadCategories]);
 
+  // Auto-dismiss toast after 3s
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
   async function handleAdd(event: React.FormEvent) {
     event.preventDefault();
     if (!supabase || !newName.trim()) return;
 
-    const { error } = await supabase.from("finance_categories").insert({
-      display_name: newName.trim(),
-      grouping_purpose: newPurpose.trim() || null,
-    });
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user?.id) {
+      setToast("請先登入");
+      return;
+    }
 
-    if (error) {
-      setState((s) =>
-        s.status === "success"
-          ? { ...s, message: `新增失敗: ${error.message}` }
-          : s,
+    // Use REST API directly to get full error details
+    try {
+      const response = await fetch(
+        `${runtimeConfig.supabaseUrl}/rest/v1/finance_categories`,
+        {
+          method: "POST",
+          headers: {
+            apikey: runtimeConfig.publishableKey,
+            authorization: `Bearer ${session.access_token}`,
+            "content-type": "application/json",
+            prefer: "return=minimal",
+          },
+          body: JSON.stringify({
+            user_id: session.user.id,
+            display_name: newName.trim(),
+            grouping_purpose: newPurpose.trim() || null,
+          }),
+        },
       );
+
+      if (!response.ok) {
+        const body = await response.text();
+        setToast(`新增失敗 (${response.status}): ${body}`);
+        return;
+      }
+    } catch (err) {
+      setToast(`新增失敗: ${err}`);
       return;
     }
 
     setNewName("");
     setNewPurpose("");
-    setState((s) =>
-      s.status === "success" ? { ...s, message: "分類已新增" } : s,
-    );
+    setToast("✅ 分類已新增");
     await loadCategories();
   }
 
@@ -93,19 +122,13 @@ export default function CategoriesPage() {
       .eq("id", id);
 
     if (error) {
-      setState((s) =>
-        s.status === "success"
-          ? { ...s, message: `更新失敗: ${error.message}` }
-          : s,
-      );
+      setToast(`更新失敗: ${error.message}`);
       return;
     }
 
     setEditingId(null);
     setEditName("");
-    setState((s) =>
-      s.status === "success" ? { ...s, message: "分類已更新" } : s,
-    );
+    setToast("✅ 分類已更新");
     await loadCategories();
   }
 
@@ -118,14 +141,11 @@ export default function CategoriesPage() {
       .eq("id", id);
 
     if (error) {
-      setState((s) =>
-        s.status === "success"
-          ? { ...s, message: `更新失敗: ${error.message}` }
-          : s,
-      );
+      setToast(`更新失敗: ${error.message}`);
       return;
     }
 
+    setToast(current ? "✅ 已停用" : "✅ 已啟用");
     await loadCategories();
   }
 
@@ -149,8 +169,8 @@ export default function CategoriesPage() {
         </p>
       ) : (
         <>
-          {state.message ? (
-            <p className="success-message">{state.message}</p>
+          {toast ? (
+            <p className="toast-message">{toast}</p>
           ) : null}
 
           {/* Add new category */}
@@ -166,13 +186,15 @@ export default function CategoriesPage() {
               />
             </div>
             <div className="field">
-              <span>用途分組（選填）</span>
-              <input
-                type="text"
+              <span>分組（選填）</span>
+              <select
                 value={newPurpose}
                 onChange={(e) => setNewPurpose(e.target.value)}
-                placeholder="例如：固定支出、生活費"
-              />
+              >
+                <option value="">不分組</option>
+                <option value="expense">支出</option>
+                <option value="income">收入</option>
+              </select>
             </div>
             <button className="submit-button" type="submit">
               新增分類

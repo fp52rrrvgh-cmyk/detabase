@@ -10,6 +10,7 @@ import { DailyTrend } from "./components/DailyTrend";
 import { BudgetProgress } from "./components/BudgetProgress";
 import { Briefing } from "./components/Briefing";
 import { IncomeCard } from "./components/IncomeCard";
+import { ShareReport } from "./components/ShareReport";
 
 export default function DashboardPage() {
   const auth = useAuth(() => {});
@@ -76,6 +77,12 @@ export default function DashboardPage() {
           <TopCategories categories={state.data.topCategories} />
           <IncomeCard income={state.data.thisMonthIncome} expense={state.data.thisMonthExpense} />
           <BudgetProgress budgets={state.data.budgets} />
+          <ShareReport
+            expense={state.data.thisMonthExpense}
+            income={state.data.thisMonthIncome}
+            topCategories={state.data.topCategories}
+            budgets={state.data.budgets}
+          />
           <DailyTrend data={state.data.dailyTrend} />
         </>
       ) : null}

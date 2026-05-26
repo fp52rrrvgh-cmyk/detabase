@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 
 import type { QuickCaptureMode, SubmitState } from "../types";
 
@@ -10,6 +11,11 @@ import { hasRuntimeFields, runtimeRefsForMode } from "../lib/runtime";
 import { readSafeJson, extractSafeErrorCode, safeFailureMessage } from "../lib/errors";
 import { REQUEST_FAILURE_MESSAGE } from "../constants";
 
+export type CategoryOption = {
+  id: string;
+  label: string;
+};
+
 export type UseQuickCaptureReturn = {
   amount: string;
   description: string;
@@ -17,10 +23,13 @@ export type UseQuickCaptureReturn = {
   quickCaptureMode: QuickCaptureMode;
   submitState: SubmitState;
   currentModeConfigReady: boolean;
+  categoryId: string;
+  categories: CategoryOption[];
   setAmount: (v: string) => void;
   setDescription: (v: string) => void;
   setActivityDate: (v: string) => void;
   setQuickCaptureMode: (v: QuickCaptureMode) => void;
+  setCategoryId: (v: string) => void;
   handleSubmit: (event: FormEvent<HTMLFormElement>) => void;
   clearSettledSubmitState: () => void;
 };
@@ -37,11 +46,42 @@ export function useQuickCapture(
   const [activityDate, setActivityDateState] = useState(currentLocalDate);
   const [quickCaptureMode, setQuickCaptureMode] = useState<QuickCaptureMode>("expense");
   const [submitState, setSubmitState] = useState<SubmitState>({ status: "idle" });
+  const [categoryId, setCategoryId] = useState("");
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
 
   const expenseConfigReady = hasRuntimeFields(runtimeConfig, EXPENSE_RUNTIME_KEYS);
   const incomeConfigReady = hasRuntimeFields(runtimeConfig, INCOME_RUNTIME_KEYS);
   const currentModeConfigReady =
     quickCaptureMode === "income" ? incomeConfigReady : expenseConfigReady;
+
+  // Load categories
+  useEffect(() => {
+    const supabase =
+      runtimeConfig.supabaseUrl && runtimeConfig.publishableKey
+        ? createClient(runtimeConfig.supabaseUrl, runtimeConfig.publishableKey)
+        : null;
+    if (!supabase) return;
+
+    let cancelled = false;
+    supabase.auth.getSession().then(({ data }) => {
+      if (cancelled || !data.session) return;
+      supabase
+        .from("finance_categories")
+        .select("id,display_name,grouping_purpose")
+        .eq("is_active", true)
+        .order("display_name", { ascending: true })
+        .limit(500)
+        .then(({ data: rows }) => {
+          if (cancelled) return;
+          const list = ((rows ?? []) as { id: string; display_name: string }[]).map(
+            (r) => ({ id: r.id, label: r.display_name }),
+          );
+          setCategories(list);
+        });
+    });
+
+    return () => { cancelled = true; };
+  }, []);
 
   const clearSettledSubmitState = useCallback(() => {
     setSubmitState((current) =>
@@ -141,7 +181,7 @@ export function useQuickCapture(
             amount: trimmedAmount,
             currency: "TWD",
             account_id: selectedRefs.accountId,
-            category_id: selectedRefs.categoryId,
+            category_id: categoryId && categoryId !== "none" ? categoryId : selectedRefs.categoryId,
             description: trimmedDescription,
           }),
         });
@@ -183,7 +223,7 @@ export function useQuickCapture(
       });
       onSuccess();
     },
-    [activityDate, amount, coreConfigReady, currentModeConfigReady, description, onSuccess, quickCaptureMode, supabase],
+    [activityDate, amount, categoryId, coreConfigReady, currentModeConfigReady, description, onSuccess, quickCaptureMode, supabase],
   );
 
   return {
@@ -193,10 +233,13 @@ export function useQuickCapture(
     quickCaptureMode,
     submitState,
     currentModeConfigReady,
+    categoryId: categoryId || "none",
+    categories,
     setAmount: handleAmountChange,
     setDescription: handleDescriptionChange,
     setActivityDate: setActivityDateState,
     setQuickCaptureMode: handleQuickCaptureModeChange,
+    setCategoryId,
     handleSubmit,
     clearSettledSubmitState,
   };

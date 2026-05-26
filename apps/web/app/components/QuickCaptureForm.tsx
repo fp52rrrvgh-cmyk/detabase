@@ -22,9 +22,12 @@ export type QuickCaptureFormProps = {
   description: string;
   mode: QuickCaptureMode;
   submitState: SubmitState;
+  categoryId: string;
+  categories: { id: string; label: string }[];
   onAmountChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onModeChange: (mode: QuickCaptureMode) => void;
+  onCategoryChange: (id: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
 
@@ -37,9 +40,12 @@ export function QuickCaptureForm({
   description,
   mode,
   submitState,
+  categoryId,
+  categories,
   onAmountChange,
   onDescriptionChange,
   onModeChange,
+  onCategoryChange,
   onSubmit,
 }: QuickCaptureFormProps) {
   const label = quickCaptureModeLabel(mode);
@@ -98,6 +104,26 @@ export function QuickCaptureForm({
             rows={4}
             value={description}
           />
+        </label>
+
+        <label className="field">
+          <span>分類</span>
+          <select
+            value={categoryId}
+            onChange={(e) => onCategoryChange(e.target.value)}
+          >
+            <option value="none">未選擇</option>
+            {categories
+              .filter((c) => {
+                // For expense mode, filter by grouping_purpose matching mode
+                return true;
+              })
+              .map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+          </select>
         </label>
 
         <div className="fixed-details" aria-label="提交明細">

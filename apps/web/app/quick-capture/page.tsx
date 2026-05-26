@@ -66,9 +66,12 @@ export default function QuickCapturePage() {
           description={capture.description}
           mode={capture.quickCaptureMode}
           submitState={capture.submitState}
+          categoryId={capture.categoryId}
+          categories={capture.categories}
           onAmountChange={capture.setAmount}
           onDescriptionChange={capture.setDescription}
           onModeChange={capture.setQuickCaptureMode}
+          onCategoryChange={capture.setCategoryId}
           onSubmit={capture.handleSubmit}
         />
       </section>
