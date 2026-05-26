@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { createClient, type Session } from "@supabase/supabase-js";
 import type { FormEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
