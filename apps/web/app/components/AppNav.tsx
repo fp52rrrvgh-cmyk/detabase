@@ -20,6 +20,12 @@ export function AppNav() {
       >
         儀表板
       </Link>
+      <Link
+        href="/budgets"
+        className={`app-nav-link ${pathname === "/budgets" ? "app-nav-link--active" : ""}`}
+      >
+        預算
+      </Link>
     </nav>
   );
 }

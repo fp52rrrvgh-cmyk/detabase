@@ -969,3 +969,136 @@ body {
   color: var(--accent-strong);
   border-bottom-color: var(--accent);
 }
+
+/* Budget management */
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.month-label {
+  font-size: 1.1rem;
+  font-weight: 700;
+  min-width: 140px;
+  text-align: center;
+}
+
+.budget-section-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 24px 0 12px;
+}
+
+.budget-list {
+  margin-top: 8px;
+}
+
+.budget-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.budget-card-inactive {
+  opacity: 0.75;
+}
+
+.budget-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.budget-category-name {
+  font-weight: 650;
+  font-size: 0.95rem;
+}
+
+.budget-alert-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.budget-alert-badge.alert-ok,
+.budget-progress-fill.alert-ok {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.budget-alert-badge.alert-warning,
+.budget-progress-fill.alert-warning {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.budget-alert-badge.alert-exceeded,
+.budget-progress-fill.alert-exceeded {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.budget-card.alert-exceeded {
+  border-color: var(--danger);
+}
+
+.budget-card.alert-warning {
+  border-color: var(--warning);
+}
+
+.budget-card-body {
+  margin-bottom: 12px;
+}
+
+.budget-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.budget-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 300ms ease;
+}
+
+.budget-card-stats {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.budget-card-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.budget-amount-field {
+  flex: 1;
+  min-width: 120px;
+}
+
+.budget-amount-field input {
+  width: 100%;
+}
+
+.budget-action-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
