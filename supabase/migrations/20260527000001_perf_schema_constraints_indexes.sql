@@ -31,8 +31,10 @@ create index if not exists finance_activities_user_date_movement_idx
   on public.finance_activities (user_id, activity_date desc, movement_type);
 
 -- 2b. Monthly aggregation support
+-- date_trunc with timestamptz is STABLE, not IMMUTABLE.
+-- Use a deterministic date-only extraction instead.
 create index if not exists finance_activities_user_month_movement_idx
-  on public.finance_activities (user_id, (date_trunc('month', activity_date)), movement_type);
+  on public.finance_activities (user_id, (date_trunc('month', activity_date::timestamptz)), movement_type);
 
 -- 2c. Account balance / per-account history
 create index if not exists finance_activities_user_account_date_idx
@@ -49,7 +51,7 @@ create index if not exists finance_activity_corrections_owner_created_idx
 create materialized view if not exists public.finance_monthly_summary as
 select
   fa.user_id,
-  date_trunc('month', fa.activity_date) as month,
+  date_trunc('month', fa.activity_date::timestamptz) as month,
   fa.movement_type,
   count(*)                                                                    as transaction_count,
   sum(fa.amount)                                                              as total_amount,
