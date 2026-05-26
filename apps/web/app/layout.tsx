@@ -10,15 +10,15 @@ const APP_DESCRIPTION = "個人財務作戰系統";
 export const metadata: Metadata = {
   title: APP_NAME,
   description: APP_DESCRIPTION,
-  applicationName: APP_NAME,
+  applicationName: "戰情中心",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: APP_NAME,
+    title: "戰情中心",
   },
   manifest: "/manifest.json",
   icons: {
-    apple: "/icons/apple-touch-icon.svg",
+    apple: "/icons/apple-touch-icon.png",
   },
 };
 

@@ -1296,3 +1296,299 @@ body {
     height: 90px;
   }
 }
+
+/* Budget progress */
+
+.budget-progress-list {
+  display: grid;
+  gap: 12px;
+}
+
+.budget-progress-card {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.budget-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.budget-progress-label {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.budget-progress-status {
+  font-size: 0.72rem;
+  font-weight: 750;
+  padding: 3px 8px;
+  border-radius: 6px;
+  line-height: 1.2;
+}
+
+.status-ok {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.status-warning {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+.status-over {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.budget-progress-track {
+  height: 10px;
+  border-radius: 5px;
+  background: #eef1f5;
+  overflow: hidden;
+}
+
+.budget-progress-fill {
+  height: 100%;
+  border-radius: 5px;
+  background: var(--accent);
+  transition: width 400ms ease;
+}
+
+.fill-warning {
+  background: #d68a00;
+}
+
+.fill-over {
+  background: var(--danger);
+}
+
+.budget-progress-details {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.budget-progress-remaining {
+  font-size: 0.82rem;
+  color: var(--text);
+}
+
+.budget-progress-remaining strong {
+  color: var(--accent);
+  font-weight: 750;
+}
+
+/* Briefing */
+
+.briefing-card {
+  padding: 14px 18px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  background: linear-gradient(135deg, #e7f5f1, #f0faf6);
+}
+
+.briefing-text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+/* Income card */
+
+.income-card {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.income-rows {
+  display: grid;
+  gap: 8px;
+}
+
+.income-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.income-label {
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-weight: 650;
+}
+
+.income-amount {
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.income-amount--positive {
+  color: var(--success);
+}
+
+.income-amount--negative {
+  color: var(--danger);
+}
+
+.income-divider {
+  height: 1px;
+  background: var(--line);
+}
+
+.income-bar-strip {
+  display: grid;
+  gap: 5px;
+}
+
+.income-bar-track {
+  height: 8px;
+  border-radius: 4px;
+  background: #eef1f5;
+  overflow: hidden;
+}
+
+.income-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 400ms ease;
+}
+
+.income-bar-fill--expense {
+  background: #d68a00;
+}
+
+.income-bar-label {
+  font-size: 0.74rem;
+  color: var(--muted);
+  text-align: right;
+}
+
+/* Categories */
+
+.category-add-form {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.category-list {
+  display: grid;
+  gap: 8px;
+}
+
+.category-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+
+.category-row--inactive {
+  opacity: 0.5;
+}
+
+.category-row-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.category-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.category-purpose {
+  font-size: 0.74rem;
+  color: var(--muted);
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.category-badge-inactive {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.category-row-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.category-action-btn {
+  min-height: 34px;
+  padding: 0 10px;
+  font-size: 0.78rem;
+  width: auto;
+}
+
+.category-edit-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+}
+
+.category-edit-input {
+  flex: 1;
+  min-width: 120px;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.category-edit-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.category-edit-actions .submit-button {
+  min-height: 40px;
+  padding: 0 14px;
+  width: auto;
+  font-size: 0.82rem;
+}
+
+.btn-warning {
+  color: #d68a00;
+  border-color: #f0d6a0;
+}
+
+.btn-success {
+  color: var(--success);
+  border-color: #a8dbb5;
+}

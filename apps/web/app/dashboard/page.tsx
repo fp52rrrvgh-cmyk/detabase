@@ -7,6 +7,9 @@ import { useDashboard } from "./hooks/useDashboard";
 import { StatCard } from "./components/StatCard";
 import { TopCategories } from "./components/TopCategories";
 import { DailyTrend } from "./components/DailyTrend";
+import { BudgetProgress } from "./components/BudgetProgress";
+import { Briefing } from "./components/Briefing";
+import { IncomeCard } from "./components/IncomeCard";
 
 export default function DashboardPage() {
   const auth = useAuth(() => {});
@@ -47,6 +50,8 @@ export default function DashboardPage() {
         </p>
       ) : state.status === "success" ? (
         <>
+          <Briefing text={state.data.briefing} />
+
           <div className="stat-card-strip">
             <StatCard
               label="今日支出"
@@ -69,6 +74,8 @@ export default function DashboardPage() {
           </div>
 
           <TopCategories categories={state.data.topCategories} />
+          <IncomeCard income={state.data.thisMonthIncome} expense={state.data.thisMonthExpense} />
+          <BudgetProgress budgets={state.data.budgets} />
           <DailyTrend data={state.data.dailyTrend} />
         </>
       ) : null}

@@ -26,6 +26,12 @@ export function AppNav() {
       >
         預算
       </Link>
+      <Link
+        href="/categories"
+        className={`app-nav-link ${pathname === "/categories" ? "app-nav-link--active" : ""}`}
+      >
+        分類
+      </Link>
     </nav>
   );
 }
