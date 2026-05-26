@@ -921,3 +921,19 @@ h1 {
     grid-column: auto;
   }
 }
+
+/* PWA: safe area for notch/home indicator */
+html {
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* PWA: prevent text selection on tap targets */
+input, button, select, textarea {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* PWA: disable pull-to-refresh overscroll for standalone mode */
+body {
+  overscroll-behavior: none;
+}
