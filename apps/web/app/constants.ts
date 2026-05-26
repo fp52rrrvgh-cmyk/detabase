@@ -64,6 +64,9 @@ export const runtimeConfig: RuntimeConfig = {
   supabaseUrl: typeof process !== "undefined" ? (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "") : "",
   publishableKey: typeof process !== "undefined" ? (process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "") : "",
   functionUrl: typeof process !== "undefined" ? (process.env.NEXT_PUBLIC_FINANCE_FUNCTION_URL ?? "") : "",
+  supabaseFunctionsUrl: typeof process !== "undefined"
+    ? ((process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").replace(/\/+$/, "") + "/functions/v1")
+    : "",
   expenseAccountId: typeof process !== "undefined" ? (process.env.NEXT_PUBLIC_DEFAULT_EXPENSE_ACCOUNT_ID ?? "") : "",
   expenseCategoryId: typeof process !== "undefined" ? (process.env.NEXT_PUBLIC_DEFAULT_EXPENSE_CATEGORY_ID ?? "") : "",
   incomeAccountId: typeof process !== "undefined" ? (process.env.NEXT_PUBLIC_DEFAULT_INCOME_ACCOUNT_ID ?? "") : "",

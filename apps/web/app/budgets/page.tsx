@@ -130,7 +130,11 @@ export default function BudgetsPage() {
     ]);
 
     if (categoriesResult.error || budgetsResult.error || alertsResult.error) {
-      setError("讀取資料時發生錯誤");
+      const parts: string[] = [];
+      if (categoriesResult.error) parts.push(`分類:${categoriesResult.error.message}`);
+      if (budgetsResult.error) parts.push(`預算:${budgetsResult.error.message}`);
+      if (alertsResult.error) parts.push(`警示:${alertsResult.error.message}`);
+      setError(`讀取資料時發生錯誤 (${parts.join(", ")})`);
       setLoading(false);
       return;
     }
@@ -154,6 +158,9 @@ export default function BudgetsPage() {
   }, [loadData]);
 
   // --- Set budget ---
+  const [setBudgetMessage, setSetBudgetMessage] = useState<string | null>(null);
+  const [setBudgetError, setSetBudgetError] = useState<string | null>(null);
+
   async function handleSetBudget(categoryId: string) {
     const key = `${categoryId}:${budgetYear}:${budgetMonth}`;
     const rawAmount = editingAmounts[key]?.trim();
@@ -166,31 +173,50 @@ export default function BudgetsPage() {
     const sessionResult = await supabase.auth.getSession();
     if (sessionResult.error || !sessionResult.data.session?.access_token) return;
 
-    const setBudgetUrl = runtimeConfig.functionUrl.replace(/\/functions\/v1\/.*$/, "/functions/v1/set-budget");
-
     setSavingKeys((prev) => new Set(prev).add(key));
+    setSetBudgetMessage(null);
+    setSetBudgetError(null);
 
     try {
-      const response = await fetch(setBudgetUrl, {
-        method: "POST",
-        headers: {
-          apikey: runtimeConfig.publishableKey,
-          authorization: `Bearer ${sessionResult.data.session.access_token}`,
-          "content-type": "application/json",
+      // Use Supabase REST API upsert directly (avoids Edge Function CORS complexity)
+      const response = await fetch(
+        `${runtimeConfig.supabaseUrl}/rest/v1/finance_budgets`,
+        {
+          method: "POST",
+          headers: {
+            apikey: runtimeConfig.publishableKey,
+            authorization: `Bearer ${sessionResult.data.session.access_token}`,
+            "content-type": "application/json",
+            prefer: "resolution=merge-duplicates",
+          },
+          body: JSON.stringify({
+            user_id: sessionResult.data.session.user.id,
+            category_id: categoryId,
+            budget_year: budgetYear,
+            budget_month: budgetMonth,
+            limit_amount: amount,
+          }),
         },
-        body: JSON.stringify({
-          category_id: categoryId,
-          budget_year: budgetYear,
-          budget_month: budgetMonth,
-          limit_amount: amount,
-        }),
-      });
+      );
 
       if (response.ok) {
+        setSetBudgetMessage("預算已設定成功");
         await loadData();
+      } else {
+        let errorMsg = `HTTP ${response.status}: `;
+        try {
+          const body = await response.json();
+          errorMsg += JSON.stringify(body);
+          if (body?.error?.message) errorMsg = body.error.message;
+        } catch {
+          const raw = await response.text().catch(() => "(cannot read body)");
+          errorMsg += raw;
+        }
+        setSetBudgetError(errorMsg);
       }
-    } catch {
-      // silent
+    } catch (e) {
+      const errMsg = e instanceof Error ? e.message : String(e);
+      setSetBudgetError(`網路請求失敗: ${errMsg}`);
     } finally {
       setSavingKeys((prev) => {
         const next = new Set(prev);
@@ -276,6 +302,9 @@ export default function BudgetsPage() {
         </div>
 
         {error && <p className="error-message">{error}</p>}
+
+        {setBudgetMessage && <p className="success-message">{setBudgetMessage}</p>}
+        {setBudgetError && <p className="error-message">{setBudgetError}</p>}
 
         {loading ? (
           <p>載入中...</p>

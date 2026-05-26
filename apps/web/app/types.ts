@@ -22,6 +22,7 @@ export type RuntimeConfig = {
   supabaseUrl: string;
   publishableKey: string;
   functionUrl: string;
+  supabaseFunctionsUrl: string;
   expenseAccountId: string;
   expenseCategoryId: string;
   incomeAccountId: string;

@@ -6,6 +6,7 @@ const JSON_HEADERS = {
 const ALLOWED_CORS_ORIGINS = new Set([
   "http://localhost:3000",
   "http://127.0.0.1:3000",
+  "https://web-two-gamma-aorcvaarvn.vercel.app",
 ]);
 const DEFAULT_CORS_ORIGIN = "http://localhost:3000";
 const CORS_METHODS = "POST, OPTIONS";
@@ -71,7 +72,10 @@ function withCors(req: Request, response: Response): Response {
 function preflightResponse(req: Request): Response {
   return new Response(null, {
     status: 204,
-    headers: corsHeaders(req),
+    headers: {
+      ...corsHeaders(req),
+      "access-control-max-age": "86400",
+    },
   });
 }
 
