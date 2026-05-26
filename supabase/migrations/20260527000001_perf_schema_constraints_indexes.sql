@@ -60,7 +60,7 @@ left join public.finance_activity_corrections fc
   on fc.activity_id = fa.id
   and fc.owner_user_id = fa.user_id
   and fc.correction_type = 'void'
-group by fa.user_id, date_trunc('month', fa.activity_date), fa.movement_type;
+group by fa.user_id, (extract(year from fa.activity_date)::int * 100 + extract(month from fa.activity_date)::int), fa.movement_type;
 
 -- Unique index on the materialized view for concurrent refresh support
 create unique index if not exists finance_monthly_summary_pkey
