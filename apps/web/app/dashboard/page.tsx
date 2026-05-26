@@ -3,7 +3,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { runtimeConfig } from "../constants";
 import { formatAmount } from "../lib/format";
 
 type MonthlyRow = {
@@ -27,8 +26,10 @@ function monthLabel(month: number): string {
 
 export default function DashboardPage() {
   const supabase = useMemo(() => {
-    if (!runtimeConfig.supabaseUrl || !runtimeConfig.publishableKey) return null;
-    return createClient(runtimeConfig.supabaseUrl, runtimeConfig.publishableKey);
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+    const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "";
+    if (!supabaseUrl || !publishableKey) return null;
+    return createClient(supabaseUrl, publishableKey);
   }, []);
 
   const [state, setState] = useState<DashboardState>({ status: "loading" });
