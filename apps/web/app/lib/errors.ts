@@ -1,6 +1,19 @@
 import type { QuickCaptureMode } from "../types";
 import { quickCaptureModeLabel } from "./format";
 
+export async function readSafeJson(response: Response): Promise<unknown> {
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    return null;
+  }
+
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
 export function extractSafeErrorCode(body: unknown): string | null {
   if (typeof body !== "object" || body === null || !("error" in body)) {
     return null;

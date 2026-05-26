@@ -27,7 +27,7 @@ Personal Financial Operating System（個人財務作戰系統）
 
 ## 關鍵路徑
 ```
-apps/web/app/page.tsx              ← 唯一前端頁面（2271 行巨型元件，技術債）
+apps/web/app/page.tsx              ← 入口頁面（55 行，邏輯已拆至 hooks/）
 apps/web/app/layout.tsx            ← App layout
 apps/web/app/globals.css           ← 全域樣式
 apps/web/.env.local                ← env 值（本地唯一，禁止 commit）
