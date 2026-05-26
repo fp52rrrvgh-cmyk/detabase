@@ -1,7 +1,7 @@
 "use client";
 
 import { createClient } from "@supabase/supabase-js";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { formatAmount } from "../lib/format";
 
@@ -26,17 +26,19 @@ function monthLabel(month: number): string {
   return `${y} 年 ${m} 月`;
 }
 
-export default function DashboardPage() {
-  const supabase = useMemo(() => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-    const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "";
-    if (!supabaseUrl || !publishableKey) return null;
-    return createClient(supabaseUrl, publishableKey);
-  }, []);
+function getSupabaseClient() {
+  if (typeof window === "undefined") return null;
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "";
+  if (!supabaseUrl || !publishableKey) return null;
+  return createClient(supabaseUrl, publishableKey);
+}
 
+export default function DashboardPage() {
   const [state, setState] = useState<DashboardState>({ status: "loading" });
 
   const load = useCallback(async () => {
+    const supabase = getSupabaseClient();
     if (!supabase) {
       setState({ status: "error", message: "Supabase 未設定" });
       return;
@@ -63,7 +65,7 @@ export default function DashboardPage() {
     const currentMonth = today.getFullYear() * 100 + (today.getMonth() + 1);
 
     setState({ status: "loaded", currentMonth, rows: data as MonthlyRow[] });
-  }, [supabase]);
+  }, []);
 
   useEffect(() => {
     void load();
@@ -93,7 +95,6 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        {/* 本月概覽卡片 */}
         <div className="dashboard-card-strip">
           <article className="dashboard-card dashboard-card--primary">
             <span className="dashboard-card-label">本月支出</span>
@@ -128,7 +129,6 @@ export default function DashboardPage() {
           </article>
         </div>
 
-        {/* 歷史趨勢表格 */}
         <section className="review-section">
           <div className="section-heading">
             <h3>月度趨勢</h3>
