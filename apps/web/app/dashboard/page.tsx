@@ -13,12 +13,9 @@ import { AccountOverviewCard } from "./components/AccountOverviewCard";
 import { Briefing } from "./components/Briefing";
 import { ShareReport } from "./components/ShareReport";
 import { YearOverYearChart } from "./components/YearOverYearChart";
-import { AnomalyDetection } from "./components/AnomalyDetection";
 import { DashboardSkeleton } from "./components/DashboardSkeleton";
 import { QuickCaptureModal } from "./components/QuickCaptureModal";
 import { ErrorBoundary } from "../components/ErrorBoundary";
-import AiAdvisor from "./components/AiAdvisor";
-
 function formatTWD(n: number): string {
   return `TWD ${Math.round(n).toLocaleString()}`;
 }
@@ -33,7 +30,7 @@ function TxItem({ tx, onCopy }: { tx: any; onCopy: () => void }) {
         onClick={() => setShowActions(!showActions)}
       >
         <div className="d-tx-left">
-          <span className={`d-tx-icon ${tx.movementType === "income" ? "icon-income" : "icon-expense"}`}>
+          <span className={`d-tx-icon ${tx.movementType === "income" ? "income" : "expense"}`}>
             {tx.movementType === "income" ? "↓" : "↑"}
           </span>
           <div>
@@ -107,22 +104,19 @@ export default function DashboardPage() {
           <>
             {/* ===== Header with month nav ===== */}
           <div className="d-header">
-            <div>
-              <h2 className="d-title">
-                戰情總覽
-                <span className="d-title-month">{viewYear} 年 {viewMonth} 月</span>
-              </h2>
-              <p className="d-desc">30 秒掌握整體財務狀態</p>
+            <div className="d-header-left">
+              <h2 className="d-title">戰情總覽</h2>
+              <p className="d-title-sub">{viewYear} 年 {viewMonth} 月</p>
             </div>
             <div className="d-header-right">
               <div className="d-month-nav">
                 <button className="d-month-btn" onClick={prevMonth} type="button">‹</button>
-                <span className="d-month-label" onClick={goCurrentMonth} style={{ cursor: "pointer" }}>
-                  {isCurrentMonth && <span className="d-month-current-badge">本月</span>}
+                <span className="d-month-label" onClick={goCurrentMonth}>
+                  {isCurrentMonth ? <><span className="d-month-badge">本月</span></> : <>{viewMonth}月</>}
                 </span>
                 <button className="d-month-btn" onClick={nextMonth} type="button">›</button>
               </div>
-              <button className="d-refresh" onClick={reload} type="button">
+              <button className="d-refresh-btn" onClick={reload} type="button">
                 ⟳
               </button>
             </div>
@@ -134,23 +128,23 @@ export default function DashboardPage() {
           {/* ===== KPI Row (5 cards) ===== */}
           <div className="d-kpi-row">
             <div className="d-kpi">
-              <div className="d-kpi-bar income" />
+              <div className="d-kpi-glow expense" />
               <div className="d-kpi-lbl">{isCurrentMonth ? "本月" : `${viewMonth}月`}支出</div>
-              <div className="d-kpi-val warn">{formatTWD(state.data.thisMonthExpense)}</div>
+              <div className="d-kpi-val expense">{formatTWD(state.data.thisMonthExpense)}</div>
               <div className="d-kpi-sub">
                 {totalBudget > 0 ? `預算 ${((state.data.thisMonthExpense / totalBudget) * 100).toFixed(0)}%` : "無預算"}
               </div>
             </div>
             <div className="d-kpi">
-              <div className="d-kpi-bar income" />
+              <div className="d-kpi-glow income" />
               <div className="d-kpi-lbl">{isCurrentMonth ? "本月" : `${viewMonth}月`}收入</div>
               <div className="d-kpi-val income">{formatTWD(state.data.thisMonthIncome)}</div>
               <div className="d-kpi-sub"></div>
             </div>
             <div className="d-kpi">
-              <div className="d-kpi-bar net" />
+              <div className="d-kpi-glow net" />
               <div className="d-kpi-lbl">淨流量</div>
-              <div className={`d-kpi-val ${state.data.thisMonthIncome - state.data.thisMonthExpense >= 0 ? "income" : "danger"}`}>
+              <div className={`d-kpi-val net ${state.data.thisMonthIncome - state.data.thisMonthExpense >= 0 ? "positive" : "negative"}`}>
                 {(state.data.thisMonthIncome - state.data.thisMonthExpense) >= 0 ? "" : "-"}
                 {formatTWD(Math.abs(state.data.thisMonthIncome - state.data.thisMonthExpense))}
               </div>
@@ -161,15 +155,15 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="d-kpi">
-              <div className="d-kpi-bar pending" />
+              <div className="d-kpi-glow budget" />
               <div className="d-kpi-lbl">總預算</div>
-              <div className="d-kpi-val pending">{formatTWD(totalBudget)}</div>
+              <div className="d-kpi-val budget-val">{formatTWD(totalBudget)}</div>
               <div className="d-kpi-sub">{state.data.budgets.length} 分類</div>
             </div>
             <div className="d-kpi">
-              <div className="d-kpi-bar balance" />
+              <div className="d-kpi-glow balance" />
               <div className="d-kpi-lbl">帳戶總餘額</div>
-              <div className="d-kpi-val balance">{formatTWD(state.data.totalBalance)}</div>
+              <div className="d-kpi-val balance-val">{formatTWD(state.data.totalBalance)}</div>
               <div className="d-kpi-sub">▲ {state.data.accounts.length} 帳戶</div>
             </div>
           </div>
@@ -191,12 +185,6 @@ export default function DashboardPage() {
               />
             </div>
           </div>
-
-          {/* ===== Anomaly Detection ===== */}
-          <AnomalyDetection />
-
-          {/* ===== AI Advisor ===== */}
-          <AiAdvisor />
 
           {/* ===== Bottom Row ===== */}
           <div className="d-bottom-grid">
@@ -237,7 +225,7 @@ export default function DashboardPage() {
                   state.data.upcomingSubscriptions.slice(0, 5).map((sub) => (
                     <div key={sub.id} className="d-tx-item">
                       <div className="d-tx-left">
-                        <span className="d-tx-icon" style={{ background: "rgba(168,85,247,0.12)", color: "#a78bfa" }}>
+                        <span className="d-tx-icon subscription">
                           {sub.frequency === "weekly" ? "W" : sub.frequency === "monthly" ? "M" : "Y"}
                         </span>
                         <div>
@@ -245,7 +233,7 @@ export default function DashboardPage() {
                           <div className="d-tx-cat">{sub.categoryLabel} · {sub.nextDate}</div>
                         </div>
                       </div>
-                      <div className={`d-tx-amt ${sub.movementType === "income" ? "income" : "danger"}`}>
+                      <div className={`d-tx-amt ${sub.movementType === "income" ? "income" : "expense"}`}>
                         {sub.movementType === "income" ? "+" : "-"}TWD {sub.amount.toLocaleString()}
                       </div>
                     </div>
