@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 
 import { useState } from "react";
 import { useAuth } from "../hooks/useAuth";
+import { useQuickCapture } from "../hooks/useQuickCapture";
 import { useDashboard } from "./hooks/useDashboard";
 import { ExpensePieChart } from "./components/ExpensePieChart";
 import { DailyTrendChart } from "./components/DailyTrendChart";
@@ -13,6 +14,7 @@ import { Briefing } from "./components/Briefing";
 import { ShareReport } from "./components/ShareReport";
 import { YearOverYearChart } from "./components/YearOverYearChart";
 import { DashboardSkeleton } from "./components/DashboardSkeleton";
+import { QuickCaptureModal } from "./components/QuickCaptureModal";
 
 function formatTWD(n: number): string {
   return `TWD ${Math.round(n).toLocaleString()}`;
@@ -56,6 +58,9 @@ function TxItem({ tx, onCopy }: { tx: any; onCopy: () => void }) {
 
 export default function DashboardPage() {
   const auth = useAuth(() => {});
+
+  const [quickCaptureOpen, setQuickCaptureOpen] = useState(false);
+  const capture = useQuickCapture(auth.supabase, auth.coreConfigReady, auth.authStatus, auth.session);
 
   const now = new Date();
   const [viewYear, setViewYear] = useState(now.getFullYear());
@@ -194,7 +199,6 @@ export default function DashboardPage() {
             <div className="d-card">
               <div className="d-card-h">
                 <span className="d-card-t">📝 最近交易</span>
-                <a href="/quick-capture" className="d-card-m">查看全部 ›</a>
               </div>
               <div className="d-tx-list">
                 {state.data.recentTransactions.slice(0, 6).map((tx) => (
@@ -473,6 +477,36 @@ export default function DashboardPage() {
             budgets={state.data.budgets}
             accounts={state.data.accounts}
             totalBalance={state.data.totalBalance}
+          />
+
+          {/* ===== FAB: Quick capture ===== */}
+          <button
+            className="qc-fab"
+            onClick={() => setQuickCaptureOpen(true)}
+            type="button"
+            aria-label="快速記帳"
+          >
+            ＋
+          </button>
+
+          <QuickCaptureModal
+            open={quickCaptureOpen}
+            onClose={() => setQuickCaptureOpen(false)}
+            activityDate={capture.activityDate}
+            amount={capture.amount}
+            authStatus={auth.authStatus}
+            coreConfigReady={auth.coreConfigReady}
+            currentModeConfigReady={capture.currentModeConfigReady}
+            description={capture.description}
+            mode={capture.quickCaptureMode}
+            submitState={capture.submitState}
+            categoryId={capture.categoryId}
+            categories={capture.categories}
+            onAmountChange={capture.setAmount}
+            onDescriptionChange={capture.setDescription}
+            onModeChange={capture.setQuickCaptureMode}
+            onCategoryChange={capture.setCategoryId}
+            onSubmit={capture.handleSubmit}
           />
         </>
       ) : null}

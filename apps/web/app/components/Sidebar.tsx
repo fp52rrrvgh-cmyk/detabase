@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "📊 總覽" },
-  { href: "/quick-capture", label: "✏️ 快捷記帳" },
   { href: "/transactions", label: "📋 記帳列表" },
   { href: "/accounts", label: "🏦 帳戶" },
   { href: "/reconciliation", label: "✅ 對帳" },
