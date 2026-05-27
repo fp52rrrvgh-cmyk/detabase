@@ -6,13 +6,17 @@ import { useState } from "react";
 import { BudgetsTab } from "./BudgetsTab";
 import { SubscriptionsTab } from "./SubscriptionsTab";
 import { CategoriesTab } from "./CategoriesTab";
+import { AccountsTab } from "./AccountsTab";
+import { RulesTab } from "./RulesTab";
 
-type TabId = "budgets" | "subscriptions" | "categories";
+type TabId = "budgets" | "subscriptions" | "categories" | "accounts" | "rules";
 
 const TABS: { id: TabId; label: string; icon: string }[] = [
   { id: "budgets", label: "預算", icon: "🎯" },
   { id: "subscriptions", label: "固定訂閱", icon: "🔄" },
   { id: "categories", label: "分類", icon: "🏷️" },
+  { id: "accounts", label: "帳戶", icon: "🏦" },
+  { id: "rules", label: "規則分類", icon: "📋" },
 ];
 
 export default function SettingsPage() {
@@ -47,6 +51,8 @@ export default function SettingsPage() {
         {activeTab === "budgets" && <BudgetsTab />}
         {activeTab === "subscriptions" && <SubscriptionsTab />}
         {activeTab === "categories" && <CategoriesTab />}
+        {activeTab === "accounts" && <AccountsTab />}
+        {activeTab === "rules" && <RulesTab />}
       </div>
     </div>
   );

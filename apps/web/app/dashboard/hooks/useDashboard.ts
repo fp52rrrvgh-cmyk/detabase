@@ -8,7 +8,10 @@ export type AccountSummary = {
   id: string;
   displayName: string;
   accountType: string;
+  initialBalance: number;
   balance: number;
+  creditLimit: number | null;
+  totalLoan: number | null;
   currency: string;
 };
 
@@ -139,7 +142,7 @@ export function useDashboard(targetYear?: number, targetMonth?: number) {
 
       const accountPromise = supabase
         .from("finance_accounts")
-        .select("id,display_name,account_type")
+        .select("id,display_name,account_type,initial_balance,credit_limit,total_loan")
         .eq("is_active", true)
         .limit(50);
 
@@ -230,7 +233,7 @@ export function useDashboard(targetYear?: number, targetMonth?: number) {
       );
       const allAccounts = (accountRows ?? []) as any[];
 
-      // Balances
+      // Balances: initial_balance + income - expense
       const incomeMap = new Map<string, number>(
         ((balanceIncome ?? []) as any[]).map((r) => [r.account_id, Number(r.amount)]),
       );
@@ -241,7 +244,10 @@ export function useDashboard(targetYear?: number, targetMonth?: number) {
         id: a.id,
         displayName: a.display_name,
         accountType: a.account_type,
-        balance: (incomeMap.get(a.id) ?? 0) - (expenseMap.get(a.id) ?? 0),
+        initialBalance: Number(a.initial_balance ?? 0),
+        balance: Number(a.initial_balance ?? 0) + (incomeMap.get(a.id) ?? 0) - (expenseMap.get(a.id) ?? 0),
+        creditLimit: a.credit_limit ?? null,
+        totalLoan: a.total_loan ?? null,
         currency: "TWD",
       }));
       const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);

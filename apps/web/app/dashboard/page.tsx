@@ -13,8 +13,11 @@ import { AccountOverviewCard } from "./components/AccountOverviewCard";
 import { Briefing } from "./components/Briefing";
 import { ShareReport } from "./components/ShareReport";
 import { YearOverYearChart } from "./components/YearOverYearChart";
+import { AnomalyDetection } from "./components/AnomalyDetection";
 import { DashboardSkeleton } from "./components/DashboardSkeleton";
 import { QuickCaptureModal } from "./components/QuickCaptureModal";
+import { ErrorBoundary } from "../components/ErrorBoundary";
+import AiAdvisor from "./components/AiAdvisor";
 
 function formatTWD(n: number): string {
   return `TWD ${Math.round(n).toLocaleString()}`;
@@ -100,8 +103,9 @@ export default function DashboardPage() {
       ) : state.status === "failure" ? (
         <p className="status-message status-error" role="alert">{state.message}</p>
       ) : state.status === "success" ? (
-        <>
-          {/* ===== Header with month nav ===== */}
+        <ErrorBoundary>
+          <>
+            {/* ===== Header with month nav ===== */}
           <div className="d-header">
             <div>
               <h2 className="d-title">
@@ -187,6 +191,12 @@ export default function DashboardPage() {
               />
             </div>
           </div>
+
+          {/* ===== Anomaly Detection ===== */}
+          <AnomalyDetection />
+
+          {/* ===== AI Advisor ===== */}
+          <AiAdvisor />
 
           {/* ===== Bottom Row ===== */}
           <div className="d-bottom-grid">
@@ -489,28 +499,35 @@ export default function DashboardPage() {
             ＋
           </button>
 
-          <QuickCaptureModal
-            open={quickCaptureOpen}
-            onClose={() => setQuickCaptureOpen(false)}
-            onSuccess={reload}
-            activityDate={capture.activityDate}
-            amount={capture.amount}
-            authStatus={auth.authStatus}
-            coreConfigReady={auth.coreConfigReady}
-            currentModeConfigReady={capture.currentModeConfigReady}
-            description={capture.description}
-            mode={capture.quickCaptureMode}
-            submitState={capture.submitState}
-            categoryId={capture.categoryId}
-            categories={capture.categories}
-            onAmountChange={capture.setAmount}
-            onDescriptionChange={capture.setDescription}
-            onModeChange={capture.setQuickCaptureMode}
-            onCategoryChange={capture.setCategoryId}
-            onSubmit={capture.handleSubmit}
-          />
+          <ErrorBoundary fallback={<p className="status-message status-error" role="alert">快捷記帳載入失敗，請重整頁面再試。</p>}>
+            <QuickCaptureModal
+              open={quickCaptureOpen}
+              onClose={() => setQuickCaptureOpen(false)}
+              onSuccess={reload}
+              activityDate={capture.activityDate}
+              amount={capture.amount}
+              authStatus={auth.authStatus}
+              coreConfigReady={auth.coreConfigReady}
+              currentModeConfigReady={capture.currentModeConfigReady}
+              description={capture.description}
+              mode={capture.quickCaptureMode}
+              submitState={capture.submitState}
+              categoryId={capture.categoryId}
+              categories={capture.categories}
+              categoryUsage={capture.categoryUsage}
+              accountId={capture.accountId}
+              accounts={capture.accounts}
+              onAmountChange={capture.setAmount}
+              onDescriptionChange={capture.setDescription}
+              onModeChange={capture.setQuickCaptureMode}
+              onCategoryChange={capture.setCategoryId}
+              onAccountChange={capture.setAccountId}
+              onSubmit={capture.handleSubmit}
+            />
+          </ErrorBoundary>
         </>
-      ) : null}
+      </ErrorBoundary>
+    ) : null}
     </div>
   );
 }

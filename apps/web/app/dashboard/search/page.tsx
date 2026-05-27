@@ -1,0 +1,535 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
+import { runtimeConfig } from "../../constants";
+
+/* ───────── Types ───────── */
+
+type Category = {
+  id: string;
+  display_name: string;
+  grouping_purpose: string | null;
+};
+
+type SearchFilters = {
+  keyword: string;
+  dateFrom: string;
+  dateTo: string;
+  movementType: "" | "income" | "expense";
+  amountMin: string;
+  amountMax: string;
+  categoryId: string;
+};
+
+type SortField = "activity_date" | "amount";
+type SortDir = "asc" | "desc";
+
+type TxRow = {
+  id: string;
+  activity_date: string;
+  description: string | null;
+  amount: number;
+  movement_type: string;
+  category_id: string | null;
+  account_id: string | null;
+  finance_categories: { display_name: string }[] | null;
+  finance_accounts: { display_name: string }[] | null;
+};
+
+type SearchState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "success"; rows: TxRow[]; totalCount: number; hasMore: boolean }
+  | { status: "failure"; message: string };
+
+const PAGE_SIZE = 20;
+const DEFAULT_FILTERS: SearchFilters = {
+  keyword: "",
+  dateFrom: "",
+  dateTo: "",
+  movementType: "",
+  amountMin: "",
+  amountMax: "",
+  categoryId: "",
+};
+
+function formatTWD(n: number): string {
+  return `${Math.abs(n).toLocaleString()}`;
+}
+
+function pad2(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+function todayStr(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+/* ───────── Search Button Component ───────── */
+
+function SearchButton({
+  onClick,
+  loading,
+}: {
+  onClick: () => void;
+  loading: boolean;
+}) {
+  return (
+    <button
+      className="txs-btn txs-btn-primary"
+      onClick={onClick}
+      disabled={loading}
+      type="button"
+    >
+      {loading ? "搜尋中…" : "🔍 搜尋"}
+    </button>
+  );
+}
+
+/* ───────── Sort Controls Component ───────── */
+
+function SortControls({
+  sortField,
+  sortDir,
+  onSortChange,
+}: {
+  sortField: SortField;
+  sortDir: SortDir;
+  onSortChange: (field: SortField, dir: SortDir) => void;
+}) {
+  return (
+    <div className="txs-sort-controls">
+      <span className="txs-sort-label">排序：</span>
+      <select
+        className="txs-select txs-select-sm"
+        value={sortField}
+        onChange={(e) =>
+          onSortChange(e.target.value as SortField, sortDir)
+        }
+      >
+        <option value="activity_date">日期</option>
+        <option value="amount">金額</option>
+      </select>
+      <select
+        className="txs-select txs-select-sm"
+        value={sortDir}
+        onChange={(e) =>
+          onSortChange(sortField, e.target.value as SortDir)
+        }
+      >
+        <option value="desc">最新／最大</option>
+        <option value="asc">最舊／最小</option>
+      </select>
+    </div>
+  );
+}
+
+/* ───────── Transaction Row ───────── */
+
+function TxSearchRow({ tx }: { tx: TxRow }) {
+  const isIncome = tx.movement_type === "income";
+  const catLabel = tx.finance_categories?.[0]?.display_name ?? "未分類";
+  const acctLabel = tx.finance_accounts?.[0]?.display_name ?? "未知";
+  const desc = tx.description?.trim() || "無備註";
+
+  return (
+    <div className="d-tx-item">
+      <div className="d-tx-left">
+        <span
+          className={`d-tx-icon ${isIncome ? "icon-income" : "icon-expense"}`}
+        >
+          {isIncome ? "↓" : "↑"}
+        </span>
+        <div>
+          <div className="d-tx-desc">{desc}</div>
+          <div className="d-tx-cat">
+            {catLabel} · {acctLabel} · {tx.activity_date}
+          </div>
+        </div>
+      </div>
+      <div className={`d-tx-amt ${isIncome ? "income" : "danger"}`}>
+        {isIncome ? "+" : "-"}TWD {formatTWD(tx.amount)}
+      </div>
+    </div>
+  );
+}
+
+/* ───────── Main Page ───────── */
+
+export default function SearchPage() {
+  const [supabase] = useState(() => {
+    if (!runtimeConfig.supabaseUrl || !runtimeConfig.publishableKey) return null;
+    return createClient(runtimeConfig.supabaseUrl, runtimeConfig.publishableKey);
+  });
+
+  const [filters, setFilters] = useState<SearchFilters>({ ...DEFAULT_FILTERS });
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [state, setState] = useState<SearchState>({ status: "idle" });
+  const [sortField, setSortField] = useState<SortField>("activity_date");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [count, setCount] = useState<number>(0);
+  const [searchLoading, setSearchLoading] = useState(false);
+
+  const abortRef = useRef<AbortController | null>(null);
+  const pageRef = useRef(0);
+  const loadedRef = useRef(false);
+  const currentFiltersRef = useRef<SearchFilters>({ ...DEFAULT_FILTERS });
+  const currentSortRef = useRef<{ field: SortField; dir: SortDir }>({
+    field: "activity_date",
+    dir: "desc",
+  });
+
+  /* ───────── Load categories ───────── */
+  useEffect(() => {
+    if (!supabase) return;
+    let cancelled = false;
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session || cancelled) return;
+      supabase
+        .from("finance_categories")
+        .select("id,display_name,grouping_purpose")
+        .eq("is_active", true)
+        .limit(500)
+        .then(({ data }) => {
+          if (cancelled) return;
+          setCategories((data ?? []) as Category[]);
+        });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase]);
+
+  /* ───────── Search function ───────── */
+  const doSearch = useCallback(
+    async (append: boolean) => {
+      if (!supabase) {
+        setState({ status: "failure", message: "Runtime 設定不完整" });
+        return;
+      }
+
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setState({ status: "failure", message: "請先登入" });
+        return;
+      }
+
+      const page = append ? pageRef.current + 1 : 0;
+      pageRef.current = page;
+
+      const f = currentFiltersRef.current;
+      const s = currentSortRef.current;
+
+      setState({ status: "loading" });
+      setSearchLoading(true);
+
+      try {
+        let query = supabase
+          .from("finance_activities")
+          .select(
+            "id,activity_date,description,amount,movement_type,category_id,account_id,finance_categories(display_name),finance_accounts(display_name)",
+            { count: "exact" },
+          )
+          .order(s.field, { ascending: s.dir === "asc" });
+
+        // Keyword filter
+        if (f.keyword.trim()) {
+          query = query.ilike("description", `%${f.keyword.trim()}%`);
+        }
+
+        // Date range
+        if (f.dateFrom) {
+          query = query.gte("activity_date", f.dateFrom);
+        }
+        if (f.dateTo) {
+          query = query.lte("activity_date", f.dateTo);
+        }
+
+        // Movement type
+        if (f.movementType) {
+          query = query.eq("movement_type", f.movementType);
+        }
+
+        // Amount range
+        if (f.amountMin) {
+          query = query.gte("amount", parseFloat(f.amountMin));
+        }
+        if (f.amountMax) {
+          query = query.lte("amount", parseFloat(f.amountMax));
+        }
+
+        // Category
+        if (f.categoryId) {
+          query = query.eq("category_id", f.categoryId);
+        }
+
+        // Pagination
+        const rangeStart = page * PAGE_SIZE;
+        const rangeEnd = rangeStart + PAGE_SIZE - 1;
+        query = query.range(rangeStart, rangeEnd);
+
+        const { data, error, count: totalCount } = await query.abortSignal(
+          controller.signal,
+        );
+
+        if (error) {
+          setState({ status: "failure", message: error.message });
+          setSearchLoading(false);
+          return;
+        }
+
+        const rows = (data ?? []) as unknown as TxRow[];
+        const hasMore = rows.length === PAGE_SIZE;
+
+        setState((prev) => ({
+          status: "success" as const,
+          rows: append
+            ? (prev.status === "success" ? [...prev.rows, ...rows] : rows)
+            : rows,
+          totalCount: totalCount ?? 0,
+          hasMore,
+        }));
+        setCount(totalCount ?? 0);
+        setSearchLoading(false);
+      } catch (e) {
+        if (e instanceof DOMException && e.name === "AbortError") return;
+        setState({ status: "failure", message: "資料載入異常" });
+        setSearchLoading(false);
+      }
+    },
+    [supabase],
+  );
+
+  const handleSearch = useCallback(() => {
+    currentFiltersRef.current = { ...filters };
+    currentSortRef.current = { field: sortField, dir: sortDir };
+    pageRef.current = 0;
+    loadedRef.current = true;
+    doSearch(false);
+  }, [filters, sortField, sortDir, doSearch]);
+
+  const handleLoadMore = useCallback(() => {
+    if (state.status !== "success" || !state.hasMore) return;
+    doSearch(true);
+  }, [state, doSearch]);
+
+  const handleSortChange = useCallback(
+    (field: SortField, dir: SortDir) => {
+      setSortField(field);
+      setSortDir(dir);
+      currentSortRef.current = { field, dir };
+      if (loadedRef.current) {
+        pageRef.current = 0;
+        doSearch(false);
+      }
+    },
+    [doSearch],
+  );
+
+  const handleClear = useCallback(() => {
+    setFilters({ ...DEFAULT_FILTERS });
+    currentFiltersRef.current = { ...DEFAULT_FILTERS };
+    setState({ status: "idle" });
+    setCount(0);
+    pageRef.current = 0;
+    loadedRef.current = false;
+  }, []);
+
+  const updateFilter = useCallback(
+    (key: keyof SearchFilters, value: string) => {
+      setFilters((prev) => ({ ...prev, [key]: value }));
+    },
+    [],
+  );
+
+  return (
+    <div className="db-page">
+      {/* ===== Page Header ===== */}
+      <div className="d-header">
+        <div>
+          <h2 className="d-title">
+            🔍 搜尋交易
+          </h2>
+          <p className="d-desc">透過多種條件快速查找交易記錄</p>
+        </div>
+      </div>
+
+      {/* ===== Filters ===== */}
+      <div className="d-card">
+        <div className="d-card-h">
+          <span className="d-card-t">🔎 篩選條件</span>
+        </div>
+        <div className="txs-filters-grid">
+          {/* Keyword */}
+          <div className="txs-field">
+            <label className="txs-label">關鍵字</label>
+            <input
+              className="txs-input"
+              type="text"
+              placeholder="搜尋描述…"
+              value={filters.keyword}
+              onChange={(e) => updateFilter("keyword", e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSearch();
+              }}
+            />
+          </div>
+
+          {/* Date range */}
+          <div className="txs-field">
+            <label className="txs-label">日期從</label>
+            <input
+              className="txs-input"
+              type="date"
+              value={filters.dateFrom}
+              onChange={(e) => updateFilter("dateFrom", e.target.value)}
+            />
+          </div>
+          <div className="txs-field">
+            <label className="txs-label">日期至</label>
+            <input
+              className="txs-input"
+              type="date"
+              max={todayStr()}
+              value={filters.dateTo}
+              onChange={(e) => updateFilter("dateTo", e.target.value)}
+            />
+          </div>
+
+          {/* Movement type */}
+          <div className="txs-field">
+            <label className="txs-label">類型</label>
+            <select
+              className="txs-input"
+              value={filters.movementType}
+              onChange={(e) => updateFilter("movementType", e.target.value)}
+            >
+              <option value="">全部</option>
+              <option value="income">收入</option>
+              <option value="expense">支出</option>
+            </select>
+          </div>
+
+          {/* Amount range */}
+          <div className="txs-field">
+            <label className="txs-label">金額（最小）</label>
+            <input
+              className="txs-input"
+              type="number"
+              min="0"
+              placeholder="0"
+              value={filters.amountMin}
+              onChange={(e) => updateFilter("amountMin", e.target.value)}
+            />
+          </div>
+          <div className="txs-field">
+            <label className="txs-label">金額（最大）</label>
+            <input
+              className="txs-input"
+              type="number"
+              min="0"
+              placeholder="不限"
+              value={filters.amountMax}
+              onChange={(e) => updateFilter("amountMax", e.target.value)}
+            />
+          </div>
+
+          {/* Category */}
+          <div className="txs-field">
+            <label className="txs-label">分類</label>
+            <select
+              className="txs-input"
+              value={filters.categoryId}
+              onChange={(e) => updateFilter("categoryId", e.target.value)}
+            >
+              <option value="">全部分類</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.display_name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Buttons */}
+          <div className="txs-field txs-field-actions">
+            <label className="txs-label">&nbsp;</label>
+            <div className="txs-btn-row">
+              <SearchButton onClick={handleSearch} loading={state.status === "loading"} />
+              <button
+                className="txs-btn txs-btn-secondary"
+                onClick={handleClear}
+                type="button"
+              >
+                ✕ 清除篩選
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== Results ===== */}
+      {state.status === "success" && (
+        <div className="d-card" style={{ marginTop: "12px" }}>
+          <div className="d-card-h">
+            <span className="d-card-t">
+              📋 搜尋結果（{state.totalCount} 筆）
+            </span>
+            <SortControls
+              sortField={sortField}
+              sortDir={sortDir}
+              onSortChange={handleSortChange}
+            />
+          </div>
+
+          {state.rows.length === 0 ? (
+            <p className="status-message status-muted">查無符合條件的交易</p>
+          ) : (
+            <>
+              <div className="d-tx-list">
+                {state.rows.map((tx) => (
+                  <TxSearchRow key={tx.id} tx={tx} />
+                ))}
+              </div>
+
+              {state.hasMore && (
+                <div className="txs-loadmore-wrap">
+                  <button
+                    className="txs-btn txs-btn-loadmore"
+                    onClick={handleLoadMore}
+                    disabled={searchLoading}
+                    type="button"
+                  >
+                    {searchLoading ? "載入中…" : "載入更多"}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {state.status === "failure" && (
+        <p className="status-message status-error" role="alert">
+          {state.message}
+        </p>
+      )}
+
+      {state.status === "idle" && (
+        <div className="d-card" style={{ marginTop: "12px" }}>
+          <p className="status-message status-muted" style={{ textAlign: "center", padding: "24px 0" }}>
+            設定篩選條件後點擊「搜尋」開始查詢
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}

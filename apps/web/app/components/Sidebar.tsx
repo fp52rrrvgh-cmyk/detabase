@@ -5,9 +5,7 @@ import { usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "📊 總覽" },
-  { href: "/transactions", label: "📋 記帳列表" },
-  { href: "/accounts", label: "🏦 帳戶" },
-  { href: "/reconciliation", label: "✅ 對帳" },
+  { href: "/dashboard/search", label: "🔍 搜尋" },
   { href: "/settings", label: "⚙️ 設定" },
 ];
 
@@ -28,10 +26,7 @@ export function Sidebar({
 
   return (
     <>
-      {/* Overlay — mobile only */}
       {open && <div className="sb-overlay" onClick={onClose} />}
-
-      {/* Desktop sidebar (hidden on mobile) */}
       <aside className="sb-sidebar">
         <div className="sb-logo">
           <span className="sb-logo-icon">◆</span>
@@ -57,7 +52,6 @@ export function Sidebar({
         </div>
       </aside>
 
-      {/* Mobile dropdown menu — appears below hamburger */}
       <nav className={`sb-dropdown ${open ? "sb-dropdown--open" : ""}`}>
         {NAV_ITEMS.map((item) => (
           <Link

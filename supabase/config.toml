@@ -14,6 +14,9 @@ verify_jwt = true
 [functions.set-budget]
 verify_jwt = true
 
+[functions.classify-transaction]
+verify_jwt = true
+
 # AI/internal functions (called from agent with HMAC secret) — skip JWT
 [functions.ai-search-finance-transactions]
 verify_jwt = false
