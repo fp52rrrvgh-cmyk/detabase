@@ -142,14 +142,6 @@ export function useQuickCapture(
         return;
       }
 
-      if (!trimmedDescription) {
-        setSubmitState({
-          status: "failure",
-          message: "請輸入描述後再送出。",
-        });
-        return;
-      }
-
       setSubmitState({ status: "loading" });
 
       const {

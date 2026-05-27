@@ -492,6 +492,7 @@ export default function DashboardPage() {
           <QuickCaptureModal
             open={quickCaptureOpen}
             onClose={() => setQuickCaptureOpen(false)}
+            onSuccess={reload}
             activityDate={capture.activityDate}
             amount={capture.amount}
             authStatus={auth.authStatus}
