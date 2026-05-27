@@ -2068,7 +2068,7 @@ body {
 /* ── Page Shell ── */
 .db-page {
   display: grid;
-  gap: 16px;
+  gap: 14px;
   max-width: 960px;
   animation: d-fade-in 0.35s ease-out;
 }
@@ -2115,11 +2115,7 @@ body {
 }
 
 .d-title-sub {
-  font-size: 0.68rem;
-  color: rgba(148, 163, 184, 0.6);
-  font-weight: 400;
-  margin: 0;
-  letter-spacing: 0.02em;
+  display: none;
 }
 
 .d-header-right {
@@ -2207,20 +2203,34 @@ body {
 
 /* ── KPI Row — 5 glass cards with glow accents ── */
 .d-kpi-row {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+  margin: 0 -4px;
+  padding-left: 4px;
+  padding-right: 4px;
+  scrollbar-width: none;
 }
 
+.d-kpi-row::-webkit-scrollbar { display: none; }
+
 @media (max-width: 640px) {
-  .d-kpi-row { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .d-kpi-row { gap: 6px; }
 }
+
 @media (max-width: 400px) {
-  .d-kpi-row { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .d-kpi-row { gap: 6px; }
 }
 
 .d-kpi {
   position: relative;
+  flex: 0 0 auto;
+  width: 130px;
+  min-width: 130px;
+  scroll-snap-align: start;
   background: rgba(12, 18, 34, 0.5);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -2310,13 +2320,15 @@ body {
 
 /* ── d-card — glass card, the primary wrapper ── */
 .d-card {
-  background: rgba(12, 18, 34, 0.55);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(8, 14, 28, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 20px;
   padding: 20px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .d-card-h {
