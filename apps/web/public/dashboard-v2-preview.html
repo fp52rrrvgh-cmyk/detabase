@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>個人作戰系統 v2</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: #0a0e1a;
+  color: #e2e8f0;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  padding: 16px;
+  min-height: 100vh;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 0 4px;
+}
+
+.header-left h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #f0fdf4, #14b8a6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
+}
+
+.header-left .sub {
+  font-size: 0.7rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  margin-top: 2px;
+}
+
+.header-right {
+  display: flex;
+  gap: 10px;
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #1e293b;
+  background: #131a2e;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+/* KPI Row */
+.kpi-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.kpi-card {
+  background: linear-gradient(135deg, #111827, #1a2332);
+  border: 1px solid #1e293b;
+  border-radius: 14px;
+  padding: 14px 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  border-radius: 14px 14px 0 0;
+}
+
+.kpi-card:nth-child(1)::before { background: linear-gradient(90deg, #14b8a6, #0d9488); }
+.kpi-card:nth-child(2)::before { background: linear-gradient(90deg, #f59e0b, #d97706); }
+.kpi-card:nth-child(3)::before { background: linear-gradient(90deg, #ef4444, #dc2626); }
+.kpi-card:nth-child(4)::before { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
+
+.kpi-label {
+  font-size: 0.65rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.kpi-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.kpi-value.green { color: #14b8a6; }
+.kpi-value.amber { color: #f59e0b; }
+.kpi-value.red { color: #ef4444; }
+.kpi-value.purple { color: #a78bfa; }
+
+.kpi-sub {
+  font-size: 0.6rem;
+  color: #475569;
+  margin-top: 2px;
+}
+
+/* 2-col grid */
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 440px) {
+  .kpi-row { grid-template-columns: 1fr 1fr; }
+  .grid-2 { grid-template-columns: 1fr; }
+}
+
+/* Glass card */
+.glass {
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.9), rgba(26, 35, 50, 0.85));
+  border: 1px solid rgba(30, 41, 59, 0.8);
+  border-radius: 16px;
+  padding: 16px;
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+
+.glass::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(20, 184, 166, 0.03) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.card-title {
+  font-size: 0.7rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.card-title .icon {
+  font-size: 0.85rem;
+}
+
+/* Chart placeholder */
+.chart-placeholder {
+  width: 100%;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #334155;
+  font-size: 0.75rem;
+}
+
+/* Pie donut mock */
+.donut-mock {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: conic-gradient(
+    #14b8a6 0% 42%,
+    #f59e0b 42% 63%,
+    #8b5cf6 63% 79%,
+    #ef4444 79% 90%,
+    #0ea5e9 90% 100%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
+}
+
+.donut-hole {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: #111827;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut-hole .total {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.donut-hole .amount {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+/* Legend */
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 8px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+/* Line chart mock */
+.line-chart-mock {
+  height: 160px;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  padding: 0 4px;
+}
+
+.bar {
+  flex: 1;
+  border-radius: 3px 3px 0 0;
+  min-height: 4px;
+  background: linear-gradient(to top, rgba(20, 184, 166, 0.3), rgba(20, 184, 166, 0.7));
+  transition: height 0.3s;
+}
+
+.bar:nth-child(odd) { background: linear-gradient(to top, rgba(139, 92, 246, 0.3), rgba(139, 92, 246, 0.6)); }
+
+/* Account list */
+.account-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(30, 41, 59, 0.5);
+}
+
+.account-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.account-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+}
+
+.account-icon.cash { background: rgba(20, 184, 166, 0.15); color: #14b8a6; }
+.account-icon.bank { background: rgba(139, 92, 246, 0.15); color: #a78bfa; }
+.account-icon.card { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+
+.account-info .name { font-size: 0.82rem; font-weight: 600; }
+.account-info .type { font-size: 0.6rem; color: #64748b; }
+.account-amount { font-size: 0.9rem; font-weight: 700; }
+.account-amount.positive { color: #14b8a6; }
+.account-amount.negative { color: #ef4444; }
+
+/* Budget bar */
+.budget-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.budget-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.budget-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+}
+
+.budget-label { color: #94a3b8; }
+.budget-pct { font-weight: 600; }
+.budget-pct.normal { color: #14b8a6; }
+.budget-pct.warn { color: #f59e0b; }
+.budget-pct.danger { color: #ef4444; }
+
+.budget-track {
+  height: 6px;
+  border-radius: 3px;
+  background: #1e293b;
+  overflow: hidden;
+  position: relative;
+}
+
+.budget-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.budget-fill.normal { background: linear-gradient(90deg, #14b8a6, #0d9488); }
+.budget-fill.warn { background: linear-gradient(90deg, #f59e0b, #d97706); }
+.budget-fill.danger { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+/* Bottom actions */
+.bottom-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(20, 184, 166, 0.2);
+}
+
+.btn-secondary {
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid #334155;
+  color: #e2e8f0;
+}
+
+.btn:active { transform: scale(0.97); }
+
+/* Health score */
+.health-ring {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: conic-gradient(#14b8a6 0% 82%, #1e293b 82% 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.health-inner {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #111827;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.health-score { font-size: 1.1rem; font-weight: 800; color: #14b8a6; }
+.health-label { font-size: 0.55rem; color: #64748b; text-transform: uppercase; }
+
+/* AI insight */
+.ai-insight {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(20, 184, 166, 0.08));
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 10px;
+  font-size: 0.78rem;
+  color: #c4b5fd;
+  line-height: 1.5;
+}
+
+.ai-insight .label {
+  font-size: 0.6rem;
+  color: #8b5cf6;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+/* Footer nav */
+.footer-nav {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-top: 24px;
+  padding: 10px 0;
+  border-top: 1px solid #1e293b;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: #475569;
+  font-size: 0.55rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
+.nav-item.active { color: #14b8a6; }
+.nav-item .nav-icon { font-size: 1.2rem; }
+
+.nav-add {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(20, 184, 166, 0.3);
+  margin-top: -20px;
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <h1>戰情中心</h1>
+    <div class="sub">PERSONAL OPERATING SYSTEM</div>
+  </div>
+  <div class="header-right">
+    <div class="icon-btn">🔔</div>
+    <div class="icon-btn">⚙️</div>
+  </div>
+</div>
+
+<!-- KPI Row -->
+<div class="kpi-row">
+  <div class="kpi-card">
+    <div class="kpi-label">本月收入</div>
+    <div class="kpi-value green">TWD 15,200</div>
+    <div class="kpi-sub">累計</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">本月支出</div>
+    <div class="kpi-value amber">TWD 24,560</div>
+    <div class="kpi-sub">累計</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">本月結餘</div>
+    <div class="kpi-value red">-TWD 9,360</div>
+    <div class="kpi-sub">支出佔 162%</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">總資產</div>
+    <div class="kpi-value purple">TWD 92,050</div>
+    <div class="kpi-sub">3 帳戶</div>
+  </div>
+</div>
+
+<!-- Row 1: Pie + Accounts -->
+<div class="grid-2">
+  <!-- Pie -->
+  <div class="glass">
+    <div class="card-title"><span class="icon">📊</span> 支出分類</div>
+    <div class="donut-mock">
+      <div class="donut-hole">
+        <div class="total">總支出</div>
+        <div class="amount">TWD 24.6k</div>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><span class="dot" style="background:#14b8a6"></span>餐飲 42%</div>
+      <div class="legend-item"><span class="dot" style="background:#f59e0b"></span>交通 21%</div>
+      <div class="legend-item"><span class="dot" style="background:#8b5cf6"></span>娛樂 16%</div>
+      <div class="legend-item"><span class="dot" style="background:#ef4444"></span>購物 11%</div>
+      <div class="legend-item"><span class="dot" style="background:#0ea5e9"></span>其他 10%</div>
+    </div>
+  </div>
+
+  <!-- Accounts -->
+  <div class="glass">
+    <div class="card-title"><span class="icon">🏦</span> 帳戶總覽</div>
+    <div class="account-list">
+      <div class="account-item">
+        <div class="account-left">
+          <div class="account-icon bank">🏛</div>
+          <div class="account-info">
+            <div class="name">玉山帳戶</div>
+            <div class="type">銀行存款</div>
+          </div>
+        </div>
+        <div class="account-amount positive">TWD 68,580</div>
+      </div>
+      <div class="account-item">
+        <div class="account-left">
+          <div class="account-icon bank">🏦</div>
+          <div class="account-info">
+            <div class="name">台新帳戶</div>
+            <div class="type">銀行存款</div>
+          </div>
+        </div>
+        <div class="account-amount positive">TWD 12,150</div>
+      </div>
+      <div class="account-item">
+        <div class="account-left">
+          <div class="account-icon cash">💵</div>
+          <div class="account-info">
+            <div class="name">現金</div>
+            <div class="type">手邊現金</div>
+          </div>
+        </div>
+        <div class="account-amount positive">TWD 8,500</div>
+      </div>
+      <div class="account-item">
+        <div class="account-left">
+          <div class="account-icon card">💳</div>
+          <div class="account-info">
+            <div class="name">信用卡</div>
+            <div class="type">循環信用</div>
+          </div>
+        </div>
+        <div class="account-amount negative">-TWD 2,320</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Row 2: Trend + Budget -->
+<div class="grid-2">
+  <!-- Daily Trend -->
+  <div class="glass">
+    <div class="card-title"><span class="icon">📈</span> 每日支出趨勢</div>
+    <div class="line-chart-mock" id="trendBars"></div>
+  </div>
+
+  <!-- Budget -->
+  <div class="glass">
+    <div class="card-title"><span class="icon">🎯</span> 預算執行</div>
+    <div class="budget-list">
+      <div class="budget-item">
+        <div class="budget-header">
+          <span class="budget-label">餐飲</span>
+          <span class="budget-pct warn">74%</span>
+        </div>
+        <div class="budget-track">
+          <div class="budget-fill warn" style="width:74%"></div>
+        </div>
+      </div>
+      <div class="budget-item">
+        <div class="budget-header">
+          <span class="budget-label">交通</span>
+          <span class="budget-pct normal">41%</span>
+        </div>
+        <div class="budget-track">
+          <div class="budget-fill normal" style="width:41%"></div>
+        </div>
+      </div>
+      <div class="budget-item">
+        <div class="budget-header">
+          <span class="budget-label">娛樂</span>
+          <span class="budget-pct danger">112%</span>
+        </div>
+        <div class="budget-track">
+          <div class="budget-fill danger" style="width:100%"></div>
+        </div>
+      </div>
+      <div class="budget-item">
+        <div class="budget-header">
+          <span class="budget-label">購物</span>
+          <span class="budget-pct normal">32%</span>
+        </div>
+        <div class="budget-track">
+          <div class="budget-fill normal" style="width:32%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Insight -->
+    <div class="ai-insight">
+      <div class="label">🤖 AI 洞察</div>
+      娛樂預算已超支 12%。本月交通支出較上月降低 15%，建議維持。整體財務健康評分 82/100。
+    </div>
+  </div>
+</div>
+
+<!-- Bottom actions -->
+<div class="bottom-actions">
+  <button class="btn btn-primary" onclick="alert('複製報表')">📋 複製本月總結</button>
+  <button class="btn btn-secondary" onclick="alert('分享')">📤 分享戰報</button>
+</div>
+
+<!-- Footer nav -->
+<div class="footer-nav">
+  <div class="nav-item active"><div class="nav-icon">📊</div>戰情</div>
+  <div class="nav-item"><div class="nav-icon">📝</div>記錄</div>
+  <div class="nav-item"><div class="nav-add">+</div></div>
+  <div class="nav-item"><div class="nav-icon">📂</div>報表</div>
+  <div class="nav-item"><div class="nav-icon">👤</div>設定</div>
+</div>
+
+<script>
+// Generate random bars for trend chart
+const container = document.getElementById('trendBars');
+const days = 28;
+const heights = [];
+for (let i = 0; i < days; i++) {
+  heights.push(Math.floor(Math.random() * 140) + 10);
+}
+for (let i = 0; i < days; i++) {
+  const bar = document.createElement('div');
+  bar.className = 'bar';
+  bar.style.height = heights[i] + 'px';
+  container.appendChild(bar);
+}
+</script>
+
+</body>
+</html>

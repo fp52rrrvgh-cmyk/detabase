@@ -154,7 +154,9 @@ export default function BudgetsPage() {
   }, [supabase, coreConfigReady, budgetYear, budgetMonth]);
 
   useEffect(() => {
+    const controller = new AbortController();
     void loadData();
+    return () => { /* controller.abort() would not cancel Supabase client queries */ };
   }, [loadData]);
 
   // --- Set budget ---

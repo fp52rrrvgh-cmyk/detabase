@@ -2,3 +2,27 @@ project_id = "detabase"
 
 [db]
 port = 55432
+
+[functions]
+# Frontend-facing functions (called from browser) — verify JWT
+[functions.log-finance-activity]
+verify_jwt = true
+
+[functions.void-finance-activity]
+verify_jwt = true
+
+[functions.set-budget]
+verify_jwt = true
+
+# AI/internal functions (called from agent with HMAC secret) — skip JWT
+[functions.ai-search-finance-transactions]
+verify_jwt = false
+
+[functions.ai-log-finance-activity]
+verify_jwt = false
+
+[functions.ai-get-user-refs]
+verify_jwt = false
+
+[functions.test-env]
+verify_jwt = false

@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { runtimeConfig } from "../constants";
 
@@ -19,10 +19,10 @@ type PageState =
   | { status: "failure"; message: string };
 
 export default function CategoriesPage() {
-  const supabase =
-    runtimeConfig.supabaseUrl && runtimeConfig.publishableKey
-      ? createClient(runtimeConfig.supabaseUrl, runtimeConfig.publishableKey)
-      : null;
+  const supabase = useMemo(() => {
+    if (!runtimeConfig.supabaseUrl || !runtimeConfig.publishableKey) return null;
+    return createClient(runtimeConfig.supabaseUrl, runtimeConfig.publishableKey);
+  }, []);
 
   const [state, setState] = useState<PageState>({ status: "loading" });
   const [editingId, setEditingId] = useState<string | null>(null);

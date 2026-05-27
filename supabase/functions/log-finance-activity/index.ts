@@ -9,7 +9,9 @@ const ALLOWED_CORS_ORIGINS = new Set([
   "http://localhost:3000",
   "http://127.0.0.1:3000",
 ]);
-const DEFAULT_CORS_ORIGIN = "http://localhost:3000";
+// Staging only: relax CORS to any origin since auth is via bearer token + RLS.
+// When promoting to production, restrict this to known deployment domains.
+const DEFAULT_CORS_ORIGIN = "*";
 const CORS_METHODS = "POST, OPTIONS";
 const CORS_HEADERS = "authorization, x-client-info, apikey, content-type";
 const UUID_PATTERN =

@@ -14,6 +14,7 @@ import { REQUEST_FAILURE_MESSAGE } from "../constants";
 export type CategoryOption = {
   id: string;
   label: string;
+  groupingPurpose: string | null;
 };
 
 export type UseQuickCaptureReturn = {
@@ -39,7 +40,7 @@ export function useQuickCapture(
   coreConfigReady: boolean,
   authStatus: string,
   session: import("@supabase/supabase-js").Session | null,
-  onSuccess: () => void,
+  onSuccess?: () => void,
 ): UseQuickCaptureReturn {
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -73,8 +74,8 @@ export function useQuickCapture(
         .limit(500)
         .then(({ data: rows }) => {
           if (cancelled) return;
-          const list = ((rows ?? []) as { id: string; display_name: string }[]).map(
-            (r) => ({ id: r.id, label: r.display_name }),
+          const list = ((rows ?? []) as { id: string; display_name: string; grouping_purpose: string | null }[]).map(
+            (r) => ({ id: r.id, label: r.display_name, groupingPurpose: r.grouping_purpose }),
           );
           setCategories(list);
         });
@@ -221,7 +222,7 @@ export function useQuickCapture(
         description: trimmedDescription,
         movementType: quickCaptureMode,
       });
-      onSuccess();
+      onSuccess?.();
     },
     [activityDate, amount, categoryId, coreConfigReady, currentModeConfigReady, description, onSuccess, quickCaptureMode, supabase],
   );

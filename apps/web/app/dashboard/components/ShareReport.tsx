@@ -11,21 +11,25 @@ export function ShareReport({
   income,
   topCategories,
   budgets,
+  accounts,
+  totalBalance,
 }: {
   expense: number;
   income: number;
   topCategories: { label: string; amount: number }[];
   budgets: { categoryLabel: string; limitAmount: number; spent: number }[];
+  accounts?: { displayName: string; balance: number }[];
+  totalBalance?: number;
 }) {
   const [copied, setCopied] = useState(false);
+  const now = new Date();
+  const monthLabel = `${now.getFullYear()}年${now.getMonth() + 1}月`;
 
   function buildReport(): string {
-    const now = new Date();
-    const month = `${now.getFullYear()}年${now.getMonth() + 1}月`;
     const net = income - expense;
     const lines: string[] = [];
 
-    lines.push(`📊 ${month} 財務總結`);
+    lines.push(`📊 ${monthLabel} 財務總結`);
     lines.push(`─────────────────`);
     lines.push(`收入：${formatAmount(income)}`);
     lines.push(`支出：${formatAmount(expense)}`);
@@ -57,10 +61,44 @@ export function ShareReport({
       }
     }
 
+    if (accounts && accounts.length > 0 && totalBalance !== undefined) {
+      lines.push(``);
+      lines.push(`🏦 帳戶總覽：`);
+      for (const a of accounts) {
+        lines.push(`  ${a.displayName}：${formatAmount(a.balance)}`);
+      }
+      lines.push(`  合計：${formatAmount(totalBalance)}`);
+    }
+
     lines.push(``);
     lines.push(`🔗 ${window.location.origin}/dashboard`);
 
     return lines.join("\n");
+  }
+
+  function handleExportCSV() {
+    const rows: string[][] = [["分類", "金額", "幣別"]];
+    for (const c of topCategories) {
+      rows.push([c.label, String(c.amount), "TWD"]);
+    }
+    if (budgets.length > 0) {
+      rows.push([]);
+      rows.push(["預算分類", "已花費", "預算上限", "使用率"]);
+      for (const b of budgets) {
+        const pct = b.limitAmount > 0 ? ((b.spent / b.limitAmount) * 100).toFixed(0) + "%" : "-";
+        rows.push([b.categoryLabel, String(b.spent), String(b.limitAmount), pct]);
+      }
+    }
+    const csv = rows.map((r) => r.join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${monthLabel.replace(/[\/\s]/g, "_")}_財務報表.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
   async function handleShare() {
@@ -70,7 +108,6 @@ export function ShareReport({
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {
-      // Fallback: select text method
       const ta = document.createElement("textarea");
       ta.value = text;
       document.body.appendChild(ta);
@@ -83,15 +120,18 @@ export function ShareReport({
   }
 
   return (
-    <section className="stat-section">
-      <div className="share-report-card">
-        <p className="share-report-hint">
+    <div className="d-share-card">
+        <p className="d-share-hint">
           一鍵複製本月財務總結，可直接貼到 Telegram 或備忘錄
         </p>
-        <button className="submit-button" onClick={handleShare} type="button">
-          {copied ? "✅ 已複製！" : "📋 複製本月總結"}
-        </button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button className="submit-button" onClick={handleShare} type="button">
+            {copied ? "✅ 已複製！" : "📋 複製本月總結"}
+          </button>
+          <button className="secondary-button d-desktop-only" onClick={handleExportCSV} type="button">
+            📥 下載 CSV 月報
+          </button>
+        </div>
       </div>
-    </section>
   );
 }

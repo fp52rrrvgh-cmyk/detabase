@@ -23,7 +23,7 @@ export type QuickCaptureFormProps = {
   mode: QuickCaptureMode;
   submitState: SubmitState;
   categoryId: string;
-  categories: { id: string; label: string }[];
+  categories: { id: string; label: string; groupingPurpose: string | null }[];
   onAmountChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onModeChange: (mode: QuickCaptureMode) => void;
@@ -115,8 +115,13 @@ export function QuickCaptureForm({
             <option value="none">未選擇</option>
             {categories
               .filter((c) => {
-                // For expense mode, filter by grouping_purpose matching mode
-                return true;
+                // expense: grouping_purpose is null or 'expense'
+                // income: grouping_purpose is 'income'
+                // fallback: show all if grouping_purpose is null (legacy)
+                if (mode === "expense") {
+                  return c.groupingPurpose === null || c.groupingPurpose === "expense";
+                }
+                return c.groupingPurpose === "income";
               })
               .map((c) => (
                 <option key={c.id} value={c.id}>

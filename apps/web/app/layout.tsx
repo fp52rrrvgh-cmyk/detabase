@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { Sidebar } from "./components/Sidebar";
+import { AppShellWithSidebar } from "./components/AppShellWithSidebar";
 
 export const dynamic = "force-dynamic";
 
@@ -40,10 +40,7 @@ export default function RootLayout({
   return (
     <html lang="zh-Hant">
       <body>
-        <div className="app-shell-with-sidebar">
-          <Sidebar />
-          <main className="app-main-content">{children}</main>
-        </div>
+        <AppShellWithSidebar>{children}</AppShellWithSidebar>
       </body>
     </html>
   );

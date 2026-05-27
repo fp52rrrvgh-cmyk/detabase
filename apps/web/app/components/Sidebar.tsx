@@ -2,77 +2,53 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "📊 總覽" },
   { href: "/quick-capture", label: "✏️ 快捷記帳" },
-  { href: "/quick-capture", label: "📋 記帳列表", badge: 8 },
-  { href: "/quick-capture", label: "🏦 帳戶" },
-  { href: "/categories", label: "🏷️ 分類" },
-  { href: "/budgets", label: "🎯 預算" },
-  { href: "#", label: "⚙️ 設定" },
+  { href: "/transactions", label: "📋 記帳列表" },
+  { href: "/accounts", label: "🏦 帳戶" },
+  { href: "/reconciliation", label: "✅ 對帳" },
+  { href: "/settings", label: "⚙️ 設定" },
 ];
 
-export function Sidebar() {
+export function Sidebar({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+
+  function isActive(href: string): boolean {
+    if (href === "/dashboard") return pathname === "/dashboard" || pathname === "/";
+    if (href === "/settings") return pathname.startsWith("/settings") || pathname === "/budgets" || pathname === "/subscriptions" || pathname === "/categories";
+    return pathname === href;
+  }
 
   return (
     <>
-      {/* Hamburger — only visible on mobile */}
-      <button
-        className="sb-hamburger"
-        onClick={() => setOpen(true)}
-        aria-label="開啟選單"
-        type="button"
-      >
-        <span className="sb-hamburger-line" />
-        <span className="sb-hamburger-line" />
-        <span className="sb-hamburger-line" />
-      </button>
+      {/* Overlay — mobile only */}
+      {open && <div className="sb-overlay" onClick={onClose} />}
 
-      {/* Overlay — mobile only, closes sidebar */}
-      {open && (
-        <div className="sb-overlay" onClick={() => setOpen(false)} />
-      )}
-
-      {/* Sidebar */}
-      <aside className={`sb-sidebar ${open ? "sb-sidebar--open" : ""}`}>
-        {/* Close button — mobile only */}
-        <button
-          className="sb-close-btn"
-          onClick={() => setOpen(false)}
-          aria-label="關閉選單"
-          type="button"
-        >
-          ✕
-        </button>
-
+      {/* Desktop sidebar (hidden on mobile) */}
+      <aside className="sb-sidebar">
         <div className="sb-logo">
           <span className="sb-logo-icon">◆</span>
-          <span className="sb-logo-text">database</span>
+          <span className="sb-logo-text">DB</span>
         </div>
-
         <nav className="sb-nav">
-          {NAV_ITEMS.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href + item.label}
-                href={item.href}
-                className={`sb-item ${isActive ? "active" : ""}`}
-                onClick={() => setOpen(false)}
-              >
-                {item.label}
-                {item.badge != null && (
-                  <span className="sb-badge">{item.badge}</span>
-                )}
-              </Link>
-            );
-          })}
+          {NAV_ITEMS.map((item) => (
+            <Link
+              key={item.href + item.label}
+              href={item.href}
+              className={`sb-item ${isActive(item.href) ? "active" : ""}`}
+            >
+              {item.label}
+            </Link>
+          ))}
         </nav>
-
         <div className="sb-user">
           <div className="sb-avatar">🧑</div>
           <div className="sb-user-info">
@@ -81,6 +57,22 @@ export function Sidebar() {
           </div>
         </div>
       </aside>
+
+      {/* Mobile dropdown menu — appears below hamburger */}
+      <nav className={`sb-dropdown ${open ? "sb-dropdown--open" : ""}`}>
+        {NAV_ITEMS.map((item) => (
+          <Link
+            key={item.href + item.label}
+            href={item.href}
+            className={`sb-dropdown-item ${isActive(item.href) ? "active" : ""}`}
+            onClick={onClose}
+          >
+            {item.label}
+          </Link>
+        ))}
+      </nav>
     </>
   );
 }
+
+export { NAV_ITEMS };
