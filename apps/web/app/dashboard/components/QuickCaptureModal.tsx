@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import type { FormEvent } from "react";
 
 import type { QuickCaptureMode, SubmitState } from "../../types";
@@ -8,30 +8,6 @@ import type { QuickCaptureMode, SubmitState } from "../../types";
 import { quickCaptureModeLabel } from "../../lib/format";
 
 const QUICK_AMOUNTS = [100, 500, 1000, 5000];
-
-const CATEGORY_EMOJI: Record<string, string> = {
-  "加油": "⛽",
-  "餐飲": "🍽️",
-  "香菸": "🚬",
-  "停車": "🅿️",
-  "過路費": "🛣️",
-  "保養": "🔧",
-  "保險": "🛡️",
-  "維修": "🔩",
-  "輪胎": "⚙️",
-  "貨物": "📦",
-  "罰單": "📋",
-  "通訊": "📱",
-  "娛樂": "🎮",
-  "購物": "🛒",
-  "醫療": "🏥",
-  "教育": "📚",
-  "居住": "🏠",
-  "水電": "💡",
-  "交通": "🚗",
-  "薪資": "💰",
-  "其他": "📌",
-};
 
 export type QuickCaptureModalProps = {
   open: boolean;
@@ -46,7 +22,7 @@ export type QuickCaptureModalProps = {
   mode: QuickCaptureMode;
   submitState: SubmitState;
   categoryId: string;
-  categories: { id: string; label: string; groupingPurpose: string | null }[];
+  categories: { id: string; label: string; groupingPurpose: string | null; parentId: string | null }[];
   onAmountChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onModeChange: (mode: QuickCaptureMode) => void;
@@ -75,13 +51,10 @@ export function QuickCaptureModal({
   onSubmit,
 }: QuickCaptureModalProps) {
   const amountInputRef = useRef<HTMLInputElement>(null);
-  const [showAllCategories, setShowAllCategories] = useState(false);
 
-  // Reset category list view when modal opens
+  // Focus amount input when modal opens
   useEffect(() => {
     if (open) {
-      setShowAllCategories(false);
-      // Focus amount input after a short delay
       setTimeout(() => amountInputRef.current?.focus(), 200);
     }
   }, [open]);
@@ -100,19 +73,6 @@ export function QuickCaptureModal({
   if (!open) return null;
 
   const label = quickCaptureModeLabel(mode);
-
-  // Filter categories by mode
-  const filteredCategories = categories.filter((c) => {
-    if (mode === "expense") {
-      return c.groupingPurpose === null || c.groupingPurpose === "expense";
-    }
-    return c.groupingPurpose === "income";
-  });
-
-  // Top 4 + the rest
-  const topCategories = filteredCategories.slice(0, 4);
-  const moreCategories = filteredCategories.slice(4);
-  const displayCategories = showAllCategories ? filteredCategories : topCategories;
 
   const handleQuickAmount = (val: number) => {
     onAmountChange(String(val));
@@ -198,37 +158,59 @@ export function QuickCaptureModal({
             />
           </div>
 
-          {/* Category icon grid */}
-          <div className="qc-cat-section">
-            <span className="field-label">分類</span>
-            <div className="qc-cat-grid">
-              {displayCategories.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  className={`qc-cat-btn ${
-                    categoryId === c.id ? "qc-cat-btn-active" : ""
-                  }`}
-                  onClick={() => onCategoryChange(c.id)}
-                >
-                  <span className="qc-cat-icon">
-                    {CATEGORY_EMOJI[c.label] || "📌"}
-                  </span>
-                  <span className="qc-cat-lbl">{c.label}</span>
-                </button>
-              ))}
-              {filteredCategories.length > 4 && !showAllCategories && (
-                <button
-                  type="button"
-                  className="qc-cat-btn qc-cat-more"
-                  onClick={() => setShowAllCategories(true)}
-                >
-                  <span className="qc-cat-icon">⋯</span>
-                  <span className="qc-cat-lbl">更多</span>
-                </button>
-              )}
-            </div>
-          </div>
+          {/* Category select with hierarchy */}
+          <label className="field">
+            <span>分類</span>
+            <select
+              value={categoryId}
+              onChange={(e) => onCategoryChange(e.target.value)}
+            >
+              <option value="none">未選擇</option>
+              {(() => {
+                // Filter by mode and group by parent
+                const modeFiltered = categories.filter((c) => {
+                  if (mode === "expense") {
+                    return c.groupingPurpose === null || c.groupingPurpose === "expense";
+                  }
+                  return c.groupingPurpose === "income";
+                });
+                const parents = modeFiltered.filter((c) => !c.parentId);
+                const children = modeFiltered.filter((c) => c.parentId);
+                const groups = parents.map((p) => {
+                  const kids = children.filter((c) => c.parentId === p.id);
+                  return { parent: p, children: kids };
+                });
+                // Also include children whose parent isn't in the list
+                const orphanChildren = children.filter(
+                  (c) => !parents.some((p) => p.id === c.parentId)
+                );
+                return (
+                  <>
+                    {groups.map((g) => (
+                      <optgroup key={g.parent.id} label={g.parent.label}>
+                        {g.children.map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {c.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                    {orphanChildren.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.label}
+                      </option>
+                    ))}
+                    {/* Parents without children also visible via standalone parent options */}
+                    {parents.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.label}
+                      </option>
+                    ))}
+                  </>
+                );
+              })()}
+            </select>
+          </label>
 
           {/* Description (optional) */}
           <label className="field">

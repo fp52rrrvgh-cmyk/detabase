@@ -15,6 +15,7 @@ export type CategoryOption = {
   id: string;
   label: string;
   groupingPurpose: string | null;
+  parentId: string | null;
 };
 
 export type UseQuickCaptureReturn = {
@@ -68,14 +69,14 @@ export function useQuickCapture(
       if (cancelled || !data.session) return;
       supabase
         .from("finance_categories")
-        .select("id,display_name,grouping_purpose")
+        .select("id,display_name,grouping_purpose,parent_id")
         .eq("is_active", true)
         .order("display_name", { ascending: true })
         .limit(500)
         .then(({ data: rows }) => {
           if (cancelled) return;
-          const list = ((rows ?? []) as { id: string; display_name: string; grouping_purpose: string | null }[]).map(
-            (r) => ({ id: r.id, label: r.display_name, groupingPurpose: r.grouping_purpose }),
+          const list = ((rows ?? []) as { id: string; display_name: string; grouping_purpose: string | null; parent_id: string | null }[]).map(
+            (r) => ({ id: r.id, label: r.display_name, groupingPurpose: r.grouping_purpose, parentId: r.parent_id }),
           );
           setCategories(list);
         });
