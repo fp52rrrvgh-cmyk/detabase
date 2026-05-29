@@ -1,6 +1,4 @@
-// Extracted from page.tsx (W1 refactor) — constants + the helper that operates on MOVEMENT_FILTER_OPTIONS.
-
-import type { MovementFilter, RuntimeConfig } from "./types";
+import type { RuntimeConfig } from "./types";
 
 export const RUNTIME_ENVIRONMENT_FIELDS: Array<{
   name: string;
@@ -36,29 +34,8 @@ export const INCOME_RUNTIME_KEYS: Array<keyof RuntimeConfig> = [
 export const REQUEST_FAILURE_MESSAGE =
   "網路或服務請求發生問題，請稍後再試。";
 
-export const REVIEW_FAILURE_MESSAGE =
-  "讀取資料時發生問題，請稍後再試。";
-
-export const VOID_SUCCESS_MESSAGE =
-  "支出已作廢。預設檢視與合計已重新整理，原始紀錄仍保留於稽核紀錄。";
-
 export const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-export const MOVEMENT_FILTER_OPTIONS: Array<{ value: MovementFilter; label: string }> = [
-  { value: "all", label: "全部類型" },
-  { value: "income", label: "收入" },
-  { value: "expense", label: "支出" },
-  { value: "transfer", label: "轉帳" },
-  { value: "adjustment", label: "調整" },
-];
-
-export function movementFilterLabel(value: MovementFilter): string {
-  return (
-    MOVEMENT_FILTER_OPTIONS.find((option) => option.value === value)?.label ??
-    value
-  );
-}
 
 export const runtimeConfig: RuntimeConfig = {
   supabaseUrl: typeof process !== "undefined" ? (process.env.NEXT_PUBLIC_SUPABASE_URL ?? "") : "",

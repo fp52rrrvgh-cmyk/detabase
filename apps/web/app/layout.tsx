@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { AppNav } from "./components/AppNav";
+import { AppShellWithSidebar } from "./components/AppShellWithSidebar";
 
 export const dynamic = "force-dynamic";
 
@@ -10,15 +10,15 @@ const APP_DESCRIPTION = "個人財務作戰系統";
 export const metadata: Metadata = {
   title: APP_NAME,
   description: APP_DESCRIPTION,
-  applicationName: APP_NAME,
+  applicationName: "戰情中心",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: APP_NAME,
+    title: "戰情中心",
   },
   manifest: "/manifest.json",
   icons: {
-    apple: "/icons/apple-touch-icon.svg",
+    apple: "/icons/apple-touch-icon.png",
   },
 };
 
@@ -40,8 +40,18 @@ export default function RootLayout({
   return (
     <html lang="zh-Hant">
       <body>
-        <AppNav />
-        {children}
+        <AppShellWithSidebar>{children}</AppShellWithSidebar>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                  navigator.serviceWorker.register('/sw.js');
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );

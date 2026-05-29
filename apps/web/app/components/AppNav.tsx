@@ -9,12 +9,6 @@ export function AppNav() {
   return (
     <nav className="app-nav">
       <Link
-        href="/"
-        className={`app-nav-link ${pathname === "/" ? "app-nav-link--active" : ""}`}
-      >
-        快速記錄
-      </Link>
-      <Link
         href="/dashboard"
         className={`app-nav-link ${pathname === "/dashboard" ? "app-nav-link--active" : ""}`}
       >
@@ -25,6 +19,12 @@ export function AppNav() {
         className={`app-nav-link ${pathname === "/budgets" ? "app-nav-link--active" : ""}`}
       >
         預算
+      </Link>
+      <Link
+        href="/categories"
+        className={`app-nav-link ${pathname === "/categories" ? "app-nav-link--active" : ""}`}
+      >
+        分類
       </Link>
     </nav>
   );
