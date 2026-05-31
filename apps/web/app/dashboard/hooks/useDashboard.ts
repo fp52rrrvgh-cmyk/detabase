@@ -13,6 +13,13 @@ export type AccountSummary = {
   creditLimit: number | null;
   totalLoan: number | null;
   currency: string;
+  isCoinBox: boolean;
+};
+
+export type DashboardCreditCardSnapshot = {
+  displayName: string;
+  used: number;
+  creditLimit: number | null;
 };
 
 export type DashboardSummary = {
@@ -26,6 +33,11 @@ export type DashboardSummary = {
   thisMonthIncome: number;
   last7DaysExpense: number;
   totalBalance: number;
+  cashOnHand: number;
+  availableCash: number;
+  coinBoxBalance: number;
+  creditCards: DashboardCreditCardSnapshot[];
+  totalDebt: number;
   accounts: AccountSummary[];
   topCategories: { label: string; amount: number; currency: string }[];
   dailyTrend: { date: string; amount: number }[];
@@ -146,7 +158,7 @@ export function useDashboard(targetYear?: number, targetMonth?: number) {
 
       const accountPromise = supabase
         .from("finance_accounts")
-        .select("id,display_name,account_type,initial_balance,credit_limit,total_loan")
+        .select("id,display_name,account_type,initial_balance,credit_limit,total_loan,is_coin_box")
         .eq("is_active", true)
         .limit(50);
 
@@ -255,11 +267,30 @@ export function useDashboard(targetYear?: number, targetMonth?: number) {
         accountType: a.account_type,
         initialBalance: Number(a.initial_balance ?? 0),
         balance: Number(a.initial_balance ?? 0) + (incomeMap.get(a.id) ?? 0) - (expenseMap.get(a.id) ?? 0),
-        creditLimit: a.credit_limit ?? null,
-        totalLoan: a.total_loan ?? null,
+        creditLimit: a.credit_limit == null ? null : Number(a.credit_limit),
+        totalLoan: a.total_loan == null ? null : Number(a.total_loan),
         currency: "TWD",
+        isCoinBox: Boolean(a.is_coin_box),
       }));
       const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
+      const cashOnHand = accounts
+        .filter((a) => a.accountType === "cash" && !a.isCoinBox)
+        .reduce((s, a) => s + a.balance, 0);
+      const coinBoxBalance = accounts
+        .filter((a) => a.isCoinBox)
+        .reduce((s, a) => s + a.balance, 0);
+      const bankBalance = accounts
+        .filter((a) => a.accountType === "bank")
+        .reduce((s, a) => s + a.balance, 0);
+      const availableCash = cashOnHand + bankBalance;
+      const creditCards = accounts
+        .filter((a) => a.accountType === "credit_card")
+        .map((a) => ({
+          displayName: a.displayName,
+          used: Math.abs(a.balance),
+          creditLimit: a.creditLimit,
+        }));
+      const totalDebt = accounts.reduce((s, a) => s + (a.totalLoan ?? 0), 0);
 
       const expenses = rows.filter((r: any) => r.movement_type === "expense");
       const todayExpense = isCurrentMonth
@@ -401,7 +432,8 @@ export function useDashboard(targetYear?: number, targetMonth?: number) {
         data: {
           todayExpense, todayIncome, dailyLimit: { amount: dailyLimitAmount, type: dailyLimitType },
           thisMonthExpense, thisMonthIncome,
-          last7DaysExpense, totalBalance, accounts, topCategories, dailyTrend,
+          last7DaysExpense, totalBalance, cashOnHand, availableCash,
+          coinBoxBalance, creditCards, totalDebt, accounts, topCategories, dailyTrend,
           recentTransactions, pendingReviewCount, budgets: budgetList, briefing,
           upcomingSubscriptions: ((subRows ?? []) as any[]).map((s: any) => ({
             id: s.id, description: s.description, amount: Number(s.amount),

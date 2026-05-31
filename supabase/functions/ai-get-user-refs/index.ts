@@ -43,7 +43,7 @@ Deno.serve(async (req) => {
       fetch(`${base}/rest/v1/finance_categories?select=id,display_name,grouping_purpose&user_id=eq.${encodeURIComponent(userId)}&order=display_name`, {
         headers: { "apikey": srKey, "Authorization": `Bearer ${srKey}` },
       }),
-      fetch(`${base}/rest/v1/finance_accounts?select=id,display_name,account_type&user_id=eq.${encodeURIComponent(userId)}&order=display_name`, {
+      fetch(`${base}/rest/v1/finance_accounts?select=id,display_name,account_type,is_coin_box&user_id=eq.${encodeURIComponent(userId)}&order=display_name`, {
         headers: { "apikey": srKey, "Authorization": `Bearer ${srKey}` },
       }),
     ]);

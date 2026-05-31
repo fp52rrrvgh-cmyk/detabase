@@ -23,6 +23,7 @@ type AccountItem = {
   display_name: string;
   account_type: string;
   initial_balance: number;
+  is_coin_box: boolean;
 };
 
 type CategoryItem = {
@@ -592,6 +593,7 @@ function AccountSelect({
       case "credit_card": return "信用卡";
       case "bank": return "銀行";
       case "stored_value": return "貸款";
+      case "digital_account": return "數位帳戶";
       case "other": return "其他";
       default: return type;
     }
@@ -628,6 +630,7 @@ function AccountSelect({
               >
                 <span className="qc-tree-dot">·</span>
                 <span className="qc-tree-label">{a.display_name}</span>
+                {a.is_coin_box && <span className="qc-coin-badge">🪙 零錢盒</span>}
                 <span className="qc-account-badge">{typeLabel(a.account_type)}</span>
                 {value === a.id && <span className="qc-tree-check">✓</span>}
               </button>

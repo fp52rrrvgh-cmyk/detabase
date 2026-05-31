@@ -23,6 +23,13 @@ export function DashboardSkeleton() {
       {/* Briefing skeleton */}
       <div className="skel skel-box" style={{ width: "100%", height: 48, borderRadius: 10 }} />
 
+      {/* Snapshot skeleton */}
+      <div className="snapshot-skel">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="skel skel-box" style={{ height: 32, marginBottom: 8, borderRadius: 8 }} />
+        ))}
+      </div>
+
       {/* KPI row skeleton */}
       <div className="d-kpi-row-skel">
         {[1, 2, 3, 4, 5].map((i) => (

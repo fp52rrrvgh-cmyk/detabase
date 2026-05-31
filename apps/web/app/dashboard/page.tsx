@@ -14,6 +14,7 @@ import { BudgetBarChart } from "./components/BudgetBarChart";
 import { DailySpendingGauge } from "./components/DailySpendingGauge";
 import { AccountOverviewCard } from "./components/AccountOverviewCard";
 import { Briefing } from "./components/Briefing";
+import { SnapshotDashboard } from "./components/SnapshotDashboard";
 import { ShareReport } from "./components/ShareReport";
 import { YearOverYearChart } from "./components/YearOverYearChart";
 import { DashboardSkeleton } from "./components/DashboardSkeleton";
@@ -155,6 +156,16 @@ export default function DashboardPage() {
 
           {/* ===== Briefing ===== */}
           <Briefing text={state.data.briefing} />
+
+          {/* ===== Snapshot: Asset-Liability Dashboard ===== */}
+          <SnapshotDashboard
+            cashOnHand={state.data.cashOnHand}
+            availableCash={state.data.availableCash}
+            coinBoxBalance={state.data.coinBoxBalance}
+            creditCards={state.data.creditCards}
+            totalDebt={state.data.totalDebt}
+            monthlyNet={state.data.thisMonthIncome - state.data.thisMonthExpense}
+          />
 
           {/* ===== KPI Row (5 cards) ===== */}
           <div className="d-kpi-row">

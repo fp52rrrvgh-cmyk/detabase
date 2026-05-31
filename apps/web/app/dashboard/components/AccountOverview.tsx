@@ -24,6 +24,7 @@ export function AccountOverview({ accounts, totalBalance }: AccountOverviewProps
           <div key={account.id} className="account-card">
             <div className="account-card-header">
               <span className="account-type-badge">{accountTypeLabel(account.accountType)}</span>
+              {account.isCoinBox && <span className="account-coin-badge">🪙 零錢盒</span>}
               <span className="account-name">{account.displayName}</span>
             </div>
             <div className="account-balance">
@@ -44,6 +45,7 @@ function accountTypeLabel(type: string): string {
     bank: "銀行",
     credit_card: "信用卡",
     stored_value: "儲值",
+    digital_account: "數位帳戶",
     other: "其他",
   };
   return labels[type] ?? type;

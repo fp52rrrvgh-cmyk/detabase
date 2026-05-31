@@ -420,7 +420,7 @@ This path does not add aliases, wrappers, package scripts, Apple Shortcut implem
 ### Setup Command Template
 
 ```powershell
-node scripts/local/setup-references.js --user <local-owner-user-id> --account-name "<account-display-name>" --account-type <cash|bank|credit_card|stored_value|other> --income-category-name "<income-category-display-name>" --expense-category-name "<expense-category-display-name>" --income-grouping-purpose "income" --expense-grouping-purpose "expense"
+node scripts/local/setup-references.js --user <local-owner-user-id> --account-name "<account-display-name>" --account-type <cash|bank|credit_card|stored_value|digital_account|other> --income-category-name "<income-category-display-name>" --expense-category-name "<expense-category-display-name>" --income-grouping-purpose "income" --expense-grouping-purpose "expense"
 ```
 
 Copy the printed account UUID, income category UUID, and expense category UUID into the daily logging commands.

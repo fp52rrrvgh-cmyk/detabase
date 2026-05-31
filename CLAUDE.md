@@ -39,7 +39,7 @@ scripts/local/setup-references.js  ← 本地 ref 設定腳本
 ## Schema（detabase-staging）
 | 表 | 用途 |
 |----|------|
-| `finance_accounts` | 帳戶（user_id, display_name, account_type, is_active） |
+| `finance_accounts` | 帳戶（user_id, display_name, account_type (cash/bank/credit_card/stored_value/digital_account/other), is_active） |
 | `finance_categories` | 分類（user_id, display_name, grouping_purpose, is_active） |
 | `finance_activities` | 主要財務記錄（movement_type, amount > 0, currency = TWD） |
 | `finance_activity_corrections` | 作廢稽核（correction_type = 'void'，原始紀錄不刪） |
@@ -49,7 +49,7 @@ scripts/local/setup-references.js  ← 本地 ref 設定腳本
 
 RLS：全表啟用，`user_id = auth.uid()`。service_role 已 GRANT 給部分表供 Edge Function 使用。
 
-## Migrations（18 檔）
+## Migrations（20 檔）
 ```bash
 supabase/migrations/
 ├── 20260518015307_create_finance_mvp_schema.sql
@@ -67,7 +67,10 @@ supabase/migrations/
 ├── 20260527084116_grant_service_role_finance_activities.sql
 ├── 20260527120000_grant_budget_table_delete.sql          ← 補 DELETE GRANT
 ├── 20260527150000_fix_budget_category_fk_composite.sql    ← 修複合 FK
-└── 20260527160000_grant_activity_table_dml.sql            ← 補 activities GRANT
+├── 20260527160000_grant_activity_table_dml.sql            ← 補 activities GRANT
+├── 20260529000001_add_digital_account_type.sql           ← 新增 digital_account 類型
+├── 20260531000002_create_daily_spending_limits.sql
+└── 20260531000003_add_coin_box_field.sql                 ← 新增 coin_box 欄位
 ```
 
 ## Edge Functions（detabase-staging）

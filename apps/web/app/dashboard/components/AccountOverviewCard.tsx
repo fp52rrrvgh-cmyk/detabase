@@ -59,6 +59,7 @@ export function AccountOverviewCard({
                 <span className="acct-card-icon">{acctIcon(a.accountType)}</span>
                 <span className="acct-card-name">{a.displayName}</span>
                 <span className="acct-card-type-badge">{acctTypeLabel(a.accountType)}</span>
+                {a.isCoinBox && <span className="account-coin-badge">🪙 零錢盒</span>}
               </div>
               <div className={`acct-card-balance ${isCredit || isLoan ? "text-red" : "text-green"}`}>
                 {isCredit || isLoan ? "-" : ""}TWD {displayBalance.toLocaleString()}
@@ -95,11 +96,11 @@ export function AccountOverviewCard({
 }
 
 function acctIcon(type: string): string {
-  const icons: Record<string, string> = { cash: "💵", bank: "🏛", credit_card: "💳", stored_value: "🎫" };
+  const icons: Record<string, string> = { cash: "💵", bank: "🏛", credit_card: "💳", stored_value: "🎫", digital_account: "📱" };
   return icons[type] || "💰";
 }
 
 function acctTypeLabel(type: string): string {
-  const labels: Record<string, string> = { cash: "現金", bank: "銀行", credit_card: "信用卡", stored_value: "貸款" };
+  const labels: Record<string, string> = { cash: "現金", bank: "銀行", credit_card: "信用卡", stored_value: "貸款", digital_account: "數位帳戶" };
   return labels[type] || type;
 }

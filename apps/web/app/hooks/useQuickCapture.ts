@@ -23,6 +23,7 @@ export type AccountOption = {
   display_name: string;
   account_type: string;
   initial_balance: number;
+  is_coin_box: boolean;
   is_active: boolean;
 };
 
@@ -196,14 +197,14 @@ export function useQuickCapture(
       if (cancelled || !data.session) return;
       supabase
         .from("finance_accounts")
-        .select("id,display_name,account_type,initial_balance,is_active")
+        .select("id,display_name,account_type,initial_balance,is_coin_box,is_active")
         .eq("is_active", true)
         .order("display_name", { ascending: true })
         .limit(100)
         .then(({ data: rows }) => {
           if (cancelled) return;
-          const list = ((rows ?? []) as { id: string; display_name: string; account_type: string; initial_balance: number; is_active: boolean }[]).map(
-            (r) => ({ id: r.id, display_name: r.display_name, account_type: r.account_type, initial_balance: r.initial_balance, is_active: r.is_active }),
+          const list = ((rows ?? []) as { id: string; display_name: string; account_type: string; initial_balance: number; is_coin_box: boolean; is_active: boolean }[]).map(
+            (r) => ({ id: r.id, display_name: r.display_name, account_type: r.account_type, initial_balance: r.initial_balance, is_coin_box: Boolean(r.is_coin_box), is_active: r.is_active }),
           );
           setAccounts(list);
           try {

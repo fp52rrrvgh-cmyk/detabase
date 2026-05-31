@@ -6,7 +6,7 @@ import { formatAmount } from "../lib/format";
 import { runtimeConfig } from "../constants";
 
 // --- Types ---
-type AccountType = "cash" | "bank" | "credit_card" | "stored_value" | "other";
+type AccountType = "cash" | "bank" | "credit_card" | "stored_value" | "digital_account" | "other";
 
 type AccountRow = {
   id: string;
@@ -19,6 +19,7 @@ type AccountRow = {
   loan_term_months: number | null;
   interest_rate: number | null;
   description: string | null;
+  is_coin_box: boolean;
   is_active: boolean;
 };
 
@@ -32,6 +33,7 @@ const ACCOUNT_TYPE_OPTIONS: { value: AccountType; label: string }[] = [
   { value: "bank", label: "銀行" },
   { value: "credit_card", label: "信用卡" },
   { value: "stored_value", label: "儲值" },
+  { value: "digital_account", label: "數位帳戶" },
   { value: "other", label: "其他" },
 ];
 
@@ -40,6 +42,7 @@ const ACCOUNT_TYPE_BADGES: Record<AccountType, string> = {
   bank: "🏦 銀行",
   credit_card: "💳 信用卡",
   stored_value: "🎫 儲值",
+  digital_account: "📱 數位帳戶",
   other: "📦 其他",
 };
 
@@ -62,6 +65,7 @@ export function AccountsTab() {
   const [newTotalLoan, setNewTotalLoan] = useState("");
   const [newLoanTerms, setNewLoanTerms] = useState("");
   const [newInterestRate, setNewInterestRate] = useState("");
+  const [newIsCoinBox, setNewIsCoinBox] = useState(false);
   const [newDesc, setNewDesc] = useState("");
 
   // Edit state
@@ -74,6 +78,7 @@ export function AccountsTab() {
   const [editTotalLoan, setEditTotalLoan] = useState("");
   const [editLoanTerms, setEditLoanTerms] = useState("");
   const [editInterestRate, setEditInterestRate] = useState("");
+  const [editIsCoinBox, setEditIsCoinBox] = useState(false);
   const [editDesc, setEditDesc] = useState("");
 
   useEffect(() => {
@@ -89,7 +94,7 @@ export function AccountsTab() {
 
     const { data, error } = await supabase
       .from("finance_accounts")
-      .select("id,display_name,account_type,initial_balance,credit_limit,billing_day,total_loan,loan_term_months,interest_rate,description,is_active")
+      .select("id,display_name,account_type,initial_balance,credit_limit,billing_day,total_loan,loan_term_months,interest_rate,description,is_coin_box,is_active")
       .order("display_name", { ascending: true })
       .limit(200);
 
@@ -109,7 +114,44 @@ export function AccountsTab() {
     setNewTotalLoan("");
     setNewLoanTerms("");
     setNewInterestRate("");
+    setNewIsCoinBox(false);
     setNewDesc("");
+  }
+
+  function clearNewCreditLoanFields() {
+    setNewCreditLimit("");
+    setNewBillingDay("");
+    setNewTotalLoan("");
+    setNewLoanTerms("");
+    setNewInterestRate("");
+  }
+
+  function clearEditCreditLoanFields() {
+    setEditCreditLimit("");
+    setEditBillingDay("");
+    setEditTotalLoan("");
+    setEditLoanTerms("");
+    setEditInterestRate("");
+  }
+
+  function handleNewTypeChange(nextType: AccountType) {
+    setNewType(nextType);
+    if (nextType !== "cash") setNewIsCoinBox(false);
+  }
+
+  function handleEditTypeChange(nextType: AccountType) {
+    setEditType(nextType);
+    if (nextType !== "cash") setEditIsCoinBox(false);
+  }
+
+  function handleNewCoinBoxChange(nextValue: boolean) {
+    setNewIsCoinBox(nextValue);
+    if (nextValue) clearNewCreditLoanFields();
+  }
+
+  function handleEditCoinBoxChange(nextValue: boolean) {
+    setEditIsCoinBox(nextValue);
+    if (nextValue) clearEditCreditLoanFields();
   }
 
   // --- Add ---
@@ -126,6 +168,9 @@ export function AccountsTab() {
       account_type: newType,
       initial_balance: parseInt(newBalance, 10) || 0,
     };
+    if (newType === "cash" && newIsCoinBox) {
+      body.is_coin_box = true;
+    }
 
     if (newType === "credit_card") {
       body.credit_limit = parseInt(newCreditLimit, 10) || null;
@@ -179,6 +224,7 @@ export function AccountsTab() {
     setEditTotalLoan(acct.total_loan != null ? String(acct.total_loan) : "");
     setEditLoanTerms(acct.loan_term_months != null ? String(acct.loan_term_months) : "");
     setEditInterestRate(acct.interest_rate != null ? String(acct.interest_rate) : "");
+    setEditIsCoinBox(acct.is_coin_box);
     setEditDesc(acct.description ?? "");
   }
 
@@ -193,6 +239,7 @@ export function AccountsTab() {
       display_name: editName.trim(),
       account_type: editType,
       initial_balance: parseInt(editBalance, 10) || 0,
+      is_coin_box: editType === "cash" && editIsCoinBox,
     };
 
     if (editType === "credit_card") {
@@ -285,6 +332,30 @@ export function AccountsTab() {
     return fields;
   }
 
+  function renderCoinBoxToggle(prefix: "new" | "edit") {
+    const enabled = prefix === "new" ? newIsCoinBox : editIsCoinBox;
+    const onChange = prefix === "new" ? handleNewCoinBoxChange : handleEditCoinBoxChange;
+
+    return (
+      <div className="coin-box-toggle">
+        <div className="coin-box-copy">
+          <strong>🪙 零錢盒</strong>
+          <span>提醒式儲蓄，不自動影響帳戶餘額；年末可提醒結算轉帳。</span>
+        </div>
+        <label className="coin-box-switch">
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={(e) => onChange(e.target.checked)}
+            aria-label="啟用零錢盒模式"
+          />
+          <span className="coin-box-slider" aria-hidden="true" />
+          <span className="coin-box-switch-text">啟用</span>
+        </label>
+      </div>
+    );
+  }
+
   function renderAccountRow(acct: AccountRow) {
     const isEditing = editingId === acct.id;
 
@@ -298,7 +369,7 @@ export function AccountsTab() {
           </div>
           <div className="field">
             <span>類型</span>
-            <select value={editType} onChange={(e) => setEditType(e.target.value as AccountType)}>
+            <select value={editType} onChange={(e) => handleEditTypeChange(e.target.value as AccountType)}>
               {ACCOUNT_TYPE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
@@ -306,8 +377,9 @@ export function AccountsTab() {
           </div>
           <div className="field">
             <span>初始餘額</span>
-            <input type="number" value={editBalance} onChange={(e) => setEditBalance(e.target.value)} />
+            <input type="number" value={editBalance} onChange={(e) => setEditBalance(e.target.value)} placeholder="例如：100000" />
           </div>
+          {editType === "cash" && renderCoinBoxToggle("edit")}
           {renderConditionalFields(editType, "edit")}
           <div className="field">
             <span>描述（選填）</span>
@@ -327,6 +399,7 @@ export function AccountsTab() {
           <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <strong className="category-name">{acct.display_name}</strong>
             <span className="acct-type-badge">{ACCOUNT_TYPE_BADGES[acct.account_type]}</span>
+            {acct.is_coin_box && <span className="coin-badge">🪙 零錢盒</span>}
             {!acct.is_active && <span className="category-badge-inactive">已停用</span>}
           </div>
           <div className="acct-meta" style={{ fontSize: "0.8rem", color: "#94a3b8", marginTop: 4 }}>
@@ -392,7 +465,7 @@ export function AccountsTab() {
             </div>
             <div className="field">
               <span>帳戶類型</span>
-              <select value={newType} onChange={(e) => setNewType(e.target.value as AccountType)}>
+              <select value={newType} onChange={(e) => handleNewTypeChange(e.target.value as AccountType)}>
                 {ACCOUNT_TYPE_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
@@ -402,8 +475,9 @@ export function AccountsTab() {
               <span>初始餘額</span>
               <input type="number" value={newBalance}
                 onChange={(e) => setNewBalance(e.target.value)}
-                placeholder="例：0" />
+                placeholder="例如：100000" />
             </div>
+            {newType === "cash" && renderCoinBoxToggle("new")}
             {renderConditionalFields(newType, "new")}
             <div className="field">
               <span>描述（選填）</span>

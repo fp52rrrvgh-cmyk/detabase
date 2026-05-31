@@ -66,7 +66,7 @@ These are requirement-level record types only. They are not database tables, sch
 ### Account Reference Record
 
 - Account display name.
-- Account role or type: cash, bank, credit_card, stored_value, or other.
+- Account role or type: cash, bank, credit_card, stored_value, digital_account, or other.
 - Active or inactive status for review purposes.
 
 ### Category Reference Record
@@ -87,7 +87,7 @@ These are requirement-level record types only. They are not database tables, sch
 ## Resolved Schema-Blocking Decisions
 
 - Accepted money movement types: income, expense, transfer, adjustment.
-- Accepted account roles or types: cash, bank, credit_card, stored_value, other.
+- Accepted account roles or types: cash, bank, credit_card, stored_value, digital_account, other.
 - Category grouping: use single-level category only for the first implementation.
 - Category grouping not included yet: multi-level categories.
 - Currency handling: single-currency TWD is enough for the first implementation.
@@ -115,7 +115,7 @@ This section is a proposal only. It describes conceptual entities and candidate 
 ### Entity Purpose
 
 - Finance activity supports capture and review of income, expense, transfer, and adjustment activity.
-- Finance account supports grouping activity by cash, bank, credit_card, stored_value, or other account role.
+- Finance account supports grouping activity by cash, bank, credit_card, stored_value, digital_account, or other account role.
 - Finance category supports first-pass single-level review grouping.
 
 ### Requirement Mapping
@@ -155,7 +155,7 @@ These are proposed attributes only, not final column names, SQL types, constrain
 #### Finance Account
 
 - Display name.
-- Role or type: cash, bank, credit_card, stored_value, or other.
+- Role or type: cash, bank, credit_card, stored_value, digital_account, or other.
 - Active or inactive review status.
 
 #### Finance Category
@@ -237,7 +237,7 @@ These table names are proposed for review and may change before implementation.
 | `id` | uuid | yes | Stable account reference identifier. |
 | `user_id` | uuid reference | yes | Owning user reference for future Supabase Auth / RLS ownership. |
 | `display_name` | text | yes | User-facing account name. |
-| `account_type` | enum-like text | yes | One of cash, bank, credit_card, stored_value, other. |
+| `account_type` | enum-like text | yes | One of cash, bank, credit_card, stored_value, digital_account, other. |
 | `is_active` | boolean | yes | Indicates whether the account is available for new manual entries. |
 | `created_at` | timestamp | yes | Record creation time. |
 | `updated_at` | timestamp | yes | Last update time. |
@@ -288,7 +288,7 @@ These relationships are draft documentation only and are not final foreign key d
 
 ### Proposed Constraints
 
-- `finance_accounts.account_type` should be limited to cash, bank, credit_card, stored_value, other.
+- `finance_accounts.account_type` should be limited to cash, bank, credit_card, stored_value, digital_account, other.
 - `finance_activities.movement_type` should be limited to income, expense, transfer, adjustment.
 - `finance_activities.source_indicator` should be limited to manual, import_reference, comparison_reference.
 - `finance_activities.currency` should be fixed to TWD for the first implementation.
@@ -348,7 +348,7 @@ This section is planning-only documentation. It is not executable SQL, not a mig
 - Primary key: `id` as uuid.
 - Ownership: `user_id` as uuid reference for future Supabase Auth / RLS ownership.
 - Required fields: `display_name`, `account_type`, `is_active`, `created_at`, `updated_at`.
-- Account type values: cash, bank, credit_card, stored_value, other.
+- Account type values: cash, bank, credit_card, stored_value, digital_account, other.
 - Purpose: account reference table for money movement records.
 
 #### `finance_categories`
@@ -376,7 +376,7 @@ This section is planning-only documentation. It is not executable SQL, not a mig
 - Interpret money direction through `finance_activities.movement_type`.
 - Fix `finance_activities.currency` to TWD for the first implementation.
 - Limit `finance_activities.movement_type` to income, expense, transfer, adjustment.
-- Limit `finance_accounts.account_type` to cash, bank, credit_card, stored_value, other.
+- Limit `finance_accounts.account_type` to cash, bank, credit_card, stored_value, digital_account, other.
 - Limit `finance_activities.source_indicator` to manual, import_reference, comparison_reference.
 - Require `finance_activities.category_id` for income and expense.
 - Keep `finance_activities.category_id` optional for transfer and adjustment.

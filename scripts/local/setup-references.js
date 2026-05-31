@@ -5,7 +5,7 @@ const { spawnSync } = require("node:child_process");
 const DB_CONTAINER = "supabase_db_detabase";
 const DOCKER = "docker";
 
-const ACCOUNT_TYPES = new Set(["cash", "bank", "credit_card", "stored_value", "other"]);
+const ACCOUNT_TYPES = new Set(["cash", "bank", "credit_card", "stored_value", "digital_account", "other"]);
 const FLAGS = new Set([
   "user",
   "account-name",
@@ -20,7 +20,7 @@ const FLAGS = new Set([
 function usage() {
   return [
     "Usage:",
-    "  node scripts/local/setup-references.js --user <uuid> --account-name <name> --account-type <cash|bank|credit_card|stored_value|other> --income-category-name <name> --expense-category-name <name> [options]",
+    "  node scripts/local/setup-references.js --user <uuid> --account-name <name> --account-type <cash|bank|credit_card|stored_value|digital_account|other> --income-category-name <name> --expense-category-name <name> [options]",
     "",
     "Options:",
     "  --income-grouping-purpose <text>",
@@ -136,7 +136,7 @@ function validateUuid(label, value) {
 
 function validateAccountType(value) {
   if (!ACCOUNT_TYPES.has(value)) {
-    fail("--account-type must be one of cash, bank, credit_card, stored_value, other");
+    fail("--account-type must be one of cash, bank, credit_card, stored_value, digital_account, other");
   }
   return value;
 }
