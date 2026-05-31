@@ -2,13 +2,16 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { useAuth } from "../hooks/useAuth";
 import { useQuickCapture } from "../hooks/useQuickCapture";
+import { runtimeConfig } from "../constants";
 import { useDashboard } from "./hooks/useDashboard";
 import { ExpensePieChart } from "./components/ExpensePieChart";
 import { DailyTrendChart } from "./components/DailyTrendChart";
 import { BudgetBarChart } from "./components/BudgetBarChart";
+import { DailySpendingGauge } from "./components/DailySpendingGauge";
 import { AccountOverviewCard } from "./components/AccountOverviewCard";
 import { Briefing } from "./components/Briefing";
 import { ShareReport } from "./components/ShareReport";
@@ -67,6 +70,10 @@ export default function DashboardPage() {
   const [viewMonth, setViewMonth] = useState(now.getMonth() + 1);
 
   const { state, reload, year, month, isCurrentMonth } = useDashboard(viewYear, viewMonth);
+  const supabase = useMemo(() => {
+    if (!runtimeConfig.supabaseUrl || !runtimeConfig.publishableKey) return null;
+    return createClient(runtimeConfig.supabaseUrl, runtimeConfig.publishableKey);
+  }, []);
 
   const today = new Date();
   const dayOfMonth = today.getDate();
@@ -121,6 +128,30 @@ export default function DashboardPage() {
               </button>
             </div>
           </div>
+
+          {/* ===== Daily Spending Gauge ===== */}
+          <DailySpendingGauge
+            spent={state.data.todayExpense}
+            limit={state.data.dailyLimit.amount}
+            type={state.data.dailyLimit.type}
+            isCurrentMonth={isCurrentMonth}
+            onSetLimit={async (amount) => {
+              if (!supabase) throw new Error("Supabase client is not configured");
+              const { error } = await supabase
+                .from("finance_daily_spending_limits")
+                .upsert({ daily_limit_amount: amount }, { onConflict: "user_id" });
+              if (error) throw error;
+              reload();
+            }}
+            onResetToAuto={async () => {
+              if (!supabase) throw new Error("Supabase client is not configured");
+              const { error } = await supabase
+                .from("finance_daily_spending_limits")
+                .delete();
+              if (error) throw error;
+              reload();
+            }}
+          />
 
           {/* ===== Briefing ===== */}
           <Briefing text={state.data.briefing} />

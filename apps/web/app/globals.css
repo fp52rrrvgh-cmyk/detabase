@@ -3938,3 +3938,270 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+/* ===== Daily Spending Gauge ===== */
+.daily-gauge-wrap {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.daily-gauge-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.875rem;
+  color: var(--text-soft);
+}
+
+.daily-gauge-header-remaining {
+  font-weight: 600;
+  font-family: "SF Mono", ui-monospace, monospace;
+}
+
+.daily-gauge-header-remaining.safe { color: var(--income); }
+.daily-gauge-header-remaining.caution { color: var(--warning); }
+.daily-gauge-header-remaining.warning,
+.daily-gauge-header-remaining.exceeded { color: var(--danger); }
+
+.daily-gauge-amount {
+  font-size: 2.5rem;
+  font-weight: 700;
+  font-family: "SF Mono", ui-monospace, monospace;
+  line-height: 1.1;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.daily-gauge-amount.safe { color: var(--income); }
+.daily-gauge-amount.caution { color: var(--warning); }
+.daily-gauge-amount.warning { color: var(--danger); }
+.daily-gauge-amount.exceeded { color: var(--danger); }
+
+.daily-gauge-bar-track {
+  width: 100%;
+  height: 10px;
+  background: var(--surface);
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.daily-gauge-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+
+.daily-gauge-bar-fill.safe { background: var(--income); }
+.daily-gauge-bar-fill.caution { background: var(--warning); }
+.daily-gauge-bar-fill.warning { background: var(--danger); }
+.daily-gauge-bar-fill.exceeded { background: var(--danger); }
+
+.daily-gauge-bar-progress {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  appearance: none;
+  background: transparent;
+}
+
+.daily-gauge-bar-progress::-webkit-progress-bar {
+  background: transparent;
+}
+
+.daily-gauge-bar-progress::-webkit-progress-value {
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+
+.daily-gauge-bar-progress::-moz-progress-bar {
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+
+.daily-gauge-bar-progress.safe::-webkit-progress-value { background: var(--income); }
+.daily-gauge-bar-progress.caution::-webkit-progress-value { background: var(--warning); }
+.daily-gauge-bar-progress.warning::-webkit-progress-value { background: var(--danger); }
+.daily-gauge-bar-progress.exceeded::-webkit-progress-value { background: var(--danger); }
+
+.daily-gauge-bar-progress.safe::-moz-progress-bar { background: var(--income); }
+.daily-gauge-bar-progress.caution::-moz-progress-bar { background: var(--warning); }
+.daily-gauge-bar-progress.warning::-moz-progress-bar { background: var(--danger); }
+.daily-gauge-bar-progress.exceeded::-moz-progress-bar { background: var(--danger); }
+
+.daily-gauge-percent {
+  margin-bottom: 8px;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  text-align: right;
+  font-family: "SF Mono", ui-monospace, monospace;
+}
+
+.daily-gauge-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.daily-gauge-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  color: var(--accent);
+  font-weight: 500;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+}
+
+.daily-gauge-footer-right:hover {
+  color: var(--accent-strong);
+}
+
+.daily-gauge-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.daily-gauge-badge-auto {
+  background: rgba(100, 116, 139, 0.15);
+  color: var(--muted);
+}
+
+.daily-gauge-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+}
+
+.daily-gauge-modal {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  width: min(100%, 360px);
+}
+
+.daily-gauge-modal h3 {
+  margin: 0 0 16px;
+  font-size: 1.125rem;
+  color: var(--text);
+}
+
+.daily-gauge-modal-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 1.25rem;
+  font-family: "SF Mono", ui-monospace, monospace;
+  text-align: center;
+  margin-bottom: 12px;
+  outline: none;
+}
+
+.daily-gauge-modal-input:focus {
+  border-color: var(--accent);
+}
+
+.daily-gauge-modal-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.daily-gauge-modal-btn {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+}
+
+.daily-gauge-modal-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.daily-gauge-modal-btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.daily-gauge-modal-btn-primary:hover {
+  background: var(--accent-strong);
+}
+
+.daily-gauge-modal-btn-danger {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.daily-gauge-modal-btn-danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.daily-gauge-modal-btn-cancel {
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.daily-gauge-modal-btn-cancel:hover {
+  color: var(--text);
+}
+
+.daily-gauge-modal-error {
+  color: var(--danger);
+  font-size: 0.8125rem;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.daily-gauge-empty {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  text-align: center;
+  color: var(--warning);
+  font-size: 0.875rem;
+}
+
+.daily-gauge-empty a {
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+@keyframes dailyGaugeBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.daily-gauge-blink {
+  animation: dailyGaugeBlink 1.2s ease-in-out infinite;
+}

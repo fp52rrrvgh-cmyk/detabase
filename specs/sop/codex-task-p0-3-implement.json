@@ -1,0 +1,72 @@
+{
+  "task_id": "P0-003-implement",
+  "mode": "codex-implement",
+  "repo_path": "/home/janzongxin/projects/detabase",
+  "spec_path": "specs/features/p0-3-daily-spending-limit/design.md",
+  "audit_report": "specs/reports/codex-audit-p0-3-daily-spending-limit.md",
+  "goal": "在 Dashboard 頂部（Header 與 Briefing 之間）新增每日花費 vs 每日限額元件。新表 finance_daily_spending_limits（user_id PK, daily_limit_amount > 0）含 RLS + authenticated GRANT。寫入走 PostgREST + RLS，不新增 Edge Function。無 is_auto、無 dailyExpense。",
+  "scheme": "B. custom-limit minimal",
+  "scope": {
+    "includes": [
+      "新增 supabase/migrations/20260531000001_create_daily_spending_limits.sql — 建表 + RLS（SELECT/INSERT/UPDATE/DELETE）+ GRANT authenticated",
+      "新增 apps/web/app/dashboard/components/DailySpendingGauge.tsx — 儀表元件（包含 modal、進度條、顏色邏輯）",
+      "修改 apps/web/app/dashboard/hooks/useDashboard.ts: DashboardSummary type 新增 dailyLimit: { amount, type: \"custom\"|\"auto\" }",
+      "修改 apps/web/app/dashboard/hooks/useDashboard.ts: 平行查詢區塊新增 dailyLimitPromise，setState 前加入 auto fallback 計算",
+      "修改 apps/web/app/dashboard/page.tsx: 在 Header 與 Briefing 之間插入 <DailySpendingGauge>",
+      "修改 apps/web/app/dashboard/components/DashboardSkeleton.tsx: 插入 daily limit skeleton",
+      "修改 apps/web/app/globals.css: 新增 .daily-gauge-* CSS class（進度條、顏色、閃爍動畫）"
+    ],
+    "excludes": [
+      "Edge Function（不新增 supabase/functions/set-daily-limit/）",
+      "finance_budgets 結構修改",
+      "dailyExpense 別名（沿用 todayExpense）",
+      "is_auto 欄位",
+      "Settings 頁修改",
+      "AI 建議",
+      "假日加權",
+      "debt/transfer 模組",
+      "git commit",
+      "npm install",
+      "production DB 修改"
+    ],
+    "migration": {
+      "table": "finance_daily_spending_limits",
+      "columns": [
+        {"name": "user_id", "type": "uuid", "constraint": "primary key default auth.uid()"},
+        {"name": "daily_limit_amount", "type": "bigint", "constraint": "not null check (daily_limit_amount > 0)"},
+        {"name": "created_at", "type": "timestamptz", "constraint": "not null default now()"},
+        {"name": "updated_at", "type": "timestamptz", "constraint": "not null default now()"}
+      ],
+      "rls_policies": ["select", "insert", "update", "delete"],
+      "grants": {"role": "authenticated", "operations": ["select", "insert", "update", "delete"]},
+      "reference_migration": "supabase/migrations/20260527081144_revoke_budget_grants_and_reapply.sql"
+    },
+    "specs": {
+      "type_changes": [
+        "DashboardSummary.dailyLimit.amount: number (TWD 分)",
+        "DashboardSummary.dailyLimit.type: \"custom\" | \"auto\""
+      ],
+      "not_added": [
+        "dailyExpense (use todayExpense instead)",
+        "is_auto field (no persistence of auto value)"
+      ]
+    }
+  },
+  "colors": [
+    {"min": 0.0, "max": 0.6, "label": "green",   "state": "safe"},
+    {"min": 0.6, "max": 0.85, "label": "yellow",  "state": "caution"},
+    {"min": 0.85, "max": 1.0, "label": "red",     "state": "warning"},
+    {"min": 1.0, "max": null, "label": "red+blink", "state": "exceeded"}
+  ],
+  "verification": [
+    "npm run build 通過",
+    "表結構正確（user_id PK, daily_limit_amount > 0）",
+    "RLS 四種 policy 存在",
+    "authenticated GRANT migration 存在",
+    "不新增 dailyExpense",
+    "不新增 Edge Function",
+    "不新增 is_auto",
+    "進度條顏色邏輯正確",
+    "UPSERT / DELETE 操作正常"
+  ]
+}

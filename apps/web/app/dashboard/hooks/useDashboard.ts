@@ -18,6 +18,10 @@ export type AccountSummary = {
 export type DashboardSummary = {
   todayExpense: number;
   todayIncome: number;
+  dailyLimit: {
+    amount: number;
+    type: "custom" | "auto";
+  };
   thisMonthExpense: number;
   thisMonthIncome: number;
   last7DaysExpense: number;
@@ -167,6 +171,10 @@ export function useDashboard(targetYear?: number, targetMonth?: number) {
         .eq("budget_month", month)
         .limit(500);
 
+      const dailyLimitPromise = supabase
+        .from("finance_daily_spending_limits")
+        .select("daily_limit_amount");
+
       const recentPromise = supabase
         .from("finance_activities")
         .select("id,activity_date,description,amount,movement_type,category_id")
@@ -211,6 +219,7 @@ export function useDashboard(targetYear?: number, targetMonth?: number) {
         { data: balanceIncome },
         { data: balanceExpense },
         { data: budgetRows },
+        { data: dailyLimitRows },
         { data: recentActivity },
         { count: reviewCount },
         { data: subRows },
@@ -218,7 +227,7 @@ export function useDashboard(targetYear?: number, targetMonth?: number) {
       ] = await Promise.all([
         activityPromise, catPromise, accountPromise,
         incomeBalancePromise, expenseBalancePromise,
-        budgetPromise, recentPromise, reviewPromise, subPromise,
+        budgetPromise, dailyLimitPromise, recentPromise, reviewPromise, subPromise,
         ...historyPromises,
       ]);
 
@@ -318,6 +327,22 @@ export function useDashboard(targetYear?: number, targetMonth?: number) {
         });
       }
 
+      // ===== P0-3: Daily limit =====
+      const dailyLimitRow = (dailyLimitRows ?? [])[0] as any;
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const totalMonthlyBudget = budgetList.reduce((s, b) => s + b.limitAmount, 0);
+      const autoDailyLimit = Math.round(totalMonthlyBudget / Math.max(daysInMonth, 1));
+
+      let dailyLimitAmount: number;
+      let dailyLimitType: "custom" | "auto";
+      if (dailyLimitRow) {
+        dailyLimitAmount = Number(dailyLimitRow.daily_limit_amount);
+        dailyLimitType = "custom";
+      } else {
+        dailyLimitAmount = autoDailyLimit;
+        dailyLimitType = "auto";
+      }
+
       // Briefing
       const dayOfMonth = isCurrentMonth ? new Date().getDate() : new Date(year, month, 0).getDate();
       const avgDaily = dayOfMonth > 0 ? thisMonthExpense / dayOfMonth : 0;
@@ -374,7 +399,8 @@ export function useDashboard(targetYear?: number, targetMonth?: number) {
       setState({
         status: "success",
         data: {
-          todayExpense, todayIncome, thisMonthExpense, thisMonthIncome,
+          todayExpense, todayIncome, dailyLimit: { amount: dailyLimitAmount, type: dailyLimitType },
+          thisMonthExpense, thisMonthIncome,
           last7DaysExpense, totalBalance, accounts, topCategories, dailyTrend,
           recentTransactions, pendingReviewCount, budgets: budgetList, briefing,
           upcomingSubscriptions: ((subRows ?? []) as any[]).map((s: any) => ({

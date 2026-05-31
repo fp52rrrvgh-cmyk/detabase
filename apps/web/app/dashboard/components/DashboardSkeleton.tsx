@@ -12,6 +12,14 @@ export function DashboardSkeleton() {
         <div className="skel skel-box" style={{ width: 80, height: 28, borderRadius: 8 }} />
       </div>
 
+      {/* Daily spending gauge skeleton */}
+      <div style={{ marginBottom: 16 }}>
+        <div className="skel skel-text" style={{ width: 120, height: 14, marginBottom: 8 }} />
+        <div className="skel skel-title" style={{ width: 200, height: 44, marginBottom: 12 }} />
+        <div className="skel skel-box" style={{ width: "100%", height: 16, borderRadius: 8, marginBottom: 8 }} />
+        <div className="skel skel-text" style={{ width: 160, height: 14 }} />
+      </div>
+
       {/* Briefing skeleton */}
       <div className="skel skel-box" style={{ width: "100%", height: 48, borderRadius: 10 }} />
 
