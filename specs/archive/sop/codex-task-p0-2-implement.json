@@ -1,0 +1,92 @@
+{
+  "task_id": "P0-002-implement",
+  "mode": "codex-implement",
+  "repo_path": "/home/janzongxin/projects/detabase",
+  "goal": "在 Dashboard 頁面新增資產負債快照儀表板（SnapshotDashboard），在 Briefing 與 KPI Row 之間顯示 6 個財務存量指標（手邊現金、零錢盒、可用現金、信用卡已用、負債總額、本月淨值）。零新 migration、零新 Edge Function、零新 RPC、零新資料查詢 — 所有資料從現有 useDashboard.ts 查詢結果計算。",
+  "scope": {
+    "includes": [
+      "新增 apps/web/app/dashboard/components/SnapshotDashboard.tsx（80-100 行元件，深色未來感戰情中心風格 6 行快照卡片）",
+      "修改 apps/web/app/dashboard/hooks/useDashboard.ts: DashboardSummary type 新增 5 個 computed fields（cashOnHand, availableCash, coinBoxBalance, creditCards[], totalDebt）",
+      "修改 apps/web/app/dashboard/hooks/useDashboard.ts: 在 accounts.map() 之後、setState 之前插入 6 個 snapshot 計算邏輯",
+      "修改 apps/web/app/dashboard/hooks/useDashboard.ts: setState data object 包含 5 個新欄位",
+      "修改 apps/web/app/dashboard/page.tsx: import SnapshotDashboard + 在 Briefing (line 126) 與 KPI Row (line 128) 之間插入 <SnapshotDashboard>",
+      "修改 page.tsx: monthlyNet 使用 props 方式傳入（thisMonthIncome - thisMonthExpense，非存入 state）",
+      "修改 apps/web/app/dashboard/components/DashboardSkeleton.tsx: 在 Briefing skeleton 之後新增 5 行 snapshot skeleton",
+      "修改 apps/web/app/globals.css: 新增 .snapshot-* CSS class（毛玻璃卡片、單行佈局、顏色邏輯）"
+    ],
+    "excludes": [
+      "新 migration / schema 變更（全部用現有欄位）",
+      "新 Edge Function / RPC",
+      "修改現有 KPI Row（Snapshot 與 KPI 是互補關係，存量 vs 流量）",
+      "修改 Budgets / Subscriptions 邏輯（正交功能）",
+      "多幣別支援（系統目前強制 TWD）",
+      "淨值走勢迷你圖（延至 P2）",
+      "信用卡逐卡展開明細功能（本次僅顯示合計）",
+      "git commit / push",
+      "npm install（使用專案已安裝的依賴）"
+    ]
+  },
+  "files_to_read_first": [
+    {
+      "path": "specs/features/p0-2-snapshot-dashboard/design.md",
+      "reason": "Architect 設計文件 — 計算公式、邊界案例、視覺指引"
+    },
+    {
+      "path": "specs/features/p0-2-snapshot-dashboard/spec-v2.md",
+      "reason": "完整 Spec v2 — 元件 props、CSS class 對照、驗收標準"
+    },
+    {
+      "path": "apps/web/app/dashboard/hooks/useDashboard.ts",
+      "reason": "主要修改目標 — DashboardSummary type、accounts 計算、setState"
+    },
+    {
+      "path": "apps/web/app/dashboard/page.tsx",
+      "reason": "插入 SnapshotDashboard 元件 + import"
+    },
+    {
+      "path": "apps/web/app/dashboard/components/DashboardSkeleton.tsx",
+      "reason": "新增 snapshot skeleton 行"
+    },
+    {
+      "path": "apps/web/app/globals.css",
+      "reason": "新增 .snapshot-* CSS class"
+    }
+  ],
+  "forbidden_actions": [
+    "❌ git commit / push",
+    "❌ 修改 supabase/migrations/ 中任何檔案（本次不需 migration）",
+    "❌ 修改 RLS 政策或 GRANT 語句",
+    "❌ 修改 Edge Function",
+    "❌ 自行擴充 scope 修改不在此任務中的檔案",
+    "❌ 修改現有 KPI Row 元件或行為",
+    "❌ 修改 .env.local 或任何環境變數檔案",
+    "❌ npm install（使用專案已安裝的依賴）"
+  ],
+  "output_path": "specs/features/p0-2-snapshot-dashboard/implementation-report.md",
+  "acceptance_criteria": [
+    "DashboardSummary type 包含 cashOnHand, availableCash, coinBoxBalance, creditCards[], totalDebt",
+    "useDashboard.ts accounts map 之後正確計算 cashOnHand（SUM cash && !isCoinBox）",
+    "useDashboard.ts 正確計算 coinBoxBalance（SUM isCoinBox）",
+    "useDashboard.ts 正確計算 bankBalance + 加總到 availableCash",
+    "useDashboard.ts 正確計算 creditCards[]（MAP credit_card → {displayName, used: Math.abs(balance), creditLimit}）",
+    "useDashboard.ts 正確計算 totalDebt（SUM total_loan）",
+    "useDashboard.ts setState data 包含全部 5 個新欄位",
+    "SnapshotDashboard.tsx 存在於 components/ 目錄",
+    "SnapshotDashboard.tsx Props interface 正確（cashOnHand, availableCash, coinBoxBalance, creditCards[], totalDebt, monthlyNet）",
+    "page.tsx 正確 import SnapshotDashboard",
+    "page.tsx 在 Briefing (line 126) 與 KPI Row (line 128) 之間插入 <SnapshotDashboard>",
+    "page.tsx 傳入 monthlyNet={state.data.thisMonthIncome - state.data.thisMonthExpense}",
+    "cashOnHand 顯示格式 NT$ X,XXX（toLocaleString）",
+    "coinBoxBalance > 0 時才顯示 🪙 行，否則隱藏",
+    "無信用卡時（creditCards.length === 0）💳 行隱藏",
+    "creditLimit 為 null 時顯示 NT$ X / —（不顯示額度）",
+    "信用卡使用率 >= 80% 時顯示 ⚠️ 圖標",
+    "totalDebt > 0 時數字顯示紅色系",
+    "monthlyNet >= 0 時綠色（#34d399），< 0 時紅色（#fb7185）",
+    "DashboardSkeleton 新增 5 行 snapshot skeleton（在 Briefing skeleton 之後）",
+    "globals.css 包含全部 .snapshot-* class（card, row, label, value, positive, negative, debt, warn, sub, skel）",
+    "npm run build 通過，無 TypeScript 錯誤"
+  ],
+  "user_context": "小新是 26 噸大貨車司機，使用 iPhone 15 Pro Max 操作。使用場景包含開車、夜車、搬貨現場、疲勞狀態、單手操作。需要超低操作步數、行動優先、可中斷接續設計。SnapshotDashboard 深色未來感戰情中心風格。繁體中文使用者。零錢盒是 reminder-based 儲蓄（每天丟零錢到實體零錢盒），非自動金流。",
+  "handoff_back_format": "回報時請包含：\n1. 修改的檔案清單（含新增檔案）\n2. 每個檔案的關鍵變更摘要\n3. 關鍵程式碼片段（新元件 JSX、計算邏輯、CSS class）\n4. npm run build 結果（成功/失敗、錯誤訊息）\n5. 是否完全滿足所有驗收條件（逐條標記 ✅/❌）\n6. 若有未滿足的驗收條件，說明原因與建議修正\n7. 實施後的風險評估（如有）"
+}

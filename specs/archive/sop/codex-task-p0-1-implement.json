@@ -1,0 +1,88 @@
+{
+  "task_id": "P0-001-implement",
+  "mode": "codex-implement",
+  "repo_path": "/home/janzongxin/projects/detabase",
+  "goal": "在 AccountsTab 新增 is_coin_box 零錢盒標記功能（含 migration + UI toggle + Dashboard 標示 + Quick-capture + ai-get-user-refs），讓小新可以將任何現金帳戶標記為零錢盒以實現 reminder-based 儲蓄管理。",
+  "scope": {
+    "includes": [
+      "新增 migration: supabase/migrations/20260531000001_add_coin_box_field.sql（is_coin_box boolean + 2 個 check constraints + 可選索引）",
+      "修改 apps/web/app/settings/AccountsTab.tsx: AccountRow type 加 is_coin_box、select 補 is_coin_box、新增/編輯表單加 toggle、列表行加 🪙 badge、handleAdd/handleUpdate body 加 is_coin_box",
+      "修改 apps/web/app/dashboard/hooks/useDashboard.ts: AccountSummary type 加 isCoinBox、select 補 is_coin_box、mapping 補 isCoinBox",
+      "修改 Dashboard 帳戶總覽元件: 零錢盒帳戶顯示 🪙 標示",
+      "修改 Quick-capture 帳戶選單: 零錢盒帳戶顯示 🪙 標示",
+      "修改 supabase/functions/ai-get-user-refs/index.ts: 回傳 is_coin_box 標記",
+      "強化身 initial_balance UI: placeholder 改為「例如：100000」"
+    ],
+    "excludes": [
+      "年末結算轉帳按鈕（延至 P1）",
+      "零錢盒餘額在 Dashboard 獨立顯示一行",
+      "git commit / push",
+      "修改 Supabase RLS 策略",
+      "修改 budgets / subscriptions 相關邏輯",
+      "舊資料搬遷",
+      "npm install（若已有依賴）"
+    ]
+  },
+  "files_to_read_first": [
+    {
+      "path": "supabase/migrations/20260518015307_create_finance_mvp_schema.sql",
+      "reason": "原始 finance_accounts 表定義與 account_type check constraint"
+    },
+    {
+      "path": "supabase/migrations/20260527230000_add_account_management_fields.sql",
+      "reason": "現有 initial_balance 與 GRANT 寫法參考"
+    },
+    {
+      "path": "supabase/migrations/20260529000001_add_digital_account_type.sql",
+      "reason": "參考如何處理 account_type check constraint 的 drop/recreate 模式（本次不需改，但需了解）"
+    },
+    {
+      "path": "apps/web/app/settings/AccountsTab.tsx",
+      "reason": "主要 UI 修改目標 — AccountRow type、表單、列表、CRUD 邏輯"
+    },
+    {
+      "path": "apps/web/app/dashboard/hooks/useDashboard.ts",
+      "reason": "Dashboard 資料查詢與 AccountSummary type 定義"
+    },
+    {
+      "path": "specs/features/p0-1-account-settings/spec-v2.md",
+      "reason": "完整的 Spec v2，包含 migration SQL、UI 需求、data flow"
+    },
+    {
+      "path": "specs/features/p0-1-account-settings/design.md",
+      "reason": "Architect 的設計文件，提供 schema 設計原理與約束條件說明"
+    }
+  ],
+  "forbidden_actions": [
+    "❌ git commit / push",
+    "❌ 修改 supabase/migrations/ 中非本次新增的 migration 檔案",
+    "❌ 修改 RLS 政策或 GRANT 語句",
+    "❌ 執行 migration（僅產出檔案，由小馬手動在 Supabase dashboard 執行）",
+    "❌ 自行擴充 scope 修改不在此任務中的檔案",
+    "❌ 修改 .env.local 或任何環境變數檔案",
+    "❌ npm install（使用專案已安裝的依賴）"
+  ],
+  "output_path": "specs/features/p0-1-account-settings/implementation-report.md",
+  "acceptance_criteria": [
+    "Migration 檔 `20260531000001_add_coin_box_field.sql` 已建立且含正確的 is_coin_box 欄位 + check constraints",
+    "AccountsTab.tsx: AccountRow type 包含 `is_coin_box: boolean`",
+    "AccountsTab.tsx: loadAccounts .select() 包含 `is_coin_box`",
+    "AccountsTab.tsx: handleAdd body 在 toggle 開啟時包含 `is_coin_box: true`",
+    "AccountsTab.tsx: handleUpdate body 包含 `is_coin_box`",
+    "AccountsTab.tsx: 新增表單在 account_type === 'cash' 時顯示 toggle",
+    "AccountsTab.tsx: 編輯表單正確讀取 acct.is_coin_box 初始化 toggle",
+    "AccountsTab.tsx: 帳戶列表行顯示 🪙 badge（當 is_coin_box = true）",
+    "AccountsTab.tsx: 切換 account_type 離開 cash 時自動關閉 toggle",
+    "AccountsTab.tsx: toggle 開啟時自動清空 credit/loan 相關 state",
+    "AccountsTab.tsx: initial_balance placeholder 改為「例如：100000」",
+    "useDashboard.ts: AccountSummary type 包含 `isCoinBox: boolean`",
+    "useDashboard.ts: .select() 包含 `is_coin_box`",
+    "useDashboard.ts: mapping 包含 `isCoinBox: a.is_coin_box`",
+    "Dashboard 帳戶總覽顯示 🪙 標示",
+    "Quick-capture 帳戶選單標示 🪙",
+    "ai-get-user-refs 回傳 is_coin_box 標記",
+    "npm run build 通過，無 TypeScript 錯誤"
+  ],
+  "user_context": "小新是 26 噸大貨車司機，使用 iPhone 15 Pro Max 操作。使用場景包含開車、夜車、搬貨現場、疲勞狀態、單手操作。需要超低操作步數、行動優先、可中斷接續設計。所有 Toggle 元件最小觸控面積 44×44px。繁體中文使用者。零錢盒是 reminder-based 儲蓄（每天丟零錢到實體零錢盒，年末提醒轉帳到銀行），非自動金流。",
+  "handoff_back_format": "回報時請包含：\n1. 修改的檔案清單（含新增檔案）\n2. 每個檔案的關鍵變更摘要\n3. 關鍵程式碼片段（新 migration SQL、type 定義、toggle JSX）\n4. npm run build 結果（成功/失敗、錯誤訊息）\n5. 是否完全滿足所有驗收條件（逐條標記 ✅/❌）\n6. 若有未滿足的驗收條件，說明原因與建議修正\n7. 實施後的風險評估（如有）"
+}

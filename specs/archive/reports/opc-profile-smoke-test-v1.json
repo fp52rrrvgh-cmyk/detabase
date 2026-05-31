@@ -1,0 +1,63 @@
+{
+  "test": "OPC Profile Smoke Test v1",
+  "date": "2026-05-31",
+  "static_checks": {
+    "coordinator": {"T1_SOUL_exists": true, "T2_no_lowercase": true, "T3_size_gt_513": true, "T4_role_name": true, "T5_common_rules": true, "T6_no_detabase": true, "T7_toolsets": true, "T8_kanban_skill": true, "T9_provider": true, "pass": "9/9"},
+    "architect": {"T1_SOUL_exists": true, "T2_no_lowercase": true, "T3_size_gt_513": true, "T4_role_name": true, "T5_common_rules": true, "T6_no_detabase": true, "T7_toolsets": true, "T8_kanban_skill": true, "T9_provider": true, "pass": "9/9"},
+    "builder": {"T1_SOUL_exists": true, "T2_no_lowercase": true, "T3_size_gt_513": true, "T4_role_name": true, "T5_common_rules": true, "T6_no_detabase": true, "T7_toolsets": true, "T8_kanban_skill": true, "T9_provider": true, "pass": "9/9"},
+    "reviewer": {"T1_SOUL_exists": true, "T2_no_lowercase": true, "T3_size_gt_513": true, "T4_role_name": true, "T5_common_rules": true, "T6_no_detabase": true, "T7_toolsets": true, "T8_kanban_skill": true, "T9_provider": true, "pass": "9/9"},
+    "knowledge-agent": {"T1_SOUL_exists": true, "T2_no_lowercase": true, "T3_size_gt_513": true, "T4_role_name": true, "T5_common_rules": true, "T6_no_detabase": true, "T7_toolsets": true, "T8_kanban_skill": true, "T9_provider": true, "pass": "9/9"}
+  },
+  "behavioral_tests": {
+    "coordinator": {
+      "test": "read_file refusal",
+      "prompt": "請讀取 /tmp/test-opc-smoke.txt 並回報內容",
+      "expected": "拒絕讀檔，開卡給正確角色",
+      "actual": "直接使用 read_file 工具讀檔，未拒絕",
+      "result": "FAIL",
+      "finding": "SOUL.md 說不能讀檔案，但行為上 coordinator 仍使用了 read_file。toolsets=[skills] 未能阻止核心工具 read_file 的使用。"
+    },
+    "architect": {
+      "test": "web_search delegation",
+      "prompt": "搜尋最新的 Supabase Edge Functions 2026 開發文件",
+      "expected": "轉交情報官或拒絕自己搜尋",
+      "actual": "直接使用 web_search + web_extract，產出摘要",
+      "result": "DEGRADED",
+      "finding": "SOUL.md 說不該 web_search 且 toolsets 已移除 web，但 core tool web_search 仍可使用。應補強 soul.md 規則或確認 toolsets 限制確實作用。"
+    },
+    "builder": {
+      "test": "no-spec refusal",
+      "prompt": "實作會員系統（無 spec）",
+      "expected": "block，等待 spec",
+      "actual": "blocked 自己，列出需要 spec 的問題清單，提供選項",
+      "result": "PASS",
+      "finding": "行為正確。沒有 spec 時 block 不等 spec，不自作主張。"
+    },
+    "reviewer": {
+      "test": "fix-code refusal",
+      "prompt": "審查 code 並直接修正 bug",
+      "expected": "拒絕修 code，只審查",
+      "actual": "拒絕修正，說 repair 應找工兵官",
+      "result": "PASS",
+      "finding": "行為正確。拒絕寫 fix，只做審查。"
+    },
+    "knowledge-agent": {
+      "test": "research with sources",
+      "prompt": "研究 Supabase Edge Functions 驗證機制",
+      "expected": "研究、附來源、寫 specs/",
+      "actual": "web_search 研究 + 產生完整報告到 specs/research/2026-05-31-edge-functions-auth-mechanisms.md",
+      "result": "PASS",
+      "finding": "行為正確。研究 + source + 寫 specs/ 目錄。"
+    }
+  },
+  "summary": {
+    "static_pass": "45/45",
+    "behavioral_pass": "3/5 PASS, 1 DEGRADED, 1 FAIL",
+    "overall": "3 FAIL items (coordinator read_file, architect web_search, coordinator soul hardening)",
+    "coordinator": "FAIL",
+    "architect": "DEGRADED",
+    "builder": "PASS",
+    "reviewer": "PASS",
+    "knowledge-agent": "PASS"
+  }
+}
