@@ -1,0 +1,41 @@
+{
+  "task_id": "P0-004-implement-review",
+  "mode": "codex-audit",
+  "repo_path": "/home/janzongxin/projects/detabase",
+  "goal": "審查 P0-4 自動分類規則引擎實作品質 — 確認 code 正確、安全、符合 spec 與 audit 要求",
+  "scope": {
+    "includes": [
+      "apps/web/app/hooks/useQuickCapture.ts — suggestion state、touched flags、validateRuleMatch、markTouched",
+      "apps/web/app/dashboard/components/QuickCaptureModal.tsx — suggestion badge UI",
+      "apps/web/app/globals.css — badge 樣式"
+    ],
+    "excludes": [
+      "不改任何 code",
+      "不建議新 migration 或 Edge Function"
+    ]
+  },
+  "files_to_read_first": [
+    "specs/features/p0-4-auto-classification-rules/design.md",
+    "specs/reports/codex-audit-p0-4-auto-classification-rules.md",
+    "apps/web/app/hooks/useQuickCapture.ts",
+    "apps/web/app/dashboard/components/QuickCaptureModal.tsx",
+    "apps/web/app/globals.css"
+  ],
+  "forbidden_actions": [
+    "❌ 禁止 patch 任何檔案",
+    "❌ 禁止 write_file",
+    "❌ 禁止 git commit / git push"
+  ],
+  "acceptance_criteria": [
+    "validateRuleMatch 是否正確過濾無效 target？",
+    "touchedFields 是否正確阻止覆蓋？含 mode 保護",
+    "suggestion badge 是否只在正確條件下顯示？",
+    "movementType 是否不會突然切換使用者已選模式？",
+    "無 match / 無效 rule 時是否乾淨地 fallback？",
+    "TypeScript 是否有類型安全問題？",
+    "Edge Function / migration / 其他元件是否未被修改？",
+    "是否符合小新單手疲勞操作情境？"
+  ],
+  "user_context": "小新是 26 噸大貨車司機，iPhone 單手操作，疲勞駕駛狀態。分類建議必須低干擾。",
+  "handoff_back_format": "Markdown 審查報告。列出通過/警告/失敗的審查項目。若有問題需附行號與建議修正。"
+}

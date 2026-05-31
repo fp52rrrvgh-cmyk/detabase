@@ -553,6 +553,7 @@ export default function DashboardPage() {
               onCategoryChange={capture.setCategoryId}
               onAccountChange={capture.setAccountId}
               onSubmit={capture.handleSubmit}
+              suggestion={capture.suggestion}
             />
           </ErrorBoundary>
         </>

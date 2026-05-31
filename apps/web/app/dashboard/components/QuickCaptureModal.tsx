@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import type { FormEvent } from "react";
 
 import type { QuickCaptureMode, SubmitState } from "../../types";
+import type { QuickCaptureSuggestion } from "../../hooks/useQuickCapture";
 
 import { quickCaptureModeLabel } from "../../lib/format";
 
@@ -56,6 +57,7 @@ export type QuickCaptureModalProps = {
   onCategoryChange: (id: string) => void;
   onAccountChange: (id: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  suggestion: QuickCaptureSuggestion | null;
 };
 
 export function QuickCaptureModal({
@@ -81,6 +83,7 @@ export function QuickCaptureModal({
   onCategoryChange,
   onAccountChange,
   onSubmit,
+  suggestion,
 }: QuickCaptureModalProps) {
   const amountInputRef = useRef<HTMLInputElement>(null);
   const [batchMode, setBatchMode] = useState(false);
@@ -114,6 +117,26 @@ export function QuickCaptureModal({
   if (!open) return null;
 
   const label = quickCaptureModeLabel(mode);
+  const suggestionBadge = suggestion ? `📋 ${suggestion.match.keyword} (規則)` : "";
+  const showModeSuggestion =
+    Boolean(suggestion?.match.movementType) &&
+    !suggestion?.touchedFields.mode &&
+    suggestion?.match.movementType === mode;
+  const showCategorySuggestion =
+    Boolean(suggestion?.match.categoryId) &&
+    !suggestion?.touchedFields.category &&
+    suggestion?.match.categoryId === categoryId;
+  const showAccountSuggestion =
+    Boolean(suggestion?.match.accountId) &&
+    !suggestion?.touchedFields.account &&
+    suggestion?.match.accountId === accountId;
+
+  const renderSuggestionBadge = (visible: boolean) =>
+    visible ? (
+      <span className="qc-rule-suggestion-badge" aria-label="規則建議">
+        {suggestionBadge}
+      </span>
+    ) : null;
 
   const handleQuickAmount = (val: number) => {
     onAmountChange(String(val));
@@ -244,7 +267,10 @@ export function QuickCaptureModal({
             role="radiogroup"
             aria-label="快速輸入模式"
           >
-            <span>記錄類型</span>
+            <div className="qc-field-heading">
+              <span>記錄類型</span>
+              {renderSuggestionBadge(showModeSuggestion)}
+            </div>
             <div className="mode-options">
               {(["expense", "income"] as const).map((m) => (
                 <button
@@ -299,7 +325,10 @@ export function QuickCaptureModal({
 
           {/* ── Category cards ── */}
           <div className="field">
-            <span>分類</span>
+            <div className="qc-field-heading">
+              <span>分類</span>
+              {renderSuggestionBadge(showCategorySuggestion)}
+            </div>
             {topCategories.length > 0 && !showTree && (
               <>
                 <div className="qc-cat-cards">
@@ -354,7 +383,10 @@ export function QuickCaptureModal({
 
           {/* ── Account selector ── */}
           <div className="field">
-            <span>帳戶</span>
+            <div className="qc-field-heading">
+              <span>帳戶</span>
+              {renderSuggestionBadge(showAccountSuggestion)}
+            </div>
             <AccountSelect
               accounts={accounts}
               value={accountId}

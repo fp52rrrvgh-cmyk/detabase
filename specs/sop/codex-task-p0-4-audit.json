@@ -1,0 +1,49 @@
+{
+  "task_id": "P0-004-audit",
+  "mode": "codex-audit",
+  "repo_path": "/home/janzongxin/projects/detabase",
+  "goal": "審查 P0-4 自動分類規則引擎設計 spec，確認 schema/RLS/QuickCapture integration/scope 無遺漏或風險",
+  "scope": {
+    "includes": [
+      "specs/features/p0-4-auto-classification-rules/design.md  — 設計 spec",
+      "finance_classification_rules schema — 現有 migration 正確性",
+      "classify-transaction Edge Function — 匹配邏輯與安全",
+      "QuickCaptureModal.tsx / useQuickCapture.ts — 前端整合",
+      "RulesTab.tsx — 規則管理頁面",
+      "RLS policies for classification_rules",
+      "seed data migration"
+    ],
+    "excludes": [
+      "不改任何 code",
+      "不建議新 migration",
+      "不建議新 Edge Function"
+    ]
+  },
+  "files_to_read_first": [
+    "specs/features/p0-4-auto-classification-rules/design.md",
+    "supabase/migrations/20260527081145_create_classification_rules.sql",
+    "supabase/migrations/20260527081146_seed_classification_rules.sql",
+    "supabase/migrations/20260527083852_link_rules_to_categories.sql",
+    "supabase/functions/classify-transaction/index.ts",
+    "apps/web/app/hooks/useQuickCapture.ts",
+    "apps/web/app/dashboard/components/QuickCaptureModal.tsx",
+    "apps/web/app/settings/RulesTab.tsx"
+  ],
+  "forbidden_actions": [
+    "❌ 禁止 patch 任何檔案",
+    "❌ 禁止 write_file",
+    "❌ 禁止 git commit / git push",
+    "❌ 禁止執行 migration"
+  ],
+  "output_path": "specs/reports/codex-audit-p0-4-auto-classification-rules.md",
+  "acceptance_criteria": [
+    "審查 schema 完整性：現有 finance_classification_rules 表是否足夠支援 P0-4",
+    "審查 RLS 安全：使用者的規則是否被正確隔離",
+    "審查 classify-transaction Edge Function：匹配邏輯、安全驗證、錯誤處理",
+    "審查 QuickCapture 整合：建議 UI badge 設計是否合理、使用者能否覆蓋",
+    "審查 scope：設計 spec 是否涵蓋所有邊界案例",
+    "確認無需新 migration 或 Edge Function"
+  ],
+  "user_context": "小新是 26 噸大貨車司機，iPhone 單手操作，疲勞駕駛狀態。分類建議必須低干擾、一目瞭然、可一鍵接受或覆蓋。不要增加操作步數。",
+  "handoff_back_format": "回傳 markdown 審計報告寫到 specs/reports/codex-audit-p0-4-auto-classification-rules.md。報告須包含：審查摘要、逐項發現、風險等級（高/中/低）、建議方案 A/B/C 評價。"
+}

@@ -1,0 +1,61 @@
+{
+  "task_id": "P0-004-implement",
+  "mode": "codex-implement",
+  "repo_path": "/home/janzongxin/projects/detabase",
+  "spec_path": "specs/features/p0-4-auto-classification-rules/design.md",
+  "audit_report": "specs/reports/codex-audit-p0-4-auto-classification-rules.md",
+  "goal": "在 QuickCapture 記帳流程中實作自動分類規則建議（方案 A：Minimal Badge + Hook State）。當使用者輸入描述文字時，顯示匹配的規則 keyword badge，自動填入分類/帳戶/方向，並確保使用者手動覆蓋後不再被規則覆蓋。",
+  "scope": {
+    "allowed_files": [
+      "apps/web/app/hooks/useQuickCapture.ts",
+      "apps/web/app/dashboard/components/QuickCaptureModal.tsx",
+      "apps/web/app/globals.css"
+    ],
+    "allowed_actions": [
+      "patch/write 上述 3 個檔案",
+      "npm run build 驗證",
+      "git add（但不 git commit）"
+    ]
+  },
+  "files_to_read_first": [
+    "specs/features/p0-4-auto-classification-rules/design.md",
+    "specs/reports/codex-audit-p0-4-auto-classification-rules.md",
+    "apps/web/app/hooks/useQuickCapture.ts",
+    "apps/web/app/dashboard/components/QuickCaptureModal.tsx",
+    "apps/web/app/globals.css",
+    "apps/web/app/settings/RulesTab.tsx"
+  ],
+  "forbidden_actions": [
+    "❌ 禁止新增/修改 Edge Function",
+    "❌ 禁止新增 migration",
+    "❌ 禁止修改 dashboard 非 QuickCapture 元件",
+    "❌ 禁止新增 AI 功能",
+    "❌ 禁止改歷史交易資料",
+    "❌ 禁止 git commit / git push",
+    "❌ 禁止修改 package-lock.json",
+    "❌ 禁止修改 CLAUDE.md"
+  ],
+  "implementation_requirements": [
+    "1. useQuickCapture.ts 新增 suggestion state output：match.keyword、suggested categoryId/accountId/movementType、possible[]、touchedFields{category, account, mode}",
+    "2. 分類流程：description 變更 600ms 後呼叫 classify-transaction Edge Function，取得建議",
+    "3. 自動填入邏輯：僅在該欄位 touched flag = false 時才自動填入",
+    "4. 關鍵變更：movementType 也必須有 touched flag 保護（目前會直接覆蓋）",
+    "5. 使用者手動變更 category/account/mode 任一欄位後，該欄位在该次 modal session 不再被覆蓋",
+    "6. QuickCaptureModal 顯示建議 badge：在分類/帳戶/方向欄位旁顯示小 badge，格式如「📋 加油 (規則)」",
+    "7. Rule target 驗證：建議的 category_id/account_id 必須存在於目前使用者可見且 active 的 options 中，否則忽略",
+    "8. 無效/不可信 rule 不得套用：若 Edge Function 回傳的 target ID 不在當前的 categories/accounts 清單中，跳過該建議",
+    "9. 當 no match 或 suggestion 被忽略時，不顯示任何 badge，維持現有 UI",
+    "10. npm run build 必須通過（TypeScript + compilation）"
+  ],
+  "acceptance_criteria": [
+    "描述輸入後 600ms，分類/帳戶旁顯示建議 badge",
+    "使用者手動改分類後，不再被規則覆蓋",
+    "使用者手動改帳戶後，不再被規則覆蓋",
+    "使用者手動切換 mode 後，不再被規則覆蓋（新增保護）",
+    "badge 顯示匹配的 keyword 文字",
+    "無 match 時不顯示 badge",
+    "npm run build 通過"
+  ],
+  "user_context": "小新是 26 噸大貨車司機，iPhone 單手操作，疲勞駕駛狀態。分類建議必須低干擾、一目瞭然、可一鍵接受或覆蓋。不要增加操作步數。",
+  "handoff_back_format": "回傳實作摘要：修改了哪些檔案、變更內容摘要、build 結果、任何未解決問題。"
+}

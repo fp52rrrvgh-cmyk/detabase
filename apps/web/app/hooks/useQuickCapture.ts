@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 import type { QuickCaptureMode, SubmitState } from "../types";
@@ -27,6 +27,25 @@ export type AccountOption = {
   is_active: boolean;
 };
 
+export type QuickCaptureRuleMatch = {
+  keyword: string;
+  categoryId: string | null;
+  accountId: string | null;
+  movementType: QuickCaptureMode | null;
+};
+
+export type QuickCaptureTouchedFields = {
+  category: boolean;
+  account: boolean;
+  mode: boolean;
+};
+
+export type QuickCaptureSuggestion = {
+  match: QuickCaptureRuleMatch;
+  possible: QuickCaptureRuleMatch[];
+  touchedFields: QuickCaptureTouchedFields;
+};
+
 export type UseQuickCaptureReturn = {
   amount: string;
   description: string;
@@ -39,6 +58,8 @@ export type UseQuickCaptureReturn = {
   categoryUsage: Record<string, number>;
   accountId: string;
   accounts: AccountOption[];
+  suggestion: QuickCaptureSuggestion | null;
+  touchedFields: QuickCaptureTouchedFields;
   setAmount: (v: string) => void;
   setDescription: (v: string) => void;
   setActivityDate: (v: string) => void;
@@ -48,6 +69,65 @@ export type UseQuickCaptureReturn = {
   handleSubmit: (event: FormEvent<HTMLFormElement>) => void;
   clearSettledSubmitState: () => void;
 };
+
+type RawRuleMatch = {
+  keyword?: unknown;
+  categoryId?: unknown;
+  category_id?: unknown;
+  accountId?: unknown;
+  account_id?: unknown;
+  movementType?: unknown;
+  movement_type?: unknown;
+};
+
+function normalizeRuleMatch(raw: unknown): QuickCaptureRuleMatch | null {
+  if (!raw || typeof raw !== "object") return null;
+  const row = raw as RawRuleMatch;
+  const keyword = typeof row.keyword === "string" ? row.keyword.trim() : "";
+  if (!keyword) return null;
+
+  const rawCategoryId = row.categoryId ?? row.category_id;
+  const rawAccountId = row.accountId ?? row.account_id;
+  const rawMovementType = row.movementType ?? row.movement_type;
+  const movementType =
+    rawMovementType === "expense" || rawMovementType === "income"
+      ? rawMovementType
+      : null;
+
+  return {
+    keyword,
+    categoryId: typeof rawCategoryId === "string" && rawCategoryId ? rawCategoryId : null,
+    accountId: typeof rawAccountId === "string" && rawAccountId ? rawAccountId : null,
+    movementType,
+  };
+}
+
+function categoryMatchesMode(category: CategoryOption, mode: QuickCaptureMode): boolean {
+  if (mode === "expense") {
+    return category.groupingPurpose === null || category.groupingPurpose === "expense";
+  }
+  return category.groupingPurpose === "income";
+}
+
+function validateRuleMatch(
+  match: QuickCaptureRuleMatch,
+  categories: CategoryOption[],
+  accounts: AccountOption[],
+  fallbackMode: QuickCaptureMode,
+): QuickCaptureRuleMatch | null {
+  const suggestedMode = match.movementType ?? fallbackMode;
+
+  if (match.categoryId) {
+    const category = categories.find((item) => item.id === match.categoryId);
+    if (!category || !categoryMatchesMode(category, suggestedMode)) return null;
+  }
+
+  if (match.accountId && !accounts.some((item) => item.id === match.accountId && item.is_active)) {
+    return null;
+  }
+
+  return match;
+}
 
 export function useQuickCapture(
   supabase: ReturnType<typeof import("@supabase/supabase-js").createClient> | null,
@@ -66,11 +146,26 @@ export function useQuickCapture(
   const [categoryUsage, setCategoryUsage] = useState<Record<string, number>>({});
   const [accountId, setAccountId] = useState("");
   const [accounts, setAccounts] = useState<AccountOption[]>([]);
+  const [suggestion, setSuggestion] = useState<QuickCaptureSuggestion | null>(null);
+  const [touchedFields, setTouchedFields] = useState<QuickCaptureTouchedFields>({
+    category: false,
+    account: false,
+    mode: false,
+  });
+
+  // Track latest description to guard against stale classification responses
+  const latestDescriptionRef = useRef(description);
+  useEffect(() => {
+    latestDescriptionRef.current = description;
+  }, [description]);
 
   // ── Classification rule matching ──
   useEffect(() => {
     const trimmed = description.trim();
-    if (!trimmed) return;
+    if (!trimmed) {
+      setSuggestion(null);
+      return;
+    }
     const funcUrl = runtimeConfig.supabaseFunctionsUrl;
     if (!funcUrl) return;
 
@@ -105,17 +200,46 @@ export function useQuickCapture(
         );
         if (!resp.ok) return;
         const body = await resp.json();
-        if (!body.ok || !body.data?.match) return;
+        const rawMatch = body?.ok ? normalizeRuleMatch(body.data?.match) : null;
+        if (!rawMatch) {
+          setSuggestion(null);
+          return;
+        }
 
-        const match = body.data.match;
-        if (match.categoryId && match.categoryId !== categoryId && (categoryId === "" || categoryId === "none")) {
+        const match = validateRuleMatch(rawMatch, categories, accounts, quickCaptureMode);
+        if (!match) {
+          setSuggestion(null);
+          return;
+        }
+
+        const rawPossible: unknown[] = Array.isArray(body.data?.possible) ? body.data.possible : [];
+        const possible = rawPossible
+          .map(normalizeRuleMatch)
+          .filter((item): item is QuickCaptureRuleMatch => item !== null)
+          .map((item) => validateRuleMatch(item, categories, accounts, quickCaptureMode))
+          .filter((item): item is QuickCaptureRuleMatch => item !== null);
+
+        // Guard against stale responses from a previous description
+        if (latestDescriptionRef.current !== trimmed) return;
+
+        setSuggestion({
+          match,
+          possible,
+          touchedFields,
+        });
+
+        if (
+          !touchedFields.category &&
+          match.categoryId &&
+          match.categoryId !== categoryId
+        ) {
           setCategoryId(match.categoryId);
         }
-        if (match.accountId && match.accountId !== accountId && accountId === "") {
+        if (!touchedFields.account && match.accountId && match.accountId !== accountId) {
           setAccountId(match.accountId);
         }
-        if (match.movementType && match.movementType !== quickCaptureMode) {
-          setQuickCaptureMode(match.movementType as QuickCaptureMode);
+        if (!touchedFields.mode && match.movementType && match.movementType !== quickCaptureMode) {
+          setQuickCaptureMode(match.movementType);
         }
       } catch {
         // Silently ignore — classification is best-effort
@@ -123,7 +247,7 @@ export function useQuickCapture(
     }, 600);
 
     return () => clearTimeout(timer);
-  }, [description, categoryId, accountId, quickCaptureMode]);
+  }, [description, categoryId, accountId, quickCaptureMode, categories, accounts, touchedFields]);
 
   const expenseConfigReady = hasRuntimeFields(runtimeConfig, EXPENSE_RUNTIME_KEYS);
   const incomeConfigReady = hasRuntimeFields(runtimeConfig, INCOME_RUNTIME_KEYS);
@@ -227,6 +351,19 @@ export function useQuickCapture(
     );
   }, []);
 
+  const markTouched = useCallback((field: keyof QuickCaptureTouchedFields) => {
+    setTouchedFields((current) => {
+      if (current[field]) return current;
+      const next = { ...current, [field]: true };
+      setSuggestion((currentSuggestion) =>
+        currentSuggestion
+          ? { ...currentSuggestion, touchedFields: next }
+          : currentSuggestion,
+      );
+      return next;
+    });
+  }, []);
+
   const handleAmountChange = useCallback((value: string) => {
     setAmount(value);
     clearSettledSubmitState();
@@ -234,13 +371,28 @@ export function useQuickCapture(
 
   const handleDescriptionChange = useCallback((value: string) => {
     setDescription(value);
+    setSuggestion(null);
+    setTouchedFields({ category: false, account: false, mode: false });
     clearSettledSubmitState();
   }, [clearSettledSubmitState]);
 
   const handleQuickCaptureModeChange = useCallback((mode: QuickCaptureMode) => {
+    if (mode !== quickCaptureMode) markTouched("mode");
     setQuickCaptureMode(mode);
     clearSettledSubmitState();
-  }, [clearSettledSubmitState]);
+  }, [clearSettledSubmitState, markTouched, quickCaptureMode]);
+
+  const handleCategoryChange = useCallback((value: string) => {
+    if (value !== categoryId) markTouched("category");
+    setCategoryId(value);
+    clearSettledSubmitState();
+  }, [categoryId, clearSettledSubmitState, markTouched]);
+
+  const handleAccountChange = useCallback((value: string) => {
+    if (value !== accountId) markTouched("account");
+    setAccountId(value);
+    clearSettledSubmitState();
+  }, [accountId, clearSettledSubmitState, markTouched]);
 
   const handleSubmit = useCallback(
     async (event: FormEvent<HTMLFormElement>) => {
@@ -341,6 +493,8 @@ export function useQuickCapture(
 
       setAmount("");
       setDescription("");
+      setSuggestion(null);
+      setTouchedFields({ category: false, account: false, mode: false });
       setActivityDateState(currentLocalDate());
       if (accountId) {
         try { localStorage.setItem("xiaoma_last_account_id", accountId); } catch { /* ignore */ }
@@ -354,7 +508,7 @@ export function useQuickCapture(
       });
       onSuccess?.();
     },
-    [activityDate, amount, categoryId, coreConfigReady, currentModeConfigReady, description, onSuccess, quickCaptureMode, supabase],
+    [accountId, activityDate, amount, categoryId, coreConfigReady, currentModeConfigReady, description, onSuccess, quickCaptureMode, supabase],
   );
 
   return {
@@ -369,12 +523,14 @@ export function useQuickCapture(
     categoryUsage,
     accountId,
     accounts,
+    suggestion,
+    touchedFields,
     setAmount: handleAmountChange,
     setDescription: handleDescriptionChange,
     setActivityDate: setActivityDateState,
     setQuickCaptureMode: handleQuickCaptureModeChange,
-    setCategoryId,
-    setAccountId,
+    setCategoryId: handleCategoryChange,
+    setAccountId: handleAccountChange,
     handleSubmit,
     clearSettledSubmitState,
   };
