@@ -27,5 +27,8 @@ verify_jwt = false
 [functions.ai-get-user-refs]
 verify_jwt = false
 
+[functions.ai-get-debt-summary]
+verify_jwt = false
+
 [functions.test-env]
 verify_jwt = false
