@@ -1,0 +1,49 @@
+{
+  "project": "/home/janzongxin/projects/detabase",
+  "task": "新增債務儀表板",
+  "launched_at": "2026-06-02 13:47:12",
+  "roles": [
+    "coordinator",
+    "architect",
+    "builder",
+    "reviewer"
+  ],
+  "tasks": [
+    {
+      "goal": "You are the OPC Coordinator. Given the project at /home/janzongxin/projects/detabase and the task: 新增債務儀表板, produce:\n1. Task decomposition into 3-5 subtasks\n2. Each subtask assigned to Architect/Builder/Reviewer\n3. Dependency graph between subtasks\n4. Output format: JSON with 'subtasks' array",
+      "context": "Project: /home/janzongxin/projects/detabase\nTask: 新增債務儀表板\nRole: 協調官",
+      "toolsets": [
+        "terminal",
+        "file",
+        "web"
+      ]
+    },
+    {
+      "goal": "You are the OPC Architect. For project /home/janzongxin/projects/detabase, task: 新增債務儀表板, design:\n1. Component tree and data flow\n2. File structure (what goes where)\n3. API contracts if needed\n4. Output as markdown blueprint",
+      "context": "Project: /home/janzongxin/projects/detabase\nTask: 新增債務儀表板\nRole: 架構師",
+      "toolsets": [
+        "terminal",
+        "file",
+        "web"
+      ]
+    },
+    {
+      "goal": "You are the OPC Builder. Implement the design from Architect for project /home/janzongxin/projects/detabase, task: 新增債務儀表板.\nFollow the blueprint exactly. Only produce code, no commentary.",
+      "context": "Project: /home/janzongxin/projects/detabase\nTask: 新增債務儀表板\nRole: 建造者",
+      "toolsets": [
+        "terminal",
+        "file",
+        "web"
+      ]
+    },
+    {
+      "goal": "You are the OPC Reviewer. Audit the Builder's output for project /home/janzongxin/projects/detabase, task: 新增債務儀表板.\nCheck: correctness, completeness, security, performance. Flag issues with severity.",
+      "context": "Project: /home/janzongxin/projects/detabase\nTask: 新增債務儀表板\nRole: 審查官",
+      "toolsets": [
+        "terminal",
+        "file",
+        "web"
+      ]
+    }
+  ]
+}
