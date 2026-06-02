@@ -187,9 +187,14 @@ export function useDashboard(targetYear?: number, targetMonth?: number) {
         .from("finance_daily_spending_limits")
         .select("daily_limit_amount");
 
+      const recentStart = localMonthStart(year, month);
+      const recentEnd = localMonthEnd(year, month);
+
       const recentPromise = supabase
         .from("finance_activities")
         .select("id,activity_date,description,amount,movement_type,category_id")
+        .gte("activity_date", recentStart)
+        .lte("activity_date", recentEnd)
         .order("activity_date", { ascending: false })
         .limit(10);
 
@@ -293,10 +298,11 @@ export function useDashboard(targetYear?: number, targetMonth?: number) {
       const totalDebt = accounts.reduce((s, a) => s + (a.totalLoan ?? 0), 0);
 
       const expenses = rows.filter((r: any) => r.movement_type === "expense");
+      const thisMonthExpense = expenses.reduce((s: number, r: any) => s + Number(r.amount), 0);
+      const daysInSelectedMonth = new Date(year, month, 0).getDate();
       const todayExpense = isCurrentMonth
         ? expenses.filter((r: any) => r.activity_date === today).reduce((s: number, r: any) => s + Number(r.amount), 0)
         : 0;
-      const thisMonthExpense = expenses.reduce((s: number, r: any) => s + Number(r.amount), 0);
       const last7DaysExpense = expenses
         .filter((r: any) => r.activity_date >= weekAgoStr)
         .reduce((s: number, r: any) => s + Number(r.amount), 0);
