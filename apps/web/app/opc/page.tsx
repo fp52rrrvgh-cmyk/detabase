@@ -1,37 +1,75 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
+import { createClient } from "@supabase/supabase-js";
+import { runtimeConfig } from "../constants";
 
-/* ── 靜態 OPC 架構資料 ── */
-const COMMANDER = { name: "小新", role: "總統 / 最終決策", icon: "🎯", color: "#f59e0b" };
-const XIAOMA = { name: "小馬", role: "三軍指揮官 / 參謀總長", icon: "🐴", color: "#14b8a6" };
-const BATTLE_OPS = [
-  { name: "協調官", role: "拆任務 / 派工", icon: "🎪", color: "#8b5cf6" },
-  { name: "架構師", role: "設計架構 / 審圖", icon: "🏗️", color: "#3b82f6" },
-  { name: "建造者", role: "實作功能 / Coding", icon: "🔧", color: "#f97316" },
-  { name: "審查官", role: "Codex Audit / 監督", icon: "🛡️", color: "#ef4444" },
+/* ── Agent 工位定義 ── */
+const AGENTS = [
+  { id: "orchestrator", name: "協調官", icon: "🎪", color: "#8b5cf6", role: "任務拆解 · 派工" },
+  { id: "architect", name: "架構師", icon: "🏗️", color: "#3b82f6", role: "系統設計 · 審圖" },
+  { id: "builder", name: "建造者", icon: "🔧", color: "#f97316", role: "實作功能 · Coding" },
+  { id: "reviewer", name: "審查官", icon: "🛡️", color: "#ef4444", role: "Codex Audit · 監督" },
 ];
+
 const STAFF = [
-  { name: "安全官", role: "每小時巡邏 RLS/權限", icon: "🔐", color: "#ef4444", status: "active" },
-  { name: "記憶官", role: "每日整理 Engram/MEMORY", icon: "🧠", color: "#8b5cf6", status: "standby" },
-  { name: "架構官", role: "每日審查系統架構", icon: "📐", color: "#3b82f6", status: "standby" },
-  { name: "研究官", role: "每週研究報告", icon: "🔬", color: "#10b981", status: "standby" },
+  { id: "security", name: "安全官", icon: "🔐", color: "#ef4444" },
+  { id: "memory", name: "記憶官", icon: "🧠", color: "#8b5cf6" },
+  { id: "architecture", name: "架構官", icon: "📐", color: "#3b82f6" },
+  { id: "research", name: "研究官", icon: "🔬", color: "#10b981" },
 ];
 
-/* ── helpers ── */
-function StatusDot({ status }: { status: string }) {
-  const color = status === "active" ? "#22c55e" : status === "standby" ? "#f59e0b" : "#64748b";
-  return <span style={{ display:"inline-block", width:8, height:8, borderRadius:4, background:color, marginRight:6 }} />;
+const IDLE_ACTIONS = [
+  { emoji: "☕", label: "喝咖啡" },
+  { emoji: "💤", label: "打盹" },
+  { emoji: "🏋️", label: "健身" },
+  { emoji: "🚿", label: "休息" },
+  { emoji: "📖", label: "看文件" },
+];
+
+type OPCState = {
+  ts: number; time: string; gw: string; docker: number;
+  disk_pct: string; disk_avail: string; mem_kb: number;
+  sessions: number; skills: number; scripts: number; profiles: number;
+};
+
+function hashIdleAction(id: string, tick: number): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = ((h << 5) - h + id.charCodeAt(i)) | 0;
+  return Math.abs(h + tick) % IDLE_ACTIONS.length;
 }
 
 export default function OPCPage() {
+  const supabase = useMemo(() => {
+    if (!runtimeConfig.supabaseUrl || !runtimeConfig.publishableKey) return null;
+    return createClient(runtimeConfig.supabaseUrl, runtimeConfig.publishableKey);
+  }, []);
+
+  const [state, setState] = useState<OPCState | null>(null);
   const [time, setTime] = useState("");
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
-    setTime(new Date().toLocaleString("zh-TW", { timeZone: "Asia/Taipei" }));
-    const t = setInterval(() => setTime(new Date().toLocaleString("zh-TW", { timeZone: "Asia/Taipei" })), 1000);
+    const t = setInterval(() => {
+      setTime(new Date().toLocaleString("zh-TW", { timeZone: "Asia/Taipei" }));
+      setTick((t) => t + 1);
+    }, 3000);
     return () => clearInterval(t);
   }, []);
+
+  const fetchState = useCallback(async () => {
+    if (!supabase) return;
+    const { data } = await supabase.from("opc_state").select("data").eq("id", 1).single();
+    if (data?.data) setState(data.data as OPCState);
+  }, [supabase]);
+
+  useEffect(() => {
+    fetchState();
+    const t = setInterval(fetchState, 10000);
+    return () => clearInterval(t);
+  }, [fetchState]);
+
+  const gwActive = state?.gw === "active";
 
   return (
     <div className="db-page">
@@ -39,104 +77,123 @@ export default function OPCPage() {
       <div className="d-header">
         <div className="d-header-left">
           <h2 className="d-title">⚔️ OPC 指揮中心</h2>
-          <p className="d-title-sub">{time || "載入中…"}</p>
+          <p className="d-title-sub" style={{ color: gwActive ? "#22c55e" : "#ef4444" }}>
+            {gwActive ? "🟢 系統在線" : "🔴 系統離線"} · {time || "—"}
+          </p>
         </div>
       </div>
 
       {/* ── 指揮鏈 ── */}
-      <div style={styles.chain}>
-        {/* 總統 */}
-        <div style={{ ...styles.node, borderColor: COMMANDER.color }}>
-          <span style={styles.nodeIcon}>{COMMANDER.icon}</span>
-          <div style={styles.nodeName}>{COMMANDER.name}</div>
-          <div style={styles.nodeRole}>{COMMANDER.role}</div>
-        </div>
-        <div style={styles.arrow}>▼</div>
-        {/* 小馬 */}
-        <div style={{ ...styles.node, borderColor: XIAOMA.color, background: "rgba(20,184,166,0.08)" }}>
-          <span style={styles.nodeIcon}>{XIAOMA.icon}</span>
-          <div style={styles.nodeName}>{XIAOMA.name}</div>
-          <div style={styles.nodeRole}>{XIAOMA.role}</div>
-        </div>
-        <div style={styles.arrow}>▼</div>
-        {/* 閃電戰 OPC */}
-        <div style={styles.row}>
-          {BATTLE_OPS.map((op) => (
-            <div key={op.name} style={{ ...styles.node, borderColor: op.color, minWidth: 70 }}>
-              <span style={styles.nodeIcon}>{op.icon}</span>
-              <div style={{ ...styles.nodeName, fontSize: "0.72rem" }}>{op.name}</div>
-              <div style={{ ...styles.nodeRole, fontSize: "0.6rem" }}>{op.role}</div>
-            </div>
-          ))}
+      <div style={{ textAlign: "center", padding: "12px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+        <CmdNode icon="🎯" name="小新" role="總統 · 最終決策" color="#f59e0b" />
+        <div style={{ color: "#4a5568", fontSize: "0.8rem" }}>▼</div>
+        <CmdNode icon="🐴" name="小馬" role="三軍指揮官 · 參謀總長" color="#14b8a6" active />
+      </div>
+
+      {/* ── 閃電戰 OPC 四將（Marvis 工位風格） ── */}
+      <div style={{ marginTop: 12 }}>
+        <h3 style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+          ⚡ 閃電戰 OPC
+        </h3>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          {AGENTS.map((a) => {
+            const action = IDLE_ACTIONS[hashIdleAction(a.id, tick)];
+            const isActive = tick % 7 === 0; // simulate: 1/7 chance of being "busy"
+            return (
+              <div key={a.id} style={{
+                background: "var(--panel)", border: `1.5px solid ${a.color}22`, borderRadius: 12,
+                padding: "14px 12px", textAlign: "center", position: "relative", overflow: "hidden",
+              }}>
+                <div style={{
+                  position: "absolute", top: 0, left: 0, right: 0, height: 3,
+                  background: a.color, opacity: isActive ? 1 : 0.2,
+                  transition: "opacity 1s",
+                }} />
+                <span style={{ fontSize: "1.6rem", display: "block", marginBottom: 4 }}>{a.icon}</span>
+                <div style={{ fontWeight: 700, fontSize: "0.82rem", color: "#e2e8f0" }}>{a.name}</div>
+                <div style={{ fontSize: "0.62rem", color: "#64748b", marginTop: 1 }}>{a.role}</div>
+                <div style={{
+                  marginTop: 8, padding: "4px 8px", borderRadius: 10,
+                  background: isActive ? `${a.color}18` : "transparent",
+                  color: isActive ? a.color : "#4a5568",
+                  fontSize: "0.65rem", fontWeight: 500,
+                  transition: "all 0.5s",
+                }}>
+                  {isActive ? "⚡ 執行中" : `${action.emoji} ${action.label}`}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
       {/* ── 常駐參謀團 ── */}
-      <div style={styles.sectionTitle}>🛡️ 常駐參謀團</div>
-      <div style={styles.staffGrid}>
-        {STAFF.map((s) => (
-          <div key={s.name} style={{ ...styles.staffCard, borderColor: s.color }}>
-            <div style={styles.staffHeader}>
-              <span style={{ fontSize: "1.2rem" }}>{s.icon}</span>
-              <StatusDot status={s.status} />
-              <span style={{ fontSize: "0.65rem", color: s.color }}>{s.status === "active" ? "在線" : "待命"}</span>
-            </div>
-            <div style={{ fontWeight: 700, fontSize: "0.8rem", color: "#e2e8f0" }}>{s.name}</div>
-            <div style={{ fontSize: "0.65rem", color: "#64748b" }}>{s.role}</div>
-          </div>
-        ))}
+      <div style={{ marginTop: 14 }}>
+        <h3 style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+          🛡️ 常駐參謀團
+        </h3>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          {STAFF.map((s) => {
+            const action = IDLE_ACTIONS[hashIdleAction(s.id, tick + 10)];
+            const onDuty = s.id === "security"; // 安全官始終在線
+            return (
+              <div key={s.id} style={{
+                background: "var(--panel)", border: `1px solid ${s.color}18`, borderRadius: 10,
+                padding: "10px", display: "flex", alignItems: "center", gap: 10,
+              }}>
+                <span style={{ fontSize: "1.3rem" }}>{s.icon}</span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: "0.75rem", color: "#e2e8f0" }}>{s.name}</div>
+                  <div style={{ fontSize: "0.6rem", color: onDuty ? "#22c55e" : "#4a5568" }}>
+                    {onDuty ? "🟢 巡邏中" : `${action.emoji} ${action.label}`}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      {/* ── 系統狀態 ── */}
-      <div style={styles.sectionTitle}>📡 系統狀態</div>
-      <div style={styles.statusGrid}>
-        <StatusCard label="Sessions" value="1,846" />
-        <StatusCard label="Skills" value="157" />
-        <StatusCard label="Scripts" value="70" />
-        <StatusCard label="MCP" value="13" />
-        <StatusCard label="Cron Jobs" value="54" />
-        <StatusCard label="Profiles" value="6" />
-        <StatusCard label="Docker" value="Healthy" />
-        <StatusCard label="Gateway" value="Running" />
+      {/* ── 系統狀態網格（Live） ── */}
+      <div style={{ marginTop: 14 }}>
+        <h3 style={{ fontSize: "0.75rem", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
+          📡 系統狀態 {state ? "" : "(載入中…)"}
+        </h3>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6 }}>
+          <StatCard label="Gateway" value={state?.gw === "active" ? "🟢" : "🔴"} />
+          <StatCard label="Docker" value={state?.docker ? `${state.docker} C` : "—"} />
+          <StatCard label="Disk" value={state?.disk_pct ?? "—"} />
+          <StatCard label="Avail" value={state?.disk_avail ?? "—"} />
+          <StatCard label="Sessions" value={state?.sessions?.toLocaleString() ?? "—"} />
+          <StatCard label="Skills" value={state?.skills?.toString() ?? "—"} />
+          <StatCard label="Scripts" value={state?.scripts?.toString() ?? "—"} />
+          <StatCard label="Profiles" value={state?.profiles?.toString() ?? "—"} />
+        </div>
       </div>
     </div>
   );
 }
 
-function StatusCard({ label, value }: { label: string; value: string }) {
+function CmdNode({ icon, name, role, color, active }: { icon: string; name: string; role: string; color: string; active?: boolean }) {
   return (
     <div style={{
-      background: "var(--panel)", border: "1px solid var(--surface)",
-      borderRadius: 8, padding: "10px 12px", textAlign: "center",
+      background: active ? `${color}14` : "var(--panel)",
+      border: `2px solid ${color}${active ? "66" : "22"}`,
+      borderRadius: 14, padding: "12px 20px", textAlign: "center",
+      minWidth: 200, transition: "all 0.3s",
     }}>
-      <div style={{ fontSize: "1rem", fontWeight: 700, color: "#14b8a6" }}>{value}</div>
-      <div style={{ fontSize: "0.65rem", color: "#64748b", marginTop: 2 }}>{label}</div>
+      <span style={{ fontSize: "2rem", display: "block", marginBottom: 2 }}>{icon}</span>
+      <div style={{ fontWeight: 700, fontSize: "0.9rem", color: "#e2e8f0" }}>{name}</div>
+      <div style={{ fontSize: "0.65rem", color: "#64748b", marginTop: 1 }}>{role}</div>
     </div>
   );
 }
 
-/* ── inline styles (avoid CSS bloat for single-page) ── */
-const styles: Record<string, React.CSSProperties> = {
-  chain: { textAlign: "center", padding: "16px 0", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 },
-  node: {
-    background: "var(--panel)", border: "2px solid", borderRadius: 12,
-    padding: "12px 16px", minWidth: 140, textAlign: "center",
-  },
-  nodeIcon: { fontSize: "1.6rem", display: "block", marginBottom: 4 },
-  nodeName: { fontWeight: 700, fontSize: "0.85rem", color: "#e2e8f0" },
-  nodeRole: { fontSize: "0.68rem", color: "#64748b", marginTop: 2 },
-  arrow: { fontSize: "0.9rem", color: "#4a5568", lineHeight: 1 },
-  row: { display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" },
-  sectionTitle: {
-    fontSize: "0.78rem", fontWeight: 700, color: "#94a3b8",
-    textTransform: "uppercase", letterSpacing: "0.06em",
-    marginTop: 20, marginBottom: 8, paddingLeft: 4,
-  },
-  staffGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 },
-  staffCard: {
-    background: "var(--panel)", border: "1px solid", borderRadius: 10,
-    padding: "10px 12px",
-  },
-  staffHeader: { display: "flex", alignItems: "center", gap: 6, marginBottom: 4 },
-  statusGrid: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 6 },
-};
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div style={{ background: "var(--panel)", border: "1px solid var(--surface)", borderRadius: 8, padding: "8px 6px", textAlign: "center" }}>
+      <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#14b8a6" }}>{value}</div>
+      <div style={{ fontSize: "0.6rem", color: "#64748b", marginTop: 1 }}>{label}</div>
+    </div>
+  );
+}
