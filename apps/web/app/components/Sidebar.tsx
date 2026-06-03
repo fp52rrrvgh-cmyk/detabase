@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const NAV_ITEMS = [
   { href: "/dashboard", label: "📊 總覽" },
   { href: "/trips", label: "🚛 車趟" },
+  { href: "/opc", label: "⚔️ OPC" },
   { href: "/debts", label: "💳 債務" },
   { href: "/dashboard/search", label: "🔍 搜尋" },
   { href: "/settings", label: "⚙️ 設定" },
@@ -22,6 +23,7 @@ export function Sidebar({
 
   function isActive(href: string): boolean {
     if (href === "/dashboard") return pathname === "/dashboard" || pathname === "/";
+    if (href === "/opc") return pathname === "/opc";
     if (href === "/settings") return pathname.startsWith("/settings") || pathname === "/budgets" || pathname === "/subscriptions" || pathname === "/categories";
     return pathname === href;
   }
