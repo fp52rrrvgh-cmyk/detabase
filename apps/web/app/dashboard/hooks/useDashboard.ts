@@ -33,6 +33,8 @@ export type DashboardSummary = {
   thisMonthIncome: number;
   last7DaysExpense: number;
   totalBalance: number;
+  bankBalance: number;
+  totalAssets: number;
   cashOnHand: number;
   availableCash: number;
   coinBoxBalance: number;
@@ -438,7 +440,9 @@ export function useDashboard(targetYear?: number, targetMonth?: number) {
         data: {
           todayExpense, todayIncome, dailyLimit: { amount: dailyLimitAmount, type: dailyLimitType },
           thisMonthExpense, thisMonthIncome,
-          last7DaysExpense, totalBalance, cashOnHand, availableCash,
+          last7DaysExpense, totalBalance, bankBalance,
+          totalAssets: bankBalance + cashOnHand + coinBoxBalance,
+          cashOnHand, availableCash,
           coinBoxBalance, creditCards, totalDebt, accounts, topCategories, dailyTrend,
           recentTransactions, pendingReviewCount, budgets: budgetList, briefing,
           upcomingSubscriptions: ((subRows ?? []) as any[]).map((s: any) => ({

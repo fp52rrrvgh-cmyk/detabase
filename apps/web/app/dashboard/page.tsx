@@ -68,6 +68,9 @@ export default function DashboardPage() {
   const totalBudget = state.status === "success"
     ? state.data.budgets.reduce((s: number, b: any) => s + b.limitAmount, 0)
     : 0;
+  const totalCreditAvailable = state.status === "success"
+    ? state.data.creditCards.reduce((s: number, c) => s + ((c.creditLimit ?? 0) - c.used), 0)
+    : 0;
 
   function prevMonth() {
     if (viewMonth === 1) { setViewYear((y) => y - 1); setViewMonth(12); }
@@ -114,30 +117,36 @@ export default function DashboardPage() {
             {/* ===== KPI Row ===== */}
             <div className="d-kpi-row">
               <div className="d-kpi">
-                <div className="d-kpi-glow expense" />
-                <div className="d-kpi-lbl">本月支出</div>
-                <div className="d-kpi-val expense">{formatTWD(state.data.thisMonthExpense)}</div>
-                <div className="d-kpi-sub">
-                  {totalBudget > 0 ? `預算 ${((state.data.thisMonthExpense / totalBudget) * 100).toFixed(0)}%` : "無預算"}
-                </div>
+                <div className="d-kpi-glow balance" />
+                <div className="d-kpi-lbl">總資產</div>
+                <div className="d-kpi-val net positive">{formatTWD(state.data.totalAssets)}</div>
+                <div className="d-kpi-sub">戶頭 + 現金 + 零錢盒</div>
               </div>
               <div className="d-kpi">
                 <div className="d-kpi-glow income" />
-                <div className="d-kpi-lbl">本月收入</div>
-                <div className="d-kpi-val income">{formatTWD(state.data.thisMonthIncome)}</div>
-                <div className="d-kpi-sub"></div>
+                <div className="d-kpi-lbl">戶頭</div>
+                <div className="d-kpi-val income">{formatTWD(state.data.bankBalance)}</div>
+                <div className="d-kpi-sub">銀行存款</div>
+              </div>
+              <div className="d-kpi">
+                <div className="d-kpi-glow net" />
+                <div className="d-kpi-lbl">現金</div>
+                <div className="d-kpi-val">{formatTWD(state.data.cashOnHand)}</div>
+                <div className="d-kpi-sub">錢包現金</div>
+              </div>
+              <div className="d-kpi">
+                <div className="d-kpi-glow expense" />
+                <div className="d-kpi-lbl">零錢盒</div>
+                <div className="d-kpi-val expense">{formatTWD(state.data.coinBoxBalance)}</div>
+                <div className="d-kpi-sub">每日零錢存入</div>
               </div>
               <div className="d-kpi">
                 <div className="d-kpi-glow balance" />
-                <div className="d-kpi-lbl">淨額</div>
-                <div className={`d-kpi-val net ${(state.data.thisMonthIncome - state.data.thisMonthExpense) >= 0 ? "positive" : "negative"}`}>
-                  {formatTWD(Math.abs(state.data.thisMonthIncome - state.data.thisMonthExpense))}
+                <div className="d-kpi-lbl">信用卡餘額</div>
+                <div className={`d-kpi-val ${totalCreditAvailable >= 0 ? "positive" : "negative"}`}>
+                  {formatTWD(totalCreditAvailable)}
                 </div>
-                <div className="d-kpi-sub">
-                  {state.data.thisMonthIncome > 0
-                    ? `支出佔 ${((state.data.thisMonthExpense / state.data.thisMonthIncome) * 100).toFixed(0)}%`
-                    : ""}
-                </div>
+                <div className="d-kpi-sub">可用額度</div>
               </div>
             </div>
 
