@@ -161,8 +161,10 @@ export default function TripsPage() {
   };
 
   /* ── delete row ── */
-  const deleteRow = async (id: number) => {
+  const deleteRow = async (id: number, client: string, date: string) => {
     if (!supabase) return;
+    const label = `${fmtDate(date)} ${client || "未填客戶"}`;
+    if (!window.confirm(`確定刪除這筆車趟？\n${label}`)) return;
     const { error } = await supabase.from("trips").delete().eq("id", id);
     if (!error) {
       setTrips(prev => prev.filter(t => t.id !== id));
@@ -229,7 +231,7 @@ export default function TripsPage() {
                   <td><EditableCell value={t.dest} onSave={(v) => updateCell(t.id, "dest", v)} /></td>
                   <td><EditableCell value={t.note} onSave={(v) => updateCell(t.id, "note", v)} /></td>
                   <td><EditableCell value={t.fuel} type="number" onSave={(v) => updateCell(t.id, "fuel", v)} className="t-cell-num" /></td>
-                  <td><button className="t-del-btn" onClick={() => deleteRow(t.id)} type="button" title="刪除">×</button></td>
+                  <td><button className="t-del-btn" onClick={() => deleteRow(t.id, t.client, t.date)} type="button" title="刪除">×</button></td>
                 </tr>
               ))}
               {trips.length === 0 && (
