@@ -4633,3 +4633,45 @@ body {
 .daily-gauge-blink {
   animation: dailyGaugeBlink 1.2s ease-in-out infinite;
 }
+
+/* ── 🚛 車趟摘要卡片 ── */
+.d-trip-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.d-trip-kpi {
+  text-align: center;
+  padding: 8px 4px;
+}
+.d-trip-kpi-val {
+  display: block;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.d-trip-kpi-lbl {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.d-trip-clients {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 0;
+}
+.d-trip-client-tag {
+  background: var(--panel);
+  color: var(--accent);
+  font-size: 0.78rem;
+  padding: 3px 9px;
+  border-radius: 12px;
+}
+.d-tx-icon.trip {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
