@@ -7,11 +7,9 @@ import { createClient } from "@supabase/supabase-js";
 import { useAuth } from "../hooks/useAuth";
 import { runtimeConfig } from "../constants";
 import { useDashboard } from "./hooks/useDashboard";
-import { useTrips } from "./hooks/useTrips";
 import { ExpensePieChart } from "./components/ExpensePieChart";
 import { BudgetBarChart } from "./components/BudgetBarChart";
 import { AccountOverviewCard } from "./components/AccountOverviewCard";
-import { TripsSummaryCard } from "./components/TripsSummaryCard";
 import { DashboardSkeleton } from "./components/DashboardSkeleton";
 import { ErrorBoundary } from "../components/ErrorBoundary";
 
@@ -57,11 +55,10 @@ export default function DashboardPage() {
   const [viewMonth, setViewMonth] = useState(now.getMonth() + 1);
 
   const { state, reload, year, month, isCurrentMonth } = useDashboard(viewYear, viewMonth);
-  const { state: tripState, reload: reloadTrips } = useTrips(viewYear, viewMonth);
 
   useEffect(() => {
-    if (auth.authStatus === "signed_in") { reload(); reloadTrips(); }
-  }, [auth.authStatus, reload, reloadTrips]);
+    if (auth.authStatus === "signed_in") { reload(); }
+  }, [auth.authStatus, reload]);
 
   const supabase = useMemo(() => {
     if (!runtimeConfig.supabaseUrl || !runtimeConfig.publishableKey) return null;
@@ -110,14 +107,9 @@ export default function DashboardPage() {
                   </span>
                   <button className="d-month-btn" onClick={nextMonth} type="button">›</button>
                 </div>
-                <button className="d-refresh-btn" onClick={() => { reload(); reloadTrips(); }} type="button">⟳</button>
+                <button className="d-refresh-btn" onClick={() => { reload(); }} type="button">⟳</button>
               </div>
             </div>
-
-            {/* ===== 🚛 車趟摘要 ===== */}
-            {tripState.status === "ok" && (
-              <TripsSummaryCard summary={tripState.summary} trips={tripState.trips} />
-            )}
 
             {/* ===== KPI Row ===== */}
             <div className="d-kpi-row">
@@ -134,16 +126,6 @@ export default function DashboardPage() {
                 <div className="d-kpi-lbl">本月收入</div>
                 <div className="d-kpi-val income">{formatTWD(state.data.thisMonthIncome)}</div>
                 <div className="d-kpi-sub"></div>
-              </div>
-              <div className="d-kpi">
-                <div className="d-kpi-glow net" />
-                <div className="d-kpi-lbl">車趟油資</div>
-                <div className="d-kpi-val expense">
-                  {tripState.status === "ok" ? formatTWD(tripState.summary.totalFuel) : "—"}
-                </div>
-                <div className="d-kpi-sub">
-                  {tripState.status === "ok" ? `${tripState.summary.count} 趟` : ""}
-                </div>
               </div>
               <div className="d-kpi">
                 <div className="d-kpi-glow balance" />
