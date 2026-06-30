@@ -1,48 +1,54 @@
 # 工程手冊進度
 
-## 章節覆蓋率：100%
+## 整體進度：100%
 
-原定 10 批次章節、架構、操作程序、範本與基礎腳本已建立。
+依 10 批次規劃計算。
 
-## 技術稽核進度：10%
+| 批次 | 主題 | 狀態 |
+|---|---|---|
+| 1 | Foundation + Architecture | 完成 |
+| 2 | Windows 11 Engineering | 完成 |
+| 3 | Storage & Workspace | 完成 |
+| 4 | Development Environment | 完成 |
+| 5 | WSL2 + Docker 深入建置 | 完成 |
+| 6 | AI Runtime | 完成 |
+| 7 | Bootstrap | 完成 |
+| 8 | Operations | 完成 |
+| 9 | Security + Recovery | 完成 |
+| 10 | 整合、ADR、Runbook、最終驗收 | 完成 |
 
-目前正在 `handbook-audit-v2` 分支執行第二階段稽核。此階段會檢查官方來源、版本相容性、命令語法、破壞性風險、回復程序、跨章節一致性與腳本可執行性。
+## 已完成主要內容
 
-> **目前不可將本手冊視為已核准的重灌執行版本。** 在 `AUDIT/00-Audit-Status.md` 的 Critical Gates 全部通過以前，不得依手冊直接刪除磁碟分割區或重設 Docker / WSL2 資料。
+- Windows 11 全新安裝、驅動、更新與安全基線
+- Services、Registry、Gaming、Power Plan、Terminal
+- 雙 SSD、NTFS、Workspace、Junction、備份與 BitLocker
+- Git、GitHub CLI、VS Code、Python/uv、Node/pnpm
+- WSL2 安裝、systemd、`.wslconfig` 與資源限制
+- Windows / Linux 路徑與單一真實來源策略
+- Docker Desktop、Compose、Networking、Volume 與 GPU 驗證
+- Runtime architecture、graph-based workflow、Redis Streams、PostgreSQL
+- Evidence Layer、Capability Registry、MCP、Session Isolation 與 HITL
+- Bootstrap phases、Manifest、idempotency、Doctor、rollback 與端對端驗收
+- Daily operating model、夜間自主執行、早晨驗收與事故處理
+- Threat Model、Least Privilege、Secrets、Sandbox 與 Network Security
+- Supply-chain、Data Classification、Disaster Recovery 與 Bare-metal Rebuild
+- Master Index、Final Architecture、ADR、Runbook、Scripts 與 Templates
+- Full-System Acceptance 與 Completion Record
 
-| 稽核工作流 | 狀態 |
-|---|---|
-| Windows installation and activation | 進行中 |
-| Hardware and BIOS | 待稽核 |
-| Storage and BitLocker | 進行中 |
-| WSL2 | 進行中 |
-| Docker Desktop and Compose | 進行中 |
-| Development toolchain | 待稽核 |
-| AI runtime architecture | 待稽核 |
-| Bootstrap scripts | 待稽核 |
-| Operations and security | 待稽核 |
-| Disaster recovery rehearsal | 待稽核 |
-| Cross-document consistency | 待稽核 |
+## 文件狀態
 
-## 已完成的稽核工作
+工程手冊 10 批次建置完成。
 
-- 建立技術稽核分支與合併門檻。
-- 建立官方一手文件來源登錄表。
-- 將 Windows 全新安裝章節改為 Gate-based destructive procedure。
-- 補上外部備份與實際還原測試要求。
-- 補上 BitLocker recovery key 強制檢查。
-- 補上兩顆 SSD 以型號、序號與容量正面識別的流程。
-- 補上 Windows 11 25H2 / 26H1 適用範圍提醒。
+這個 100% 代表文件、架構、操作程序、範本與基礎腳本已完成；不代表實體工作站已通過驗收。實機仍須依 `11-Final/03-Full-System-Acceptance.md` 施工、執行 Doctor、測試備份還原，並完成最終簽核。
 
-## 文件完成定義
+## 下一階段
 
 ```text
-章節覆蓋完整
-+ 官方來源已審核
-+ 版本相容性已確認
-+ 指令與腳本已測試
-+ 破壞性步驟有防呆與回復
-+ Clean-environment rehearsal 通過
-+ Owner review 通過
-= Reinstall-Approved Handbook
+實機 Windows 11 全新安裝
+→ 依手冊施工
+→ 執行 Bootstrap
+→ 執行 verify-all.ps1
+→ 修正所有 FAIL
+→ 完成 Full-System Acceptance
+→ OPC AI Workstation Ready
 ```
