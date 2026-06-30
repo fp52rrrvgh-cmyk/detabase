@@ -2,81 +2,122 @@
 
 ## 目標
 
-在不改變 Agent 路徑的前提下，把大型資料夾分流到其他實體磁碟。
+只有在 D 槽容量真的不足時，才把特定大型資料夾搬到其他磁碟，同時維持 `D:\OPC\...` 路徑不變。
+
+## Phase 1 預設決策
+
+初次建置時：
+
+```text
+不要建立 Junction
+不要建立 Symbolic Link
+不要建立 Mount Point
+```
+
+先直接使用 `D:\OPC`。只有 `models`、`artifacts` 或 `backups` 容量不足時，才考慮 Junction。
 
 ## 白話說明
 
-可以把它們理解成「門牌不變，但房間搬家」。Agent 仍然看到：
+Junction 可理解成：門牌仍是 `D:\OPC\models`，但實際資料搬到 `E:\OPC-MODELS`。
 
-```text
-D:\OPC\models
-```
+## 什麼情況才需要
 
-但實際資料可以存放在另一顆磁碟。
+- D 槽低於安全空間。
+- 另一顆磁碟是穩定的本機 NTFS 磁碟。
+- 備份工具已測試不會遞迴或重複備份。
+- 寫入該資料夾的服務可以完整停止。
 
-## 三種機制
+## Step 1：先停止寫入
 
-### Junction
+停止會使用目標資料夾的 Agent、模型服務與同步工具。
 
-適合 Windows 本機資料夾重新導向，使用簡單、相容性高。
+確認沒有程式開啟該資料夾。
 
-```powershell
-New-Item -ItemType Junction -Path D:\OPC\models -Target E:\OPC-MODELS
-```
+## Step 2：建立目標資料夾
 
-### Symbolic Link
-
-可連結檔案或資料夾，較彈性，但部分程式與權限環境可能有額外限制。
+範例：
 
 ```powershell
-New-Item -ItemType SymbolicLink -Path D:\OPC\models -Target E:\OPC-MODELS
+New-Item -ItemType Directory -Path 'E:\OPC-MODELS' -Force
 ```
 
-### Volume Mount Point
+不要直接照抄 E:，先確認實際磁碟。
 
-把整個磁碟區掛到某個 NTFS 資料夾，適合不想顯示額外磁碟代號的情境，但維護難度較高。
-
-## OPC Phase 1 決策
-
-優先順序：
-
-1. 先直接使用 `D:\OPC`。
-2. 容量不足時，針對 `models`、`artifacts`、`backups` 使用 Junction。
-3. 不在初始建置使用整碟 Mount Point。
-4. 不對 Git repository 根目錄使用 Junction，除非已驗證 Git、Docker 與備份工具行為。
-
-## 建立 Junction 前的安全步驟
-
-1. 暫停會寫入該資料夾的 Agent。
-2. 備份原資料。
-3. 將資料移到目標位置。
-4. 確認原路徑已不存在或為空。
-5. 建立 Junction。
-6. 測試讀寫。
-
-## 查詢連結
+## Step 3：複製資料，不要先刪原資料
 
 ```powershell
-Get-Item D:\OPC\models | Format-List FullName,LinkType,Target
+robocopy 'D:\OPC\models' 'E:\OPC-MODELS' /E /COPY:DAT /DCOPY:DAT /R:2 /W:2
 ```
 
-## 移除 Junction
+`robocopy` 回傳碼 0 到 7 通常不一定是失敗；先查看摘要與檔案數量。
+
+確認兩邊內容後，再把原目錄改名：
 
 ```powershell
-Remove-Item D:\OPC\models
+Rename-Item 'D:\OPC\models' 'models.old'
 ```
 
-這只移除連結，不應刪除目標資料；執行前仍必須再次確認 `LinkType` 與 `Target`。
+## Step 4：建立 Junction
 
-## 風險
+```powershell
+New-Item -ItemType Junction -Path 'D:\OPC\models' -Target 'E:\OPC-MODELS'
+```
 
-- 備份工具可能跟隨連結，造成重複備份。
-- Agent 可能把 Junction 當一般資料夾遞迴掃描。
-- 目標磁碟未掛載時，原路徑失效。
-- 不正確的刪除命令可能傷及目標資料。
+## Step 5：驗證
 
-## 驗收
+```powershell
+Get-Item 'D:\OPC\models' | Format-List FullName,LinkType,Target
+Set-Content 'D:\OPC\models\junction-test.txt' 'ok'
+Get-Content 'E:\OPC-MODELS\junction-test.txt'
+```
 
-- 原路徑可正常讀寫。
-- 重新開機後連結仍存在。
-- Git、Docker、備份工具不出現遞迴或權限錯誤。
+應看到 `LinkType : Junction`，且測試檔可從兩個路徑讀到。
+
+重新開機後再測一次。
+
+## Step 6：確認備份工具
+
+確認備份工具：
+
+- 不會無限遞迴。
+- 不會把同一批資料備份兩次。
+- 目標磁碟未掛載時會明確報錯。
+
+## 回復原狀
+
+先確認連結：
+
+```powershell
+Get-Item 'D:\OPC\models' | Format-List FullName,LinkType,Target
+```
+
+只移除 Junction：
+
+```powershell
+Remove-Item 'D:\OPC\models'
+```
+
+再把舊目錄改回：
+
+```powershell
+Rename-Item 'D:\OPC\models.old' 'models'
+```
+
+不要使用遞迴刪除參數處理 Junction。
+
+## 禁止事項
+
+- 初次重灌就建立 Junction。
+- 對 `projects` 根目錄建立 Junction。
+- 目標是網路磁碟或不穩定 USB。
+- 原資料尚未核對就刪除。
+- 不確認 LinkType 就執行 Remove-Item。
+- 使用整碟 Mount Point 增加維護複雜度。
+
+## 完成條件
+
+- [ ] 原路徑可正常讀寫。
+- [ ] LinkType 與 Target 正確。
+- [ ] 重新開機後仍可使用。
+- [ ] 備份工具沒有遞迴或重複備份。
+- [ ] `models.old` 保留到完整驗證後才刪除。
