@@ -2,105 +2,235 @@
 
 ## 目標
 
-驗證一台剛完成 Windows 11 全新安裝的電腦，能依 Bootstrap 文件與腳本建成可工作的 OPC AI Workstation。
+驗證剛完成 Windows 11 全新安裝的電腦，可以依手冊與腳本建成「可開始 OPC 應用層開發」的工作站。
 
-## 驗收路徑
+## 驗收主線
 
 ```text
 Clean Windows
-→ Windows baseline
-→ D:\OPC workspace
-→ Developer tools
-→ WSL2 Ubuntu
-→ Docker Desktop
-→ PostgreSQL + Redis
-→ Runtime services
-→ Secrets handoff
-→ Doctor
-→ Test Objective
+→ Windows Verification
+→ Storage Verification
+→ Development Verification
+→ WSL2 / Docker Verification
+→ Runtime Foundation
+→ verify-all.ps1
+→ Full-System Acceptance
 ```
 
-## 測試一：全新安裝
+## Step 1：Windows 與 Storage
 
-- Windows 11 可正常啟動。
-- Secure Boot、TPM、虛擬化正常。
-- D: 為 `OPC-DATA` NTFS volume。
-- `D:\OPC` 標準目錄與 marker 已建立。
+必須先完成：
 
-## 測試二：基礎工具
+```text
+03-Windows/07-Windows-Verification.md
+04-Storage/09-Storage-Verification.md
+```
+
+通過條件：
+
+- Windows 11、Secure Boot、TPM、驅動正常。
+- C: 與 D: 是正確的獨立 SSD。
+- D: 為 NTFS / OPC-DATA。
+- BitLocker recovery key 可取得。
+- 外部備份已完成抽樣還原。
+
+## Step 2：Bootstrap Preflight 與 Workspace
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\scripts\bootstrap.ps1 -Phase Preflight
+.\scripts\bootstrap.ps1 -Phase Workspace
+```
+
+驗證：
+
+- `D:\OPC` 標準目錄完整。
+- `.opc-workspace.json` 存在。
+- 重跑 Workspace phase 不刪除既有資料。
+
+## Step 3：Developer Tools
+
+```powershell
+.\scripts\bootstrap.ps1 -Phase Tools
+```
+
+重新開啟 PowerShell 後執行：
 
 ```powershell
 git --version
 gh --version
 code --version
 pwsh --version
-wsl --status
-docker version
+python --version
+uv --version
+node --version
+pnpm --version
 ```
 
-所有工具都必須能顯示版本。
+若 uv 或 pnpm 尚未可用，依 Development 章節完成人工安裝與驗證。
 
-## 測試三：Runtime Services
+GitHub CLI 需人工登入：
 
-- PostgreSQL healthy。
-- Redis PING 成功。
-- Compose stack 正常。
-- Database schema 版本正確。
-- 重建 container 後資料仍存在。
+```powershell
+gh auth login
+gh auth status
+```
 
-## 測試四：Bootstrap 重跑
+## Step 4：WSL2
 
-重新執行相同 Manifest。
+```powershell
+.\scripts\bootstrap.ps1 -Phase WSL
+```
+
+依提示重開機，建立 Ubuntu username/password，再完成：
+
+```text
+06-WSL2-Docker/01-WSL2-Install-and-Initialize.md
+06-WSL2-Docker/02-WSLConfig-Resource-Limits.md
+```
+
+驗證：
+
+```powershell
+wsl --version
+wsl -l -v
+```
+
+Ubuntu 必須為 VERSION 2。
+
+## Step 5：Docker Desktop
+
+```powershell
+.\scripts\bootstrap.ps1 -Phase Docker
+```
+
+人工完成：
+
+- 啟動 Docker Desktop。
+- 接受授權條款。
+- 使用 WSL2 backend。
+- 啟用主要 Ubuntu integration。
+
+驗證：
+
+```powershell
+docker version
+docker run --rm hello-world
+```
+
+## Step 6：Runtime Foundation
+
+```powershell
+$Runtime = 'D:\OPC\runtime\opc-core'
+New-Item -ItemType Directory -Path $Runtime -Force | Out-Null
+Copy-Item .\templates\opc-core-compose.yaml (Join-Path $Runtime 'compose.yaml')
+Set-Location $Runtime
+```
+
+建立 `.env` 並填入長且隨機的 PostgreSQL password，然後：
+
+```powershell
+docker compose config
+docker compose -p opc-core up -d
+docker compose -p opc-core ps
+```
+
+驗證 PostgreSQL：
+
+```powershell
+docker compose -p opc-core exec -T postgres psql -U opc -d opc -c "SELECT now();"
+```
+
+驗證 Redis：
+
+```powershell
+docker compose -p opc-core exec -T redis redis-cli ping
+```
+
+Redis 應回傳 `PONG`。
+
+## Step 7：持久化測試
+
+在 PostgreSQL 建立測試 table，在 Redis 建立測試 Stream，再執行：
+
+```powershell
+docker compose -p opc-core down
+docker compose -p opc-core up -d
+```
+
+不要加 `-v`。
+
+重新檢查 PostgreSQL 與 Redis 測試資料仍存在。
+
+## Step 8：Bootstrap 重跑
+
+重新執行：
+
+```powershell
+.\scripts\bootstrap.ps1 -Phase Preflight
+.\scripts\bootstrap.ps1 -Phase Workspace
+```
 
 預期：
 
-- 已安裝套件跳過。
 - 已存在目錄保留。
-- WSL distribution 不重建。
-- Named volume 不刪除。
-- Doctor 結果維持一致。
+- 既有專案不被刪除。
+- Named volume 不受影響。
+- State 與 log 正常更新。
 
-## 測試五：中斷恢復
+## Step 9：失敗處理測試
 
-在需要重開機或刻意停止的步驟中中斷，之後以 `-Resume` 繼續。
-
-預期：
-
-- 從安全 checkpoint 恢復。
-- 已完成步驟不重做。
-- State 與 Manifest version 一致。
-
-## 測試六：失敗處理
-
-故意製造一個無效 package id 或被占用的 port。
+使用安全方式製造失敗，例如暫時把 WorkspaceRoot 指向不存在或標籤不正確的磁碟。
 
 預期：
 
 - Bootstrap 停止。
-- 產生 failure report。
-- 不執行後續 phase。
-- 修正後可安全 Resume。
+- Exit code 非 0。
+- `state.json` 標記 failed。
+- Log 保存失敗原因。
+- 後續 phase 不繼續執行。
 
-## 測試七：第一個 Objective
+不要用刪除 volume、格式化磁碟或 unregister WSL 來測試失敗處理。
 
-建立一個低風險測試 Objective，例如：
+## Step 10：總驗收
 
-```text
-讀取指定 repository README，產生摘要，保存 artifact 與 evidence，不修改 repository。
+```powershell
+Set-Location <HANDBOOK_REPOSITORY_PATH>
+.\scripts\verify-all.ps1
 ```
 
-驗收：
+通過條件：
 
-- Objective、Task、Attempt、Tool Call 可追蹤。
-- Worker 在隔離 session 執行。
-- Artifact 有 checksum。
-- Reviewer 能通過或退回。
-- Morning Report 能顯示結果。
+- 沒有 FAIL。
+- WARN 已理解並記錄。
+- SKIP 只用於明確不適用項目。
+- JSON 與 Markdown report 已保存。
 
-## 最終通過條件
+## Step 11：第一個低風險 Objective
 
-- 全新安裝可依手冊建成工作站。
-- Bootstrap 可重跑、可中斷、可恢復。
-- Doctor 無 FAIL。
-- Runtime 可完成一個具 Evidence 的測試 Objective。
-- Secrets、資料與權限邊界符合政策。
+在 Autonomous Runtime 尚未實作前，人工執行：
+
+```text
+讀取指定 repository README
+→ 產生摘要與風險清單
+→ 保存 artifact
+→ 建立 SHA-256
+→ 確認 repository 無修改
+```
+
+這一步驗證工作區、artifact 與 evidence 流程，不代表 Autonomous Runtime 已完成。
+
+## 最終結果
+
+```text
+Windows / Storage / Development / WSL2 / Docker / Bootstrap / Runtime Foundation 全部通過
++ verify-all 無 FAIL
+= READY FOR OPC APPLICATION DEVELOPMENT
+```
+
+```text
+上述全部
++ Autonomous Runtime 實作並通過 Objective 全鏈路
++ Recovery rehearsal 通過
+= OPC AI WORKSTATION READY
+```
