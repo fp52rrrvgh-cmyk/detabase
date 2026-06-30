@@ -1,89 +1,182 @@
-# 08-Bootstrap / 01 Bootstrap 架構
+# 08-Bootstrap / 01 Bootstrap 施工入口
 
 ## 目標
 
-讓一台剛完成 Windows 11 全新安裝的電腦，可以依固定順序被建置成 OPC AI Workstation，而且每一步都可重跑、可驗證、可中止、可回復。
+讓剛完成 Windows 11 全新安裝的電腦，依固定順序建成可驗收的 OPC AI Workstation。
 
-## Bootstrap 原則
+Bootstrap 不是「全自動亂裝」。它只處理可以安全自動化的項目；BIOS、BitLocker、磁碟格式化、GitHub 登入、Docker Desktop 首次授權與 secrets 仍由人處理。
 
-- **可重跑**：重複執行不應破壞已完成環境。
-- **可分段**：每一階段都能單獨執行與驗收。
-- **可觀察**：所有步驟輸出 log、結果與失敗原因。
-- **最小權限**：只有必要步驟使用系統管理員權限。
-- **不藏 secrets**：Bootstrap 只建立 secret 交接點，不硬編碼真值。
-- **失敗即停止**：不在前一步失敗後繼續堆疊未知狀態。
+## 主腳本
 
-## 階段劃分
+Repository 內：
 
 ```text
-Phase 0  Preflight
-Phase 1  Windows baseline
-Phase 2  Storage and workspace
-Phase 3  Developer tools
-Phase 4  WSL2 and Ubuntu
-Phase 5  Docker Desktop
-Phase 6  Runtime services
-Phase 7  Secrets handoff
-Phase 8  Doctor and verification
-Phase 9  Final report
+scripts\bootstrap.ps1
 ```
 
-## 執行入口
-
-主入口：
+複製到工作區後建議位置：
 
 ```text
-D:\OPC\tools\bootstrap\bootstrap.ps1
+D:\OPC\tools\bootstrap.ps1
 ```
 
-子腳本：
+## 執行前條件
 
-```text
-D:\OPC\tools\bootstrap\steps\
-```
+以下必須先人工完成：
 
-每個 step 應接受統一參數：
+- [ ] Windows 11 已安裝並完成 Windows Update。
+- [ ] Secure Boot、TPM、虛擬化正常。
+- [ ] D: 是正確資料 SSD。
+- [ ] D: 為 NTFS，標籤 `OPC-DATA`。
+- [ ] BitLocker recovery key 可取得。
+- [ ] 重要資料已有外部備份並測試還原。
+
+沒有全部通過，不執行 Bootstrap。
+
+## 第一次執行
+
+以系統管理員身分開啟 PowerShell 7，進入手冊 repository：
 
 ```powershell
--ManifestPath
--LogPath
--DryRun
--Force
--Resume
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\scripts\bootstrap.ps1 -Phase Preflight
 ```
 
-## 狀態保存
+只有 Preflight 通過後，才依序執行：
 
-Bootstrap state：
+```powershell
+.\scripts\bootstrap.ps1 -Phase Workspace
+.\scripts\bootstrap.ps1 -Phase Tools
+.\scripts\bootstrap.ps1 -Phase WSL
+```
+
+WSL 安裝後若要求重開機：
+
+1. 關閉正在執行的程式。
+2. 重新開機。
+3. 完成 Ubuntu 首次使用者建立。
+4. 再執行 Docker phase。
+
+```powershell
+.\scripts\bootstrap.ps1 -Phase Docker
+```
+
+Docker Desktop 安裝後：
+
+1. 手動啟動 Docker Desktop。
+2. 接受授權條款。
+3. 選擇 WSL2 backend。
+4. 啟用主要 Ubuntu integration。
+5. 等待 Docker Engine Ready。
+
+最後執行：
+
+```powershell
+.\scripts\bootstrap.ps1 -Phase Verify
+```
+
+也可以在前置條件都已具備時執行：
+
+```powershell
+.\scripts\bootstrap.ps1 -Phase All
+```
+
+但初次重灌建議逐 phase 執行，較容易判斷哪一步失敗。
+
+## `-WhatIf`
+
+腳本支援 PowerShell `ShouldProcess` 的步驟可先預覽：
+
+```powershell
+.\scripts\bootstrap.ps1 -Phase Tools -WhatIf
+```
+
+`-WhatIf` 只預覽支援的寫入與安裝操作，仍可能執行讀取型檢查。
+
+## Bootstrap 會做什麼
+
+### Preflight
+
+- 確認 Windows 11。
+- 確認 Secure Boot。
+- 確認 TPM。
+- 確認 D: 為 NTFS / OPC-DATA。
+
+### Workspace
+
+- 建立缺少的 `D:\OPC` 標準目錄。
+- 不刪除既有專案。
+- 建立 workspace marker。
+
+### Tools
+
+透過 winget 確保安裝：
+
+- PowerShell 7
+- Windows Terminal
+- Git
+- GitHub CLI
+- VS Code
+- Python
+- Node.js LTS
+
+### WSL
+
+- 安裝或更新 WSL。
+- 不會自動刪除或 unregister distribution。
+
+### Docker
+
+- 安裝 Docker Desktop。
+- 首次啟動與授權由人工完成。
+
+### Verify
+
+- 執行 `verify-all.ps1`。
+- 只要有 FAIL，Bootstrap 結果就是失敗。
+
+## 狀態與 Log
+
+狀態：
 
 ```text
 D:\OPC\runtime\bootstrap\state.json
 ```
 
-至少記錄：
+Log：
 
-- manifest version
-- current phase
-- completed steps
-- failed step
-- reboot required
-- started_at
-- updated_at
-- machine fingerprint
+```text
+D:\OPC\logs\bootstrap\bootstrap-日期時間.log
+```
 
-## 重新開機處理
+失敗時先查看這兩個檔案，不要直接重灌。
 
-涉及 Windows feature、driver、WSL2、Docker Desktop 的步驟可能需要重開機。腳本必須：
+## 可重跑規則
 
-1. 保存 checkpoint。
-2. 標記 `reboot_required=true`。
-3. 停止後續施工。
-4. 重開後以 `-Resume` 從下一個安全步驟繼續。
+- Winget 已安裝套件應由 winget 判斷並跳過或更新。
+- Workspace 只建立缺少的目錄。
+- WSL 不使用 unregister。
+- Docker 不執行 Factory Reset。
+- Verify 可重複執行。
 
-## 通過條件
+## 目前限制
 
-- 任一 phase 可單獨執行。
-- 已完成步驟重跑時會安全跳過或驗證。
-- 失敗後保留 log 與 state。
-- 重開機後可繼續。
-- 最終產生完整施工報告。
+這個 Bootstrap 是工作站基礎建置入口，不會自動：
+
+- 格式化磁碟
+- 操作 BitLocker recovery key
+- 登入 GitHub
+- 建立 Linux username/password
+- 接受 Docker Desktop 授權
+- 填入正式 secrets
+- 部署尚未實作完成的 OPC workflow application
+
+這些限制是安全邊界，不是缺陷。
+
+## 完成條件
+
+- [ ] 各 phase 可分開執行。
+- [ ] 已存在資料不被刪除。
+- [ ] 失敗會留下 state 與 log。
+- [ ] Verify 無 FAIL。
+- [ ] 人工步驟已明確標示。
