@@ -1,6 +1,6 @@
 # 工程手冊進度
 
-## 整體進度：50%
+## 整體進度：60%
 
 依 10 批次規劃計算。
 
@@ -11,7 +11,7 @@
 | 3 | Storage & Workspace | 完成 |
 | 4 | Development Environment | 完成 |
 | 5 | WSL2 + Docker 深入建置 | 完成 |
-| 6 | AI Runtime | 待施工 |
+| 6 | AI Runtime | 完成 |
 | 7 | Bootstrap | 待施工 |
 | 8 | Operations | 待施工 |
 | 9 | Security + Recovery | 待施工 |
@@ -26,20 +26,23 @@
 - WSL2 安裝、systemd、`.wslconfig` 與資源限制
 - Windows / Linux 路徑與單一真實來源策略
 - Docker Desktop、Compose、Networking、Volume 與 GPU 驗證
-- WSL2 與 Docker 疑難排解及驗收清單
+- Runtime architecture 與 graph-based workflow
+- Redis Streams queue 與 PostgreSQL durable state
+- Evidence Layer、Capability Registry 與 Tool Gateway
+- MCP 邊界、Agent roles、Session Isolation、HITL 與 default-deny
+- AI Runtime failure、cost、approval 與 recovery 驗收
 
 ## 下一批
 
-AI Runtime：
+Bootstrap：
 
-- Runtime architecture
-- Agent framework 選型與邊界
-- LangGraph workflow runtime
-- Redis Streams queue
-- PostgreSQL state and evidence
-- Capability Registry
-- MCP integration
-- Hermes、Codex、OpenHands 角色定位
-- Agent session isolation
-- Human-in-the-loop 與 default-deny
-- AI Runtime 驗收
+- Bootstrap 架構與階段
+- Manifest 與 idempotency
+- Base applications installer
+- Workspace bootstrap
+- WSL2 / Docker bootstrap
+- Runtime stack bootstrap
+- Secrets handoff
+- Doctor 與 health checks
+- Rollback 與 failure report
+- 從全新 Windows 到可工作的端對端驗收
