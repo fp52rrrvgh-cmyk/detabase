@@ -3,11 +3,9 @@
 param(
     [string]$WorkspaceRoot = 'D:\OPC',
     [string]$ExpectedVolumeLabel = 'OPC-DATA',
+    [string]$ExpectedVolumeUniqueId,
     [string]$OutputDirectory = 'D:\OPC\artifacts\verification',
-
-    [ValidateSet('Full','Ci')]
-    [string]$Mode = 'Full',
-
+    [ValidateSet('Full','Ci')][string]$Mode = 'Full',
     [string]$OutputJson,
     [string]$OutputMarkdown,
     [switch]$SkipHardwareChecks,
@@ -48,53 +46,36 @@ function Add-Result {
     })
 }
 
-function Test-CommandAvailable {
-    param(
-        [Parameter(Mandatory)][string]$Name,
-        [bool]$Required = $true
-    )
+function Add-Skip {
+    param([string]$Id,[string]$Message)
+    Add-Result -Id $Id -Status SKIP -Message $Message
+}
 
+function Test-CommandAvailable {
+    param([string]$Name,[bool]$Required = $true)
     $command = Get-Command $Name -ErrorAction SilentlyContinue
     if ($command) {
         Add-Result -Id "command.$Name" -Status PASS -Message "$Name is available" -Evidence $command.Source
         return $true
     }
-
-    $status = if ($Required) { 'FAIL' } else { 'WARN' }
-    Add-Result -Id "command.$Name" -Status $status -Message "$Name is not available"
+    Add-Result -Id "command.$Name" -Status $(if ($Required) { 'FAIL' } else { 'WARN' }) -Message "$Name is not available"
     return $false
 }
 
 function Invoke-VersionCheck {
-    param(
-        [Parameter(Mandatory)][string]$Id,
-        [Parameter(Mandatory)][string]$Command,
-        [string[]]$Arguments = @(),
-        [bool]$Required = $true
-    )
-
+    param([string]$Id,[string]$Command,[string[]]$Arguments = @(),[bool]$Required = $true)
     try {
         $output = & $Command @Arguments 2>&1 | Out-String
-        if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($output)) {
-            $firstLine = ($output.Trim() -split "`r?`n")[0]
-            Add-Result -Id $Id -Status PASS -Message $firstLine -Evidence $output.Trim()
+        if ($LASTEXITCODE -eq 0 -and $output.Trim()) {
+            Add-Result -Id $Id -Status PASS -Message (($output.Trim() -split "`r?`n")[0]) -Evidence $output.Trim()
             return $true
         }
-
-        $status = if ($Required) { 'FAIL' } else { 'WARN' }
-        Add-Result -Id $Id -Status $status -Message ($output.Trim())
+        Add-Result -Id $Id -Status $(if ($Required) { 'FAIL' } else { 'WARN' }) -Message $output.Trim()
     }
     catch {
-        $status = if ($Required) { 'FAIL' } else { 'WARN' }
-        Add-Result -Id $Id -Status $status -Message $_.Exception.Message
+        Add-Result -Id $Id -Status $(if ($Required) { 'FAIL' } else { 'WARN' }) -Message $_.Exception.Message
     }
-
     return $false
-}
-
-function Add-HardwareSkip {
-    param([Parameter(Mandatory)][string]$Id,[Parameter(Mandatory)][string]$Message)
-    Add-Result -Id $Id -Status SKIP -Message $Message
 }
 
 try {
@@ -105,90 +86,68 @@ catch {
     exit 2
 }
 
-# Host metadata and Windows
+# Windows host
 try {
     $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
-    if ($os.Caption -match 'Windows 11') {
-        Add-Result -Id 'windows.version' -Status PASS -Message "$($os.Caption) build $($os.BuildNumber)" -Evidence "Version=$($os.Version); Build=$($os.BuildNumber)"
-    }
-    else {
-        Add-Result -Id 'windows.version' -Status FAIL -Message "Expected Windows 11, found $($os.Caption)"
-    }
+    Add-Result -Id 'windows.version' -Status $(if ($os.Caption -match 'Windows 11') { 'PASS' } else { 'FAIL' }) -Message "$($os.Caption) build $($os.BuildNumber)" -Evidence "Version=$($os.Version); Build=$($os.BuildNumber)"
 }
-catch {
-    Add-Result -Id 'windows.version' -Status FAIL -Message $_.Exception.Message
-}
+catch { Add-Result -Id 'windows.version' -Status FAIL -Message $_.Exception.Message }
 
 if ($SkipHardwareChecks) {
-    Add-HardwareSkip -Id 'windows.secure-boot' -Message 'Hardware check skipped by mode or parameter'
-    Add-HardwareSkip -Id 'windows.tpm' -Message 'Hardware check skipped by mode or parameter'
+    Add-Skip 'windows.secure-boot' 'Hardware check skipped by mode or parameter'
+    Add-Skip 'windows.tpm' 'Hardware check skipped by mode or parameter'
 }
 else {
     try {
         $secureBoot = Confirm-SecureBootUEFI -ErrorAction Stop
         Add-Result -Id 'windows.secure-boot' -Status $(if ($secureBoot) { 'PASS' } else { 'FAIL' }) -Message "Secure Boot: $secureBoot" -Evidence "Confirm-SecureBootUEFI=$secureBoot"
     }
-    catch {
-        Add-Result -Id 'windows.secure-boot' -Status FAIL -Message $_.Exception.Message
-    }
+    catch { Add-Result -Id 'windows.secure-boot' -Status FAIL -Message $_.Exception.Message }
 
     try {
         $tpm = Get-Tpm -ErrorAction Stop
-        if ($tpm.TpmPresent -and $tpm.TpmReady) {
-            Add-Result -Id 'windows.tpm' -Status PASS -Message 'TPM is present and ready' -Evidence "TpmPresent=$($tpm.TpmPresent); TpmReady=$($tpm.TpmReady)"
-        }
-        else {
-            Add-Result -Id 'windows.tpm' -Status FAIL -Message "TpmPresent=$($tpm.TpmPresent), TpmReady=$($tpm.TpmReady)"
-        }
+        $ok = $tpm.TpmPresent -and $tpm.TpmReady
+        Add-Result -Id 'windows.tpm' -Status $(if ($ok) { 'PASS' } else { 'FAIL' }) -Message "TpmPresent=$($tpm.TpmPresent), TpmReady=$($tpm.TpmReady)"
     }
-    catch {
-        Add-Result -Id 'windows.tpm' -Status FAIL -Message $_.Exception.Message
-    }
+    catch { Add-Result -Id 'windows.tpm' -Status FAIL -Message $_.Exception.Message }
 }
 
 try {
     $defender = Get-MpComputerStatus -ErrorAction Stop
-    if ($defender.AntivirusEnabled -and $defender.RealTimeProtectionEnabled) {
-        Add-Result -Id 'windows.defender' -Status PASS -Message 'Defender antivirus and real-time protection are enabled' -Evidence "AMRunningMode=$($defender.AMRunningMode); AntivirusEnabled=$($defender.AntivirusEnabled); RealTimeProtectionEnabled=$($defender.RealTimeProtectionEnabled)"
-    }
-    else {
-        Add-Result -Id 'windows.defender' -Status FAIL -Message "AntivirusEnabled=$($defender.AntivirusEnabled), RealTimeProtectionEnabled=$($defender.RealTimeProtectionEnabled)"
-    }
+    $ok = $defender.AntivirusEnabled -and $defender.RealTimeProtectionEnabled
+    Add-Result -Id 'windows.defender' -Status $(if ($ok) { 'PASS' } else { 'FAIL' }) -Message "AntivirusEnabled=$($defender.AntivirusEnabled), RealTimeProtectionEnabled=$($defender.RealTimeProtectionEnabled)" -Evidence "AMRunningMode=$($defender.AMRunningMode)"
 }
 catch {
-    $status = if ($Mode -eq 'Ci') { 'SKIP' } else { 'FAIL' }
-    Add-Result -Id 'windows.defender' -Status $status -Message $_.Exception.Message
+    Add-Result -Id 'windows.defender' -Status $(if ($Mode -eq 'Ci') { 'SKIP' } else { 'FAIL' }) -Message $_.Exception.Message
 }
 
-# Storage and workspace
+# Storage identity
 if ($SkipHardwareChecks) {
-    Add-HardwareSkip -Id 'storage.opc-data' -Message 'Physical D: validation skipped by mode or parameter'
-    Add-HardwareSkip -Id 'storage.free-space' -Message 'Physical D: capacity validation skipped by mode or parameter'
+    Add-Skip 'storage.opc-data' 'Physical D: validation skipped by mode or parameter'
+    Add-Skip 'storage.identity' 'Volume identity validation skipped by mode or parameter'
+    Add-Skip 'storage.free-space' 'Physical D: capacity validation skipped by mode or parameter'
 }
 else {
     try {
         $volume = Get-Volume -DriveLetter D -ErrorAction Stop
-        if ($volume.FileSystem -eq 'NTFS' -and $volume.FileSystemLabel -eq $ExpectedVolumeLabel -and $volume.HealthStatus -eq 'Healthy') {
-            Add-Result -Id 'storage.opc-data' -Status PASS -Message "D: is Healthy NTFS labeled $ExpectedVolumeLabel" -Evidence "UniqueId=$($volume.UniqueId); Size=$($volume.Size); Remaining=$($volume.SizeRemaining)"
+        $healthy = $volume.FileSystem -eq 'NTFS' -and $volume.FileSystemLabel -eq $ExpectedVolumeLabel -and $volume.HealthStatus -eq 'Healthy'
+        Add-Result -Id 'storage.opc-data' -Status $(if ($healthy) { 'PASS' } else { 'FAIL' }) -Message "filesystem=$($volume.FileSystem), label=$($volume.FileSystemLabel), health=$($volume.HealthStatus)" -Evidence "UniqueId=$($volume.UniqueId); Path=$($volume.Path); Size=$($volume.Size); Remaining=$($volume.SizeRemaining)"
+
+        if ([string]::IsNullOrWhiteSpace($ExpectedVolumeUniqueId)) {
+            Add-Result -Id 'storage.identity' -Status WARN -Message 'ExpectedVolumeUniqueId was not supplied; current identity was recorded but not compared' -Evidence "UniqueId=$($volume.UniqueId); Path=$($volume.Path)"
+        }
+        elseif ($volume.UniqueId -eq $ExpectedVolumeUniqueId) {
+            Add-Result -Id 'storage.identity' -Status PASS -Message 'D: Volume UniqueId matches the recorded recovery value' -Evidence $volume.UniqueId
         }
         else {
-            Add-Result -Id 'storage.opc-data' -Status FAIL -Message "D: filesystem=$($volume.FileSystem), label=$($volume.FileSystemLabel), health=$($volume.HealthStatus)"
+            Add-Result -Id 'storage.identity' -Status FAIL -Message 'D: Volume UniqueId does not match the expected recovery value' -Evidence "Expected=$ExpectedVolumeUniqueId; Actual=$($volume.UniqueId)"
         }
 
         $freePercent = [math]::Round(($volume.SizeRemaining / $volume.Size) * 100, 1)
-        if ($freePercent -ge 20) {
-            Add-Result -Id 'storage.free-space' -Status PASS -Message "D: free space is $freePercent%"
-        }
-        elseif ($freePercent -ge 10) {
-            Add-Result -Id 'storage.free-space' -Status WARN -Message "D: free space is only $freePercent%"
-        }
-        else {
-            Add-Result -Id 'storage.free-space' -Status FAIL -Message "D: free space is critically low at $freePercent%"
-        }
+        $freeStatus = if ($freePercent -ge 20) { 'PASS' } elseif ($freePercent -ge 10) { 'WARN' } else { 'FAIL' }
+        Add-Result -Id 'storage.free-space' -Status $freeStatus -Message "D: free space is $freePercent%"
     }
-    catch {
-        Add-Result -Id 'storage.opc-data' -Status FAIL -Message $_.Exception.Message
-    }
+    catch { Add-Result -Id 'storage.opc-data' -Status FAIL -Message $_.Exception.Message }
 }
 
 $requiredDirectories = @('projects','workspace','runtime','artifacts','knowledge','models','logs','sandbox','config','secrets','backups','tools')
@@ -196,105 +155,89 @@ if (Test-Path $WorkspaceRoot -PathType Container) {
     Add-Result -Id 'workspace.root' -Status PASS -Message "$WorkspaceRoot exists"
     foreach ($directory in $requiredDirectories) {
         $path = Join-Path $WorkspaceRoot $directory
-        if (Test-Path $path -PathType Container) {
-            Add-Result -Id "workspace.$directory" -Status PASS -Message "$path exists"
-        }
-        else {
-            Add-Result -Id "workspace.$directory" -Status FAIL -Message "$path is missing"
-        }
+        Add-Result -Id "workspace.$directory" -Status $(if (Test-Path $path -PathType Container) { 'PASS' } else { 'FAIL' }) -Message $(if (Test-Path $path -PathType Container) { "$path exists" } else { "$path is missing" })
     }
 }
 else {
-    $status = if ($Mode -eq 'Ci') { 'SKIP' } else { 'FAIL' }
-    Add-Result -Id 'workspace.root' -Status $status -Message "$WorkspaceRoot does not exist"
+    Add-Result -Id 'workspace.root' -Status $(if ($Mode -eq 'Ci') { 'SKIP' } else { 'FAIL' }) -Message "$WorkspaceRoot does not exist"
 }
 
 $markerPath = Join-Path $WorkspaceRoot '.opc-workspace.json'
-if (Test-Path $markerPath -PathType Leaf) {
-    Add-Result -Id 'workspace.marker' -Status PASS -Message "$markerPath exists"
-}
-else {
-    $status = if ($Mode -eq 'Ci') { 'SKIP' } else { 'WARN' }
-    Add-Result -Id 'workspace.marker' -Status $status -Message 'Workspace marker is missing'
-}
+Add-Result -Id 'workspace.marker' -Status $(if (Test-Path $markerPath -PathType Leaf) { 'PASS' } elseif ($Mode -eq 'Ci') { 'SKIP' } else { 'WARN' }) -Message $(if (Test-Path $markerPath -PathType Leaf) { "$markerPath exists" } else { 'Workspace marker is missing' })
 
 # Development commands
 $commandState = @{}
 $requiredCommands = if ($Mode -eq 'Ci') { @('git','pwsh') } else { @('git','gh','code','pwsh','python','uv','node','pnpm','wsl','docker') }
-foreach ($command in $requiredCommands) {
-    $commandState[$command] = Test-CommandAvailable -Name $command -Required $true
-}
+foreach ($command in $requiredCommands) { $commandState[$command] = Test-CommandAvailable -Name $command -Required $true }
 
-if ($commandState['git']) { Invoke-VersionCheck -Id 'version.git' -Command 'git' -Arguments @('--version') | Out-Null }
+if ($commandState['git']) { Invoke-VersionCheck 'version.git' 'git' @('--version') | Out-Null }
 if ($commandState['gh']) {
-    Invoke-VersionCheck -Id 'version.gh' -Command 'gh' -Arguments @('--version') | Out-Null
+    Invoke-VersionCheck 'version.gh' 'gh' @('--version') | Out-Null
     try {
         & gh auth status *> $null
         Add-Result -Id 'github.auth' -Status $(if ($LASTEXITCODE -eq 0) { 'PASS' } else { 'FAIL' }) -Message $(if ($LASTEXITCODE -eq 0) { 'GitHub CLI authentication is valid' } else { 'GitHub CLI is not authenticated' })
     }
-    catch {
-        Add-Result -Id 'github.auth' -Status FAIL -Message $_.Exception.Message
-    }
+    catch { Add-Result -Id 'github.auth' -Status FAIL -Message $_.Exception.Message }
 }
-if ($commandState['pwsh']) { Invoke-VersionCheck -Id 'version.pwsh' -Command 'pwsh' -Arguments @('--version') | Out-Null }
-if ($commandState['python']) { Invoke-VersionCheck -Id 'version.python' -Command 'python' -Arguments @('--version') | Out-Null }
-if ($commandState['uv']) { Invoke-VersionCheck -Id 'version.uv' -Command 'uv' -Arguments @('--version') | Out-Null }
-if ($commandState['node']) { Invoke-VersionCheck -Id 'version.node' -Command 'node' -Arguments @('--version') | Out-Null }
-if ($commandState['pnpm']) { Invoke-VersionCheck -Id 'version.pnpm' -Command 'pnpm' -Arguments @('--version') | Out-Null }
+if ($commandState['pwsh']) { Invoke-VersionCheck 'version.pwsh' 'pwsh' @('--version') | Out-Null }
+if ($commandState['python']) { Invoke-VersionCheck 'version.python' 'python' @('--version') | Out-Null }
+if ($commandState['uv']) { Invoke-VersionCheck 'version.uv' 'uv' @('--version') | Out-Null }
+if ($commandState['node']) { Invoke-VersionCheck 'version.node' 'node' @('--version') | Out-Null }
+if ($commandState['pnpm']) { Invoke-VersionCheck 'version.pnpm' 'pnpm' @('--version') | Out-Null }
 
-# WSL2
+# WSL and daemon isolation
 if ($Mode -eq 'Ci') {
-    Add-HardwareSkip -Id 'wsl.version' -Message 'WSL runtime check skipped in CI mode'
-    Add-HardwareSkip -Id 'wsl.workspace' -Message 'WSL mount check skipped in CI mode'
+    Add-Skip 'wsl.version' 'WSL runtime check skipped in CI mode'
+    Add-Skip 'wsl.workspace' 'WSL mount check skipped in CI mode'
+    Add-Skip 'wsl.docker-daemon' 'WSL Docker daemon conflict check skipped in CI mode'
 }
 elseif ($commandState['wsl']) {
     try {
         $wslOutput = (& wsl -l -v 2>&1 | Out-String)
-        if ($LASTEXITCODE -ne 0) {
-            Add-Result -Id 'wsl.version' -Status FAIL -Message $wslOutput.Trim()
-        }
-        elseif ($wslOutput -match '(?m)^\s*\*?\s*\S+\s+\S+\s+2\s*$') {
-            Add-Result -Id 'wsl.version' -Status PASS -Message 'At least one WSL2 distribution was detected' -Evidence $wslOutput.Trim()
-        }
-        else {
-            Add-Result -Id 'wsl.version' -Status FAIL -Message 'No distribution with VERSION 2 was detected' -Evidence $wslOutput.Trim()
-        }
+        $ok = $LASTEXITCODE -eq 0 -and $wslOutput -match '(?m)^\s*\*?\s*\S+\s+\S+\s+2\s*$'
+        Add-Result -Id 'wsl.version' -Status $(if ($ok) { 'PASS' } else { 'FAIL' }) -Message $(if ($ok) { 'At least one WSL2 distribution was detected' } else { 'No distribution with VERSION 2 was detected' }) -Evidence $wslOutput.Trim()
     }
-    catch {
-        Add-Result -Id 'wsl.version' -Status FAIL -Message $_.Exception.Message
-    }
+    catch { Add-Result -Id 'wsl.version' -Status FAIL -Message $_.Exception.Message }
 
     try {
         & wsl -e sh -lc "test -d /mnt/d/OPC && test -w /mnt/d/OPC/workspace" *> $null
-        Add-Result -Id 'wsl.workspace' -Status $(if ($LASTEXITCODE -eq 0) { 'PASS' } else { 'FAIL' }) -Message $(if ($LASTEXITCODE -eq 0) { '/mnt/d/OPC is visible and workspace is writable' } else { '/mnt/d/OPC is missing or not writable' })
+        Add-Result -Id 'wsl.workspace' -Status $(if ($LASTEXITCODE -eq 0) { 'PASS' } else { 'FAIL' }) -Message $(if ($LASTEXITCODE -eq 0) { '/mnt/d/OPC is visible and writable' } else { '/mnt/d/OPC is missing or not writable' })
     }
-    catch {
-        Add-Result -Id 'wsl.workspace' -Status FAIL -Message $_.Exception.Message
+    catch { Add-Result -Id 'wsl.workspace' -Status FAIL -Message $_.Exception.Message }
+
+    try {
+        $daemonCheck = & wsl -e sh -lc "if command -v systemctl >/dev/null 2>&1 && systemctl is-active --quiet docker; then echo active; exit 10; else echo inactive; exit 0; fi" 2>&1 | Out-String
+        if ($LASTEXITCODE -eq 10) {
+            Add-Result -Id 'wsl.docker-daemon' -Status FAIL -Message 'A separate Docker daemon is active inside the default WSL distribution while Docker Desktop is expected' -Evidence $daemonCheck.Trim()
+        }
+        elseif ($LASTEXITCODE -eq 0) {
+            Add-Result -Id 'wsl.docker-daemon' -Status PASS -Message 'No active standalone Docker daemon was detected inside the default WSL distribution' -Evidence $daemonCheck.Trim()
+        }
+        else {
+            Add-Result -Id 'wsl.docker-daemon' -Status WARN -Message 'Could not conclusively determine Docker daemon state inside WSL' -Evidence $daemonCheck.Trim()
+        }
     }
+    catch { Add-Result -Id 'wsl.docker-daemon' -Status WARN -Message $_.Exception.Message }
 }
 
-# Docker and runtime foundation
+# Docker and runtime
 if ($Mode -eq 'Ci') {
-    Add-HardwareSkip -Id 'docker.engine' -Message 'Docker Desktop check skipped in CI mode'
-    Add-HardwareSkip -Id 'docker.hello-world' -Message 'Container smoke test skipped in CI mode'
-    Add-HardwareSkip -Id 'runtime.compose' -Message 'Runtime health check skipped in CI mode'
+    Add-Skip 'docker.engine' 'Docker Desktop check skipped in CI mode'
+    Add-Skip 'docker.hello-world' 'Container smoke test skipped in CI mode'
+    Add-Skip 'runtime.compose' 'Runtime health check skipped in CI mode'
 }
 elseif ($commandState['docker']) {
     try {
-        & docker info *> $null
-        Add-Result -Id 'docker.engine' -Status $(if ($LASTEXITCODE -eq 0) { 'PASS' } else { 'FAIL' }) -Message $(if ($LASTEXITCODE -eq 0) { 'Docker engine is available' } else { 'Docker CLI exists but engine is unavailable' })
+        $dockerInfo = & docker info 2>&1 | Out-String
+        Add-Result -Id 'docker.engine' -Status $(if ($LASTEXITCODE -eq 0) { 'PASS' } else { 'FAIL' }) -Message $(if ($LASTEXITCODE -eq 0) { 'Docker engine is available' } else { 'Docker CLI exists but engine is unavailable' }) -Evidence $dockerInfo.Trim()
     }
-    catch {
-        Add-Result -Id 'docker.engine' -Status FAIL -Message $_.Exception.Message
-    }
+    catch { Add-Result -Id 'docker.engine' -Status FAIL -Message $_.Exception.Message }
 
     try {
         & docker run --rm hello-world *> $null
         Add-Result -Id 'docker.hello-world' -Status $(if ($LASTEXITCODE -eq 0) { 'PASS' } else { 'FAIL' }) -Message $(if ($LASTEXITCODE -eq 0) { 'hello-world completed successfully' } else { 'hello-world failed' })
     }
-    catch {
-        Add-Result -Id 'docker.hello-world' -Status FAIL -Message $_.Exception.Message
-    }
+    catch { Add-Result -Id 'docker.hello-world' -Status FAIL -Message $_.Exception.Message }
 
     $composePath = Join-Path $RuntimePath 'compose.yaml'
     if (Test-Path $composePath -PathType Leaf) {
@@ -308,7 +251,6 @@ elseif ($commandState['docker']) {
                 foreach ($line in ($composeJson -split "`r?`n" | Where-Object { $_.Trim() })) {
                     try { $services += ($line | ConvertFrom-Json) } catch { }
                 }
-
                 $unhealthy = @($services | Where-Object { $_.State -ne 'running' -or ($_.Health -and $_.Health -ne 'healthy') })
                 if ($services.Count -eq 0) {
                     Add-Result -Id 'runtime.compose' -Status FAIL -Message 'No opc-core services were returned by docker compose ps'
@@ -321,27 +263,23 @@ elseif ($commandState['docker']) {
                 }
             }
         }
-        catch {
-            Add-Result -Id 'runtime.compose' -Status FAIL -Message $_.Exception.Message
-        }
+        catch { Add-Result -Id 'runtime.compose' -Status FAIL -Message $_.Exception.Message }
     }
     else {
         Add-Result -Id 'runtime.compose' -Status WARN -Message "Runtime compose file not found at $composePath"
     }
 }
 
-# NVIDIA is optional
+# Optional NVIDIA
 if ($Mode -eq 'Ci' -or $SkipHardwareChecks) {
-    Add-HardwareSkip -Id 'gpu.nvidia' -Message 'GPU check skipped by mode or parameter'
+    Add-Skip 'gpu.nvidia' 'GPU check skipped by mode or parameter'
 }
 elseif (Get-Command 'nvidia-smi' -ErrorAction SilentlyContinue) {
     try {
         $gpuOutput = & nvidia-smi 2>&1 | Out-String
         Add-Result -Id 'gpu.nvidia' -Status $(if ($LASTEXITCODE -eq 0) { 'PASS' } else { 'FAIL' }) -Message $(if ($LASTEXITCODE -eq 0) { 'NVIDIA driver responds to nvidia-smi' } else { 'nvidia-smi failed' }) -Evidence $gpuOutput.Trim()
     }
-    catch {
-        Add-Result -Id 'gpu.nvidia' -Status FAIL -Message $_.Exception.Message
-    }
+    catch { Add-Result -Id 'gpu.nvidia' -Status FAIL -Message $_.Exception.Message }
 }
 else {
     Add-Result -Id 'gpu.nvidia' -Status SKIP -Message 'nvidia-smi is absent; valid only when this machine has no NVIDIA GPU'
@@ -351,12 +289,9 @@ $timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 if (-not $OutputJson) { $OutputJson = Join-Path $OutputDirectory "verification-$timestamp.json" }
 if (-not $OutputMarkdown) { $OutputMarkdown = Join-Path $OutputDirectory "verification-$timestamp.md" }
 
-$hostInfo = [ordered]@{
-    computer_name = $env:COMPUTERNAME
-    powershell = $PSVersionTable.PSVersion.ToString()
-    mode = $Mode
-    workspace_root = $WorkspaceRoot
-    runtime_path = $RuntimePath
+foreach ($path in @($OutputJson,$OutputMarkdown)) {
+    $parent = Split-Path -Parent $path
+    if ($parent) { New-Item -ItemType Directory -Path $parent -Force | Out-Null }
 }
 
 $passCount = @($Results | Where-Object Status -eq 'PASS').Count
@@ -366,17 +301,18 @@ $skipCount = @($Results | Where-Object Status -eq 'SKIP').Count
 $overall = if ($failCount -gt 0) { 'FAIL' } elseif ($FailOnSkip -and $skipCount -gt 0) { 'FAIL' } elseif ($warnCount -gt 0 -or $skipCount -gt 0) { 'CONDITIONAL' } else { 'PASS' }
 
 $report = [ordered]@{
-    schema_version = 2
+    schema_version = 3
     run_id = $RunId
-    host = $hostInfo
-    checks = $Results
-    summary = [ordered]@{
-        pass = $passCount
-        warn = $warnCount
-        fail = $failCount
-        skip = $skipCount
-        overall = $overall
+    host = [ordered]@{
+        computer_name = $env:COMPUTERNAME
+        powershell = $PSVersionTable.PSVersion.ToString()
+        mode = $Mode
+        workspace_root = $WorkspaceRoot
+        runtime_path = $RuntimePath
+        expected_volume_unique_id = $ExpectedVolumeUniqueId
     }
+    checks = $Results
+    summary = [ordered]@{ pass=$passCount; warn=$warnCount; fail=$failCount; skip=$skipCount; overall=$overall }
 }
 
 $report | ConvertTo-Json -Depth 8 | Set-Content -Path $OutputJson -Encoding UTF8
@@ -385,8 +321,8 @@ $lines = [System.Collections.Generic.List[string]]::new()
 $lines.Add('# OPC Workstation Verification Report')
 $lines.Add('')
 $lines.Add("- Run ID: $RunId")
-$lines.Add("- Host: $($hostInfo.computer_name)")
-$lines.Add("- PowerShell: $($hostInfo.powershell)")
+$lines.Add("- Host: $env:COMPUTERNAME")
+$lines.Add("- PowerShell: $($PSVersionTable.PSVersion)")
 $lines.Add("- Mode: $Mode")
 $lines.Add("- Overall: **$overall**")
 $lines.Add('')
