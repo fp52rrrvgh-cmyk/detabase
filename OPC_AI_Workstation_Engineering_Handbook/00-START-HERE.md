@@ -47,7 +47,7 @@ scripts/
 templates/
 ```
 
-若其他文件提到 `05-WSL2/`、`06-Docker/`、`07-Bootstrap/` 或其他舊路徑，視為過期引用，不得用於施工。
+若其他文件使用與上述不一致的歷史目錄名稱，視為過期引用，不得用於施工。
 
 ## 核心原則
 
@@ -70,15 +70,9 @@ templates/
 11-Final/05-Phase-1-Release-and-Phase-2-Handoff.md
 ```
 
-## 重要邊界
+## Phase 2 邊界
 
-Repository root 的：
-
-```text
-spec-phase2.md
-```
-
-是財務系統的固定訂閱、帳戶對帳與智慧提醒規格，不是 OPC Agent Runtime 規格，不得當作本手冊的下一階段施工入口。
+Phase 2 的來源與排除規則只在正式交接文件維護，不在入口頁重複定義。
 
 ## 目前狀態
 
