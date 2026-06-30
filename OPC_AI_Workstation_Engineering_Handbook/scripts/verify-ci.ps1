@@ -38,7 +38,8 @@ $requiredFiles = @(
     'templates/opc-core-compose.yaml',
     '11-Final/01-Master-Index.md',
     '11-Final/03-Full-System-Acceptance.md',
-    '11-Final/04-Completion-Record.md'
+    '11-Final/04-Completion-Record.md',
+    '11-Final/05-Phase-1-Release-and-Phase-2-Handoff.md'
 )
 
 foreach ($relative in $requiredFiles) {
@@ -68,7 +69,6 @@ if (Test-Path $composePath) {
     }
 }
 
-# Every file path listed as a standalone line in the Master Index must resolve.
 $masterIndexPath = Join-Path $HandbookRoot '11-Final/01-Master-Index.md'
 if (Test-Path $masterIndexPath) {
     $masterIndex = Get-Content $masterIndexPath -Raw
@@ -84,7 +84,6 @@ if (Test-Path $masterIndexPath) {
     }
 }
 
-# Validate local Markdown links throughout the handbook. External URLs and anchors are excluded.
 Get-ChildItem $HandbookRoot -Filter '*.md' -Recurse | ForEach-Object {
     $markdownFile = $_
     $content = Get-Content $markdownFile.FullName -Raw
@@ -103,6 +102,32 @@ Get-ChildItem $HandbookRoot -Filter '*.md' -Recurse | ForEach-Object {
     }
 }
 
+# Prevent stale directory names from reappearing in the current handbook.
+$legacyReferences = @(
+    '05-WSL2/',
+    '06-Docker/',
+    '07-Bootstrap/',
+    '08-Runtime/'
+)
+
+$allMarkdown = Get-ChildItem $HandbookRoot -Filter '*.md' -Recurse | ForEach-Object {
+    [pscustomobject]@{ Path=$_.FullName; Content=(Get-Content $_.FullName -Raw) }
+}
+
+foreach ($legacy in $legacyReferences) {
+    $hits = @($allMarkdown | Where-Object { $_.Content.Contains($legacy) })
+    Add-Check "legacy-reference.$legacy" $(if ($hits.Count -eq 0) { 'PASS' } else { 'FAIL' }) $(if ($hits.Count -eq 0) { 'not present' } else { "found in $($hits.Count) file(s)" })
+}
+
+# The root finance spec must never become the OPC Runtime source of truth.
+$financeSpecMentions = @($allMarkdown | Where-Object {
+    $_.Content -match 'spec-phase2\.md' -and
+    $_.Path -notmatch '05-Phase-1-Release-and-Phase-2-Handoff\.md$' -and
+    $_.Path -notmatch '04-Completion-Record\.md$' -and
+    $_.Path -notmatch '03-Full-System-Acceptance\.md$'
+})
+Add-Check 'phase2.finance-spec-boundary' $(if ($financeSpecMentions.Count -eq 0) { 'PASS' } else { 'FAIL' }) $(if ($financeSpecMentions.Count -eq 0) { 'finance spec is not used as OPC Phase 2 source' } else { 'unexpected spec-phase2.md reference found' })
+
 $fail = @($results | Where-Object status -eq 'FAIL').Count
 $pass = @($results | Where-Object status -eq 'PASS').Count
 $overall = if ($fail -gt 0) { 'FAIL' } else { 'PASS' }
@@ -115,7 +140,7 @@ foreach ($path in @($OutputJson,$OutputMarkdown)) {
 }
 
 [ordered]@{
-    schema_version = 2
+    schema_version = 3
     mode = 'ci'
     generated_at = (Get-Date).ToString('o')
     host = $env:COMPUTERNAME
