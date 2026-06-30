@@ -1,0 +1,34 @@
+schema_version: 1
+objective_id: obj_example
+objective: Replace with the desired business outcome
+owner: CEO
+priority: 50
+created_at: 2026-06-30T00:00:00+08:00
+deadline: 2026-07-01T06:00:00+08:00
+
+success_criteria:
+  - Result is testable
+  - Required evidence exists
+  - No unauthorized side effects occurred
+
+constraints:
+  - Do not modify production
+  - Do not merge protected branches
+  - Do not expose secrets
+
+budget:
+  max_cost_usd: 10
+  max_duration_minutes: 480
+
+required_capabilities:
+  - repository.read
+
+approval_required_for:
+  - repository.merge
+  - production.write
+  - external.send
+  - destructive.delete
+
+output:
+  artifact_directory: D:\OPC\artifacts\objectives\obj_example
+  morning_report: true
