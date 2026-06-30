@@ -2,100 +2,170 @@
 
 ## 使用方式
 
-此清單不是閱讀清單，而是實機驗收清單。每一項必須保存 Evidence。
+這不是閱讀清單，而是實機驗收表。每一項必須有實際結果；不能靠「應該可以」勾選。
 
-## Windows Host
+判定只有三種：
 
-- [ ] Windows 11 已更新
-- [ ] Secure Boot 與 TPM 正常
-- [ ] GPU、網路、音訊驅動正常
-- [ ] Defender 與 Firewall 啟用
-- [ ] 遊戲與反作弊正常
+- PASS：已實測通過。
+- CONDITIONAL：基礎層可用，但完整 OPC autonomous runtime 尚未實作或尚未驗證。
+- FAIL：有關鍵項目失敗，不得投入正式工作。
 
-## Storage
+## 1. Windows Host
 
-- [ ] C: 與 D: 為獨立 SSD
-- [ ] D: 為 NTFS、標籤 OPC-DATA
-- [ ] `D:\OPC` 標準目錄完整
-- [ ] 沒有未預期的跨碟磁碟區
-- [ ] 重要資料有異地備份
+- [ ] Windows 11 已完成更新且沒有等待重新啟動。
+- [ ] Secure Boot 為 True。
+- [ ] TPM Present / Ready 為 True。
+- [ ] GPU、網路、音訊與藍牙正常。
+- [ ] Defender 與 Firewall 啟用。
+- [ ] 主要遊戲與反作弊正常。
+- [ ] `03-Windows/07-Windows-Verification.md` 全部通過。
 
-## Development
+## 2. Storage
 
-- [ ] Git、GitHub CLI、VS Code 正常
-- [ ] Python / uv 可重建環境
-- [ ] Node / pnpm 可重建環境
-- [ ] Repository 不含 secrets
+- [ ] C: 與 D: 為獨立 SSD。
+- [ ] SSD 型號、序號末碼與容量已有紀錄。
+- [ ] D: 為 NTFS、標籤 OPC-DATA。
+- [ ] `D:\OPC` 標準目錄完整。
+- [ ] 沒有 RAID 0、Dynamic Disk 或 Spanned Volume。
+- [ ] BitLocker recovery key 可在外部位置取得。
+- [ ] 外部備份已完成抽樣還原。
+- [ ] `04-Storage/09-Storage-Verification.md` 全部通過。
 
-## WSL2 與 Docker
+## 3. Development
 
-- [ ] Ubuntu 使用 WSL2
-- [ ] systemd 正常
-- [ ] `.wslconfig` 符合硬體
-- [ ] Docker Desktop 使用 WSL2 backend
-- [ ] Compose、volume、network 正常
-- [ ] NVIDIA GPU 可由 Windows、WSL2、Container 驗證
+- [ ] Git 身分與 main 分支設定正確。
+- [ ] GitHub CLI 登入正確帳號。
+- [ ] VS Code 可開啟 `D:\OPC\projects`。
+- [ ] Python / uv 環境可刪除 `.venv` 後重建。
+- [ ] Node / pnpm 可刪除 `node_modules` 後重建。
+- [ ] Repository 不含 `.env`、token、password 或 recovery key。
+- [ ] `05-Development/07-Development-Verification.md` 全部通過。
 
-## AI Runtime
+## 4. WSL2 與 Docker
 
-- [ ] PostgreSQL durable state 正常
-- [ ] Redis Streams queue 正常
-- [ ] Workflow 可 checkpoint 與 resume
-- [ ] Capability Registry 與 Tool Gateway 生效
-- [ ] Agent Session 隔離生效
-- [ ] Evidence 與成本可追蹤
-- [ ] HITL 與 default-deny 生效
+- [ ] Ubuntu 使用 WSL2 VERSION 2。
+- [ ] systemd 可用。
+- [ ] `/mnt/d/OPC` 可讀寫。
+- [ ] `.wslconfig` 符合硬體並保留 Windows 資源。
+- [ ] Docker Desktop 使用 WSL2 backend。
+- [ ] `docker run --rm hello-world` 成功。
+- [ ] Compose 測試 stack healthy。
+- [ ] Container 重建後資料仍存在。
+- [ ] 必要 port 只綁定 localhost 或明確允許的介面。
+- [ ] 有 NVIDIA 時，Windows 與 WSL2 的 `nvidia-smi` 成功。
+- [ ] `06-WSL2-Docker/09-Verification.md` 全部通過。
 
-## Bootstrap
+## 5. Bootstrap
 
-- [ ] Manifest 可解析
-- [ ] Bootstrap 可重跑
-- [ ] 中斷後可 Resume
-- [ ] Failure report 正常
-- [ ] Doctor 產生 JSON 與 Markdown
+- [ ] `bootstrap.ps1 -Phase Preflight` 通過。
+- [ ] Workspace phase 不會刪除既有資料。
+- [ ] Tools phase 可安全重跑。
+- [ ] WSL phase 不會 unregister distribution。
+- [ ] Docker phase 不會 Factory Reset。
+- [ ] 失敗時會留下 state.json 與 log。
+- [ ] 人工步驟已完成：GitHub login、Ubuntu user、Docker Desktop 首次設定、secrets handoff。
 
-## Operations
+## 6. Runtime Foundation
 
-- [ ] 夜間 Objective 可無人監看執行
-- [ ] Morning Report 可於 5 分鐘內理解
-- [ ] Pause、Resume、Stop 正常
-- [ ] Metrics、Logs、Traces 可查詢
-- [ ] 成本與資源上限實際阻擋
-- [ ] 備份已測試還原
+- [ ] `templates/opc-core-compose.yaml` 已複製到 `D:\OPC\runtime\opc-core\compose.yaml`。
+- [ ] `.env` 已建立且未進 Git。
+- [ ] PostgreSQL healthy。
+- [ ] Redis PING 回傳 PONG。
+- [ ] Redis Stream 可寫入與讀取。
+- [ ] PostgreSQL table 可建立與查詢。
+- [ ] Container 重建後 PostgreSQL 與 Redis 資料仍存在。
+- [ ] PostgreSQL dump 已建立並還原到測試資料庫。
+- [ ] `opc-control.ps1` 的 Start / Stop / Status 可用。
 
-## Security 與 Recovery
+通過這一節，只代表 **Runtime foundation ready**。
 
-- [ ] 未授權工具與路徑會被拒絕
-- [ ] Secrets 可輪替與撤銷
-- [ ] Restricted data 不進一般 Log
-- [ ] 網路服務沒有意外暴露
-- [ ] Supply-chain policy 生效
-- [ ] Tier 2 Recovery 已演練
-- [ ] Bare-metal Rebuild 已在測試環境驗證
+## 7. Autonomous Runtime（尚未實作完成前不得勾選）
 
-## 最終測試 Objective
+- [ ] Workflow application 可接受 Objective。
+- [ ] Task 可 checkpoint / resume。
+- [ ] Queue 可避免無限制重複執行。
+- [ ] Capability Registry 會拒絕未註冊能力。
+- [ ] Tool Gateway 會執行 auth、schema、timeout、audit 與 approval。
+- [ ] Agent session 有獨立 workspace 與 credential scope。
+- [ ] 每次工具呼叫可追蹤到 Objective / Task / Attempt。
+- [ ] Evidence 有 checksum。
+- [ ] 高風險操作需要 HITL。
+- [ ] Morning Report 只根據真實 evidence 產生。
 
-建立一個唯讀測試 Objective：
+這些尚未實作或未驗證時，最終結果只能是 CONDITIONAL，不能是完整 PASS。
 
-```text
-讀取指定 repository，產生摘要與風險清單，保存 artifact、checksum、成本與 reviewer 結果，不修改 repository。
+## 8. Recovery
+
+- [ ] Recovery Package 位於外部位置。
+- [ ] Handbook repository URL 與 commit SHA 已記錄。
+- [ ] Git repository 可重新 clone。
+- [ ] PostgreSQL dump checksum 正確。
+- [ ] PostgreSQL dump 已測試還原。
+- [ ] WSL distribution 可 export。
+- [ ] BitLocker Key ID 與 recovery key 對應正確。
+- [ ] `10-Security-Recovery/09-Bare-Metal-Rebuild.md` 已人工走讀。
+
+## 9. 執行總驗收腳本
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\scripts\verify-all.ps1
 ```
 
-通過條件：
+必須保存：
 
-- Objective 到 Evidence 全鏈路可追蹤
-- 無未授權 side effect
-- Morning Report 正確
-- Doctor 無 FAIL
+```text
+D:\OPC\artifacts\verification\verification-日期時間.json
+D:\OPC\artifacts\verification\verification-日期時間.md
+```
 
-## 簽核
+規則：
+
+- 任一 FAIL：最終結果 FAIL。
+- WARN：必須寫清楚原因與是否接受。
+- SKIP：只能用於明確不適用，例如沒有 NVIDIA GPU。
+
+## 10. 最終安全測試
+
+在完整 Autonomous Runtime 尚未實作前，人工執行：
+
+```text
+讀取指定 repository README
+→ 產生摘要與風險清單
+→ 保存到 D:\OPC\artifacts
+→ 建立 SHA-256
+→ 確認 repository 沒有被修改
+```
+
+完整 Runtime 完成後，再由 workflow application 執行同一 Objective，驗證全鏈路。
+
+## 最終簽核
 
 ```text
 驗收日期：
-Manifest version：
-Handbook commit：
-Doctor report：
+Windows build：
+Handbook branch / commit：
+Bootstrap state：
+Verification report：
 Evidence directory：
+Backup restore evidence：
+Autonomous Runtime：NOT IMPLEMENTED / PARTIAL / VERIFIED
 驗收人：
 結果：PASS / CONDITIONAL / FAIL
+未通過項目：
+```
+
+## 判定標準
+
+```text
+Windows + Storage + Development + WSL2 + Docker + Bootstrap + Runtime Foundation 全部通過
+但 Autonomous Runtime 尚未完成
+= CONDITIONAL / READY FOR OPC APPLICATION DEVELOPMENT
+```
+
+```text
+上述全部通過
++ Autonomous Runtime 全項實測
++ Recovery rehearsal 通過
+= PASS / OPC AI WORKSTATION READY
 ```
