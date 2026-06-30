@@ -1,6 +1,6 @@
 # 工程手冊進度
 
-## 整體進度：70%
+## 整體進度：80%
 
 依 10 批次規劃計算。
 
@@ -13,7 +13,7 @@
 | 5 | WSL2 + Docker 深入建置 | 完成 |
 | 6 | AI Runtime | 完成 |
 | 7 | Bootstrap | 完成 |
-| 8 | Operations | 待施工 |
+| 8 | Operations | 完成 |
 | 9 | Security + Recovery | 待施工 |
 | 10 | 整合、ADR、Runbook、最終驗收 | 待施工 |
 
@@ -28,21 +28,23 @@
 - Docker Desktop、Compose、Networking、Volume 與 GPU 驗證
 - Runtime architecture、graph-based workflow、Redis Streams、PostgreSQL
 - Evidence Layer、Capability Registry、MCP、Session Isolation 與 HITL
-- Bootstrap phases、Manifest、idempotency、base applications installer
-- Workspace、WSL2、Docker、runtime stack 與 secrets handoff
-- Doctor、health checks、rollback、failure report 與端對端驗收
+- Bootstrap phases、Manifest、idempotency、Doctor、rollback 與端對端驗收
+- Daily operating model、夜間自主執行與早晨驗收
+- Start、Stop、Pause、Resume 與遊戲模式
+- Logs、Metrics、Traces、告警與健康監控
+- 備份營運、更新窗口、成本治理與 Incident Response
 
 ## 下一批
 
-Operations：
+Security + Recovery：
 
-- Daily operating model
-- Night shift / morning acceptance workflow
-- Start、stop、pause、resume
-- Health monitoring and alerting
-- Logs、metrics、traces
-- Backup operations
-- Update and maintenance windows
-- Cost and resource governance
-- Incident response
-- Operations verification
+- Threat model
+- Identity and least privilege
+- Secrets management
+- Agent sandbox and filesystem policy
+- Network security
+- Supply-chain and dependency security
+- Data classification and privacy
+- Disaster recovery tiers
+- Bare-metal rebuild
+- Security and recovery verification
