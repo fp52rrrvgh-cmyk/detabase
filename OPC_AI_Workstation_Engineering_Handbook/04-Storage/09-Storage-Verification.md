@@ -1,57 +1,77 @@
 # 04-Storage / 09 Storage 驗收清單
 
-## 磁碟結構
+## 使用方式
+
+用系統管理員 PowerShell 逐段執行。任何一項 FAIL，都不要進入 WSL2、Docker 或 AI Runtime。
+
+## Step 1：確認兩顆 SSD
 
 ```powershell
-Get-Disk
+Get-Disk | Format-Table Number,FriendlyName,SerialNumber,PartitionStyle,Size,OperationalStatus
 Get-Partition
-Get-Volume
+Get-Volume | Format-Table DriveLetter,FileSystemLabel,FileSystem,HealthStatus,Size,SizeRemaining
 ```
 
-確認：
+通過條件：
 
-- Windows 位於 C:
-- OPC 資料碟位於 D:
-- 兩顆 SSD 為獨立磁碟
-- 分割表為 GPT
-- 沒有跨碟 Spanned Volume
-- 沒有未預期的 RAID 0
+- [ ] Windows 位於 C:。
+- [ ] OPC 資料碟位於 D:。
+- [ ] C: 與 D: 分屬不同實體 SSD。
+- [ ] 兩顆 SSD 為 GPT。
+- [ ] 沒有 Spanned Volume、Dynamic Disk 或 RAID 0。
+- [ ] 磁碟型號、序號末碼與容量符合紀錄。
 
-## 檔案系統
+## Step 2：確認 D 槽
 
 ```powershell
 Get-Volume -DriveLetter D
 fsutil fsinfo volumeinfo D:
 ```
 
-確認：
+通過條件：
 
-- D: 使用 NTFS
-- Volume Label 為 OPC-DATA
-- HealthStatus 正常
+- [ ] FileSystem 是 NTFS。
+- [ ] FileSystemLabel 是 OPC-DATA。
+- [ ] HealthStatus 是 Healthy。
+- [ ] D 槽不是 RAW。
 
-## Workspace
+## Step 3：確認 Workspace
 
 ```powershell
+Test-Path D:\OPC
 Get-ChildItem D:\OPC -Directory | Select-Object Name
 ```
 
-應包含：
+必須包含：
 
-- projects
-- workspace
-- runtime
-- artifacts
-- knowledge
-- models
-- logs
-- sandbox
-- config
-- secrets
-- backups
-- tools
+```text
+projects
+workspace
+runtime
+artifacts
+knowledge
+models
+logs
+sandbox
+config
+secrets
+backups
+tools
+```
 
-## Junction / Link
+再以 dry-run 測試 Bootstrap：
+
+```powershell
+.\scripts\bootstrap-opc-workspace.ps1 -Root 'D:\OPC' -WhatIf
+```
+
+通過條件：
+
+- [ ] 不會刪除既有資料。
+- [ ] 不會改到 C 槽。
+- [ ] 重跑只建立缺少的目錄。
+
+## Step 4：確認 Junction
 
 ```powershell
 Get-ChildItem D:\OPC -Force |
@@ -59,45 +79,84 @@ Get-ChildItem D:\OPC -Force |
   Select-Object FullName,LinkType,Target
 ```
 
-確認所有連結目標都存在，且沒有循環連結。
+初次建置正常情況應沒有 Junction。若有：
 
-## Docker
+- [ ] LinkType 與 Target 正確。
+- [ ] Target 存在。
+- [ ] 沒有循環連結。
+- [ ] 備份工具沒有重複備份。
+
+## Step 5：確認 BitLocker
+
+```powershell
+manage-bde -status
+Get-BitLockerVolume
+```
+
+通過條件：
+
+- [ ] C 與 D 狀態已確認。
+- [ ] 已加密磁碟的 recovery key 可在外部位置取得。
+- [ ] Key ID 與磁碟對應清楚。
+- [ ] 完整 recovery key 沒有放進 GitHub 或日誌。
+
+## Step 6：確認容量
+
+```powershell
+Get-Volume -DriveLetter C,D |
+  Select-Object DriveLetter,HealthStatus,Size,SizeRemaining,@{Name='FreePercent';Expression={[math]::Round(($_.SizeRemaining/$_.Size)*100,1)}}
+```
+
+通過條件：
+
+- [ ] C 與 D HealthStatus 正常。
+- [ ] 可用空間高於 20%，或已有明確容量處理計畫。
+
+## Step 7：確認 Docker 持久化
+
+Docker 安裝完成後執行：
 
 ```powershell
 docker volume ls
 docker system df
 ```
 
-確認：
+對測試 stack：
 
-- Named volumes 有清楚命名
-- 資料庫 volume 可辨識
-- 沒有大量未知 volume
+1. 建立一筆測試資料。
+2. 執行 `docker compose down`。
+3. 再執行 `docker compose up -d`。
+4. 確認資料仍存在。
 
-## 容量
+通過條件：
 
-```powershell
-Get-PSDrive C,D
+- [ ] 資料庫使用 named volume。
+- [ ] 沒有使用 `docker compose down -v`。
+- [ ] Container 重建後資料仍存在。
+
+## Step 8：確認備份可還原
+
+至少完成：
+
+- [ ] 從 GitHub clone 一個重要 repository。
+- [ ] 從外部備份打開一份文件。
+- [ ] PostgreSQL dump 已還原到測試資料庫。
+- [ ] SHA-256 checksum 一致。
+- [ ] BitLocker recovery key 可取得。
+
+## 最終判定
+
+只有以下全部成立，Storage 才算通過：
+
+```text
+雙 SSD 辨識正確
++ D: 為 NTFS / OPC-DATA
++ D:\OPC 目錄完整
++ BitLocker 可恢復
++ 容量安全
++ Docker 資料可持久化
++ 外部備份已測試還原
+= STORAGE PASS
 ```
 
-確認兩個磁碟都保有至少 20% 或合理的安全空間。
-
-## BitLocker
-
-```powershell
-manage-bde -status
-```
-
-若已啟用，確認 Recovery Key 已保存於外部位置。
-
-## 備份還原測試
-
-- Clone 一個 repository 到測試目錄
-- 還原一份資料庫 dump
-- 還原一個 Docker 測試 volume
-- 驗證 checksum
-- 記錄測試日期與結果
-
-## 通過條件
-
-只有當磁碟、Workspace、Docker volume、容量與備份還原全部通過，Storage Engineering 才視為完成。
+任一項未完成，結果就是 `STORAGE FAIL`，不得進入後續部署。
