@@ -2,27 +2,44 @@
 
 ## 目標
 
-保留 WSL2、Docker 與虛擬化能力，同時避免使用網路優化腳本把必要元件關掉。
+讓 WSL2 與 Docker Desktop 可以正常使用，同時避免把遊戲需要的穩定性搞壞。
 
-## BIOS 必要設定
+## Step 1：先確認 BIOS 虛擬化
 
-依 CPU 平台確認虛擬化已開啟：
+重新開機進 BIOS / UEFI。
 
-- Intel：Intel Virtualization Technology / VT-x
-- AMD：SVM Mode
+常見名稱：
 
-主機板名稱可能不同，但核心目標是讓 Windows 能使用硬體虛擬化。
+- Intel：`Intel Virtualization Technology`、`VT-x`
+- AMD：`SVM Mode`
 
-## Windows 必要功能
+把它設為 Enabled，儲存並離開 BIOS。
 
-至少需要：
+不知道在哪裡時，不要亂改其他選項。只找虛擬化設定。
 
-- Windows Subsystem for Linux
-- Virtual Machine Platform
+## Step 2：在 Windows 確認是否已啟用
 
-Docker Desktop 使用 WSL2 backend 時也依賴這些底層能力。
+開啟工作管理員：
 
-## 安裝與驗證
+```text
+Ctrl + Shift + Esc
+→ 效能
+→ CPU
+```
+
+右下角應看到：
+
+```text
+虛擬化：已啟用
+```
+
+也可在 PowerShell 執行：
+
+```powershell
+systeminfo | Select-String 'Virtualization|Hyper-V'
+```
+
+## Step 3：安裝 WSL 必要元件
 
 以系統管理員 PowerShell 執行：
 
@@ -30,30 +47,69 @@ Docker Desktop 使用 WSL2 backend 時也依賴這些底層能力。
 wsl --install
 ```
 
-確認：
+正常情況會安裝：
+
+- Windows Subsystem for Linux
+- Virtual Machine Platform
+- 預設 Linux distribution
+
+安裝完成後依提示重新開機。
+
+## Step 4：確認 Ubuntu 是 WSL2
 
 ```powershell
-systeminfo | Select-String "Hyper-V"
 wsl --status
 wsl -l -v
 ```
 
-## 遊戲相容說明
+正常結果中，Ubuntu 的 `VERSION` 必須是 `2`。
 
-硬體虛擬化與 VBS 可能對部分遊戲效能產生小幅影響，但不應為了追求理論最高幀數直接關閉所有虛擬化功能。OPC 的核心需求包含 WSL2 與 Docker，因此虛擬化屬於必要基礎。
+若顯示 VERSION 1：
 
-若未來有特定遊戲反作弊衝突，應針對該遊戲驗證，而不是全域停用虛擬化。
+```powershell
+wsl --set-version Ubuntu 2
+```
 
-## 常見錯誤
+Distribution 名稱若不是 `Ubuntu`，請使用 `wsl -l -v` 顯示的實際名稱。
 
-- BIOS 中 SVM / VT-x 關閉
-- 執行 debloat script 後 Virtual Machine Platform 被停用
-- 把 WSL1 誤認為 WSL2
-- 為了遊戲優化關閉所有 Hyper-V 相關能力
+## Step 5：確認 Windows 功能
 
-## 驗收
+如果 `wsl --install` 失敗，可先檢查：
 
-- `wsl -l -v` 顯示 VERSION 2
-- Docker Desktop 可啟動
-- Windows 遊戲正常啟動
-- 沒有因虛擬化設定造成藍畫面或反覆重啟
+```powershell
+Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux
+Get-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform
+```
+
+兩者應顯示 `State : Enabled`。
+
+若未啟用：
+
+```powershell
+Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux -All -NoRestart
+Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform -All -NoRestart
+Restart-Computer
+```
+
+## 遊戲相容原則
+
+OPC 需要 WSL2 與 Docker，因此硬體虛擬化屬於必要基礎。
+
+不要為了網路上的「遊戲最佳化」教學全域關閉虛擬化、Virtual Machine Platform 或安全功能。若特定遊戲真的發生反作弊衝突，只針對該遊戲驗證。
+
+## 完成條件
+
+- [ ] 工作管理員顯示虛擬化已啟用。
+- [ ] `wsl --status` 成功。
+- [ ] `wsl -l -v` 顯示 Ubuntu VERSION 2。
+- [ ] Windows 沒有因啟用虛擬化而反覆重開機。
+- [ ] 主要遊戲仍可正常啟動。
+
+## 停止條件
+
+- BIOS 改完後無法正常開機。
+- Windows 啟用功能後反覆藍畫面。
+- `wsl --install` 持續出現相同錯誤。
+- 工作管理員仍顯示虛擬化未啟用。
+
+遇到以上情況，不要繼續裝 Docker。先把 BIOS 與 WSL2 基礎修好。
