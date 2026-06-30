@@ -2,15 +2,28 @@
 
 ## 目標
 
-確保 Redis、Postgres、Supabase local 與其他 Docker 服務的資料在 container 重建後仍存在，並能被備份與還原。
+確保 PostgreSQL、Redis 與其他 Docker 服務在 container 刪除重建後，資料仍然存在，而且能備份與還原。
 
-## Container 與資料的差別
+## 先理解兩件事
 
-Container 可以刪掉重建；資料不應跟著消失。持久化資料必須放在 Docker volume 或明確的 bind mount。
+- Container 可以刪掉重建。
+- 資料不應跟著 container 消失。
 
-## 兩種主要方式
+資料必須放在 named volume 或明確的 bind mount。
 
-### Named Volume
+## OPC 固定決策
+
+| 資料類型 | 使用方式 |
+|---|---|
+| PostgreSQL / Redis 資料 | Named Volume |
+| 程式碼與設定 | Bind Mount |
+| Artifact | Bind Mount 到 `D:\OPC\artifacts` |
+| Secrets | 不進 image、不進 Git |
+| Compose 檔 | `D:\OPC\runtime\<service>` |
+
+資料庫資料目錄不要直接 bind mount 到 Windows NTFS 路徑，避免權限與檔案系統問題。
+
+## Named Volume 範例
 
 ```yaml
 services:
@@ -23,18 +36,7 @@ volumes:
   postgres_data:
 ```
 
-優點：
-
-- Docker 管理生命週期。
-- 權限與 Linux filesystem 相容性通常較穩定。
-- 適合資料庫。
-
-缺點：
-
-- Windows 檔案總管不容易直接瀏覽。
-- 備份需透過 Docker 指令或資料庫原生工具。
-
-### Bind Mount
+## Bind Mount 範例
 
 ```yaml
 services:
@@ -43,53 +45,94 @@ services:
       - D:/OPC/projects/example:/workspace
 ```
 
-優點：
+## Step 1：啟動前看 Compose 設定
 
-- Windows 可直接看到檔案。
-- 適合程式碼、設定與輸出成果。
+```powershell
+cd D:\OPC\runtime\<service>
+docker compose config
+```
 
-缺點：
+確認：
 
-- 權限、效能與檔案監聽可能受 Windows / WSL2 邊界影響。
-- 不一定適合資料庫資料目錄。
+- 資料庫使用 named volume。
+- Windows 路徑拼字正確。
+- 沒有把 secrets 直接寫入 compose 檔。
 
-## OPC 決策
+## Step 2：啟動並建立測試資料
 
-- 資料庫資料：Named Volume。
-- 程式碼與文件：Bind Mount。
-- Artifact：Bind Mount 到 `D:\OPC\artifacts`。
-- Secrets：不直接寫入 image，不提交 Git。
-- Compose 檔：放在 `D:\OPC\runtime\<service>`。
+```powershell
+docker compose up -d
+docker compose ps
+docker volume ls
+```
+
+在資料庫建立一筆可辨識的測試資料。
+
+## Step 3：測試 container 重建
+
+```powershell
+docker compose down
+docker compose up -d
+```
+
+注意：不要加 `-v`。`docker compose down -v` 會刪除 named volume。
+
+重新連線後，測試資料必須仍存在。
+
+## Step 4：備份 PostgreSQL
+
+正式 PostgreSQL 優先使用 `pg_dump`，不要只備份 volume 檔案。
+
+範例：
+
+```powershell
+New-Item -ItemType Directory -Path D:\OPC\backups\database -Force | Out-Null
+docker compose exec -T postgres pg_dump -U <DB_USER> -d <DB_NAME> > D:\OPC\backups\database\postgres-backup.sql
+```
+
+`postgres`、`<DB_USER>`、`<DB_NAME>` 必須換成實際值。
+
+確認檔案不是空的：
+
+```powershell
+Get-Item D:\OPC\backups\database\postgres-backup.sql
+Get-FileHash D:\OPC\backups\database\postgres-backup.sql -Algorithm SHA256
+```
+
+## Step 5：測試還原
+
+不要覆蓋正式資料庫。建立測試資料庫後還原：
+
+```powershell
+docker compose exec -T postgres createdb -U <DB_USER> <TEST_DB_NAME>
+Get-Content D:\OPC\backups\database\postgres-backup.sql -Raw |
+  docker compose exec -T postgres psql -U <DB_USER> -d <TEST_DB_NAME>
+```
+
+確認測試資料存在後，才算備份成功。
 
 ## 查詢 Volume
 
 ```powershell
 docker volume ls
 docker volume inspect <VOLUME_NAME>
+docker system df
 ```
-
-## 備份 Named Volume 範例
-
-```powershell
-docker run --rm `
-  -v postgres_data:/data `
-  -v D:\OPC\backups\docker:/backup `
-  alpine sh -c "tar czf /backup/postgres_data.tar.gz -C /data ."
-```
-
-對正式 PostgreSQL，優先使用 `pg_dump`，不要只依賴檔案層複製。
 
 ## 禁止事項
 
-- 執行 `docker system prune --volumes` 前未確認資料
-- 把 production database 唯一副本放在本機 volume
-- 把資料庫資料目錄直接放在不穩定的網路磁碟
-- 把 secrets bake 進 Docker image
+- `docker compose down -v` 用在有重要資料的 stack。
+- `docker system prune --volumes`。
+- 未備份就 Factory Reset Docker Desktop。
+- 把 production database 唯一副本放在本機 volume。
+- 把 secrets bake 進 image。
+- 只備份 volume，不做資料庫 dump 與還原測試。
 
-## 驗收
+## 完成條件
 
-1. 建立測試資料。
-2. 刪除並重建 container。
-3. 確認資料仍存在。
-4. 執行備份。
-5. 在測試 volume 還原並驗證。
+- [ ] 資料庫使用 named volume。
+- [ ] Container 重建後測試資料仍存在。
+- [ ] PostgreSQL dump 已建立。
+- [ ] Dump checksum 已記錄。
+- [ ] Dump 已還原到測試資料庫並驗證。
+- [ ] 外部備份中也有這份 dump。
