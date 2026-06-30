@@ -1,0 +1,86 @@
+name: OPC Handbook CI
+
+on:
+  pull_request:
+    paths:
+      - 'OPC_AI_Workstation_Engineering_Handbook/**'
+      - '.github/workflows/opc-handbook-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'OPC_AI_Workstation_Engineering_Handbook/**'
+      - '.github/workflows/opc-handbook-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  handbook-regression:
+    runs-on: windows-latest
+
+    defaults:
+      run:
+        shell: pwsh
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Parse PowerShell scripts
+        run: |
+          $errorsFound = $false
+          Get-ChildItem 'OPC_AI_Workstation_Engineering_Handbook/scripts' -Filter '*.ps1' -Recurse | ForEach-Object {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count -gt 0) {
+              $errorsFound = $true
+              Write-Host "Syntax errors in $($_.FullName)" -ForegroundColor Red
+              $errors | Format-List
+            }
+          }
+          if ($errorsFound) { exit 1 }
+
+      - name: Validate WinGet package IDs in dry-run
+        run: |
+          ./OPC_AI_Workstation_Engineering_Handbook/scripts/bootstrap.ps1 `
+            -Phase Tools `
+            -DryRun `
+            -NonInteractive
+
+      - name: Validate Compose YAML
+        run: |
+          python -m pip install --disable-pip-version-check pyyaml
+          @'
+          from pathlib import Path
+          import yaml
+
+          path = Path('OPC_AI_Workstation_Engineering_Handbook/templates/opc-core-compose.yaml')
+          data = yaml.safe_load(path.read_text(encoding='utf-8'))
+          assert isinstance(data, dict), 'Compose document must be a mapping'
+          assert 'services' in data, 'Compose document is missing services'
+          assert {'postgres', 'redis'} <= set(data['services']), 'postgres and redis services are required'
+          print('Compose YAML structure is valid')
+          '@ | python -
+
+      - name: Run verification in CI mode
+        run: |
+          $artifactDirectory = Join-Path $PWD 'artifacts/verification'
+          New-Item -ItemType Directory -Path $artifactDirectory -Force | Out-Null
+
+          ./OPC_AI_Workstation_Engineering_Handbook/scripts/verify-all.ps1 `
+            -Mode Ci `
+            -WorkspaceRoot (Join-Path $PWD 'OPC_AI_Workstation_Engineering_Handbook') `
+            -OutputDirectory $artifactDirectory `
+            -OutputJson (Join-Path $artifactDirectory 'verification.json') `
+            -OutputMarkdown (Join-Path $artifactDirectory 'verification.md')
+
+      - name: Upload verification artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: opc-handbook-verification-${{ github.run_id }}-${{ github.sha }}
+          path: artifacts/verification/*
+          retention-days: 14
