@@ -97,13 +97,27 @@ jobs:
       - name: Final CI gate
         if: always()
         run: |
+          $failures = [System.Collections.Generic.List[string]]::new()
+
           $parserErrors = Get-Content 'artifacts/verification/parser-errors.txt' -Raw
           if (-not [string]::IsNullOrWhiteSpace($parserErrors)) {
-            Write-Error "PowerShell parser errors were found:`n$parserErrors"
+            $failures.Add("PowerShell parser errors were found:`n$parserErrors")
           }
+
           if (-not (Test-Path 'artifacts/verification/verification.json')) {
-            Write-Error 'verification.json was not produced.'
+            $failures.Add('verification.json was not produced.')
           }
+          else {
+            $verification = Get-Content 'artifacts/verification/verification.json' -Raw | ConvertFrom-Json
+            if ($verification.summary.overall -ne 'PASS') {
+              $failures.Add("Handbook verification overall result: $($verification.summary.overall)")
+            }
+          }
+
           if (-not (Test-Path 'artifacts/verification/verification.md')) {
-            Write-Error 'verification.md was not produced.'
+            $failures.Add('verification.md was not produced.')
+          }
+
+          if ($failures.Count -gt 0) {
+            throw ($failures -join "`n`n")
           }
