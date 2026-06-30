@@ -1,63 +1,109 @@
 # 11-Final / 04 Completion Record
 
-## 文件工程狀態
+## 手冊狀態
 
-本工程手冊的 10 批次建置已完成。
+本工程手冊已完成「可開始實機建置」所需的主線整理：
 
-完成範圍：
+- Windows 11 全新安裝與驗收
+- 雙 SSD、BitLocker、D:\OPC、備份與還原
+- Git、GitHub CLI、VS Code、Python/uv、Node/pnpm
+- WSL2、Docker Desktop、Compose 與資料持久化
+- 可執行的 Workspace Bootstrap、總 Bootstrap 與 verify-all
+- PostgreSQL + Redis Runtime foundation
+- Bare-metal rebuild 與 Full-System Acceptance
 
-- Foundation 與 Architecture
-- Windows 11 Engineering
-- Storage 與 Workspace
-- Development Environment
-- WSL2 與 Docker
-- AI Runtime
-- Bootstrap
-- Operations
-- Security 與 Recovery
-- Final Integration、ADR、Runbook、Scripts、Templates 與 Acceptance
+## 必須區分的兩件事
 
-## 重要聲明
+### 1. Handbook Ready
 
-此紀錄代表「工程手冊建置完成」，不代表實體工作站已自動通過全部驗收。
+代表：
 
-實機狀態只有在以下條件成立時才能標示完成：
+- 可以依主線開始重灌與建置。
+- 危險操作有停止條件。
+- 基礎工具有逐步驗收。
+- Bootstrap 與 verify-all 有可執行入口。
+- Runtime foundation 有 Compose 範本與驗證方式。
 
-1. Bootstrap 已在目標電腦執行。
-2. 所有 Verification 文件已實測。
-3. `scripts/verify-all.ps1` 無 FAIL。
-4. Full-System Acceptance 已簽核。
-5. 備份與還原已演練。
-6. Runtime 已完成具 Evidence 的測試 Objective。
+### 2. OPC Autonomous Runtime Ready
 
-## 目前基準
+只有以下應用層真正實作並實測後才能宣告：
+
+- Objective API / CLI
+- Workflow checkpoint / resume
+- Redis Streams consumer group 與重複投遞保護
+- Capability Registry
+- Tool Gateway
+- Agent session isolation
+- Evidence / reviewer / morning report
+- HITL 與 default-deny
+
+目前手冊已把這些能力定義清楚，但不假裝它們已經被程式實作完成。
+
+## 實機建置入口
 
 ```text
-Handbook Version: 1.0
-Architecture: Windows 11 + WSL2 + Docker + D:\OPC
-Runtime State: PostgreSQL
-Queue: Redis Streams
-Policy: Capability Registry + Tool Gateway + Default-Deny
-Operating Model: Night Shift + Morning Acceptance
+11-Final/01-Master-Index.md
 ```
 
-## 後續變更規則
-
-- 架構變更建立 ADR。
-- 重複故障建立 Runbook。
-- 安全事件建立 Incident 與 Postmortem。
-- 軟體版本與設定變更更新 Manifest。
-- 每次實機建置保存 Handbook commit SHA。
-
-## 最終完成定義
+必要腳本：
 
 ```text
-文件完整
+scripts/bootstrap-opc-workspace.ps1
+scripts/bootstrap.ps1
+scripts/verify-all.ps1
+scripts/opc-control.ps1
+```
+
+Runtime foundation 範本：
+
+```text
+templates/opc-core-compose.yaml
+```
+
+## 實機完成條件
+
+1. 依 Master Index 逐步施工。
+2. `scripts/bootstrap.ps1` 各 phase 完成。
+3. `scripts/verify-all.ps1` 沒有 FAIL。
+4. PostgreSQL、Redis 與 Compose 持久化測試通過。
+5. 備份與 database 還原測試通過。
+6. `11-Final/03-Full-System-Acceptance.md` 完成簽核。
+
+若 Autonomous Runtime 尚未實作，實機結果應標記：
+
+```text
+CONDITIONAL / READY FOR OPC APPLICATION DEVELOPMENT
+```
+
+只有 Autonomous Runtime 與 Recovery rehearsal 都通過，才標記：
+
+```text
+PASS / OPC AI WORKSTATION READY
+```
+
+## 維護規則
+
+- 架構真的改變才建立 ADR。
+- 重複發生且值得固定處理的故障才建立 Runbook。
+- 不為了紀錄進度新增狀態垃圾文件。
+- 軟體版本敏感步驟在施工當天重新核對官方文件。
+- 每次實機建置保存 Handbook commit SHA 與 verification report。
+
+## 最終定義
+
+```text
+手冊可施工
 + 腳本可執行
-+ 設定可重建
-+ Evidence 可驗證
++ 基礎環境可重建
++ Runtime foundation 可驗證
 + 備份可還原
-+ 安全邊界生效
-+ 實機驗收通過
-= OPC AI Workstation Ready
+= READY FOR OPC APPLICATION DEVELOPMENT
+```
+
+```text
+上述全部
++ Autonomous Runtime 已實作
++ Evidence / HITL / Security 邊界實測
++ Bare-metal recovery rehearsal 通過
+= OPC AI WORKSTATION READY
 ```
