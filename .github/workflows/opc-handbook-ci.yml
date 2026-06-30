@@ -16,9 +16,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: opc-handbook-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   handbook-regression:
     runs-on: windows-latest
+    timeout-minutes: 20
 
     defaults:
       run:
@@ -65,15 +70,13 @@ jobs:
           print('Compose YAML structure is valid')
           '@ | python -
 
-      - name: Run verification in CI mode
+      - name: Run hosted-runner handbook verification
         run: |
           $artifactDirectory = Join-Path $PWD 'artifacts/verification'
           New-Item -ItemType Directory -Path $artifactDirectory -Force | Out-Null
 
-          ./OPC_AI_Workstation_Engineering_Handbook/scripts/verify-all.ps1 `
-            -Mode Ci `
-            -WorkspaceRoot (Join-Path $PWD 'OPC_AI_Workstation_Engineering_Handbook') `
-            -OutputDirectory $artifactDirectory `
+          ./OPC_AI_Workstation_Engineering_Handbook/scripts/verify-ci.ps1 `
+            -HandbookRoot (Join-Path $PWD 'OPC_AI_Workstation_Engineering_Handbook') `
             -OutputJson (Join-Path $artifactDirectory 'verification.json') `
             -OutputMarkdown (Join-Path $artifactDirectory 'verification.md')
 
