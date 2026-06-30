@@ -2,46 +2,59 @@
 
 ## 目標
 
-在問題發生時，以可重現、可驗證的方法排查，不靠反覆重灌或隨機套用網路指令。
+出問題時一次只做一個修復，不靠亂重灌、亂貼網路指令或同時改很多設定。
 
-## 排查順序
+## 固定排查順序
 
 ```text
-確認症狀
-→ 記錄發生時間
-→ 查看最近變更
-→ 查看事件記錄
-→ 驗證服務與驅動
-→ 最小化重現
-→ 套用單一修復
-→ 再次驗證
+1. 說清楚症狀
+2. 記錄發生時間
+3. 想最近改了什麼
+4. 保存錯誤畫面
+5. 查看事件記錄
+6. 只做一個修復
+7. 再次驗證
 ```
 
-## 1. 查看事件記錄
+## Step 1：先記錄，不要急著修
+
+```text
+症狀：
+發生時間：
+最近變更：
+錯誤碼：
+哪些功能正常：
+哪些功能失敗：
+```
+
+## Step 2：查看事件記錄
 
 ```powershell
 Get-WinEvent -LogName System -MaxEvents 50 |
-  Select-Object TimeCreated, Id, LevelDisplayName, ProviderName, Message
+  Select-Object TimeCreated,Id,LevelDisplayName,ProviderName,Message
 ```
 
-應將重要結果存入：
+若 `D:\OPC` 已建立，可保存：
 
-```text
-D:\OPC\artifacts\troubleshooting\
+```powershell
+New-Item -ItemType Directory -Path D:\OPC\artifacts\troubleshooting -Force | Out-Null
+Get-WinEvent -LogName System -MaxEvents 200 |
+  Select-Object TimeCreated,Id,LevelDisplayName,ProviderName,Message |
+  Out-File D:\OPC\artifacts\troubleshooting\system-events.txt -Encoding utf8
 ```
 
-## 2. 系統完整性檢查
+## Step 3：系統檔案損壞時
 
-先執行 DISM，再執行 SFC：
+只有 Windows 元件異常、更新失敗或系統檔案錯誤時才執行：
 
 ```powershell
 DISM /Online /Cleanup-Image /RestoreHealth
 sfc /scannow
 ```
 
-不要在沒有症狀時每天執行；這些是排錯工具，不是日常最佳化工具。
+先 DISM，再 SFC。不要把它當每日保養。
 
-## 3. 網路問題
+## Step 4：網路問題
 
 ```powershell
 ipconfig /all
@@ -49,26 +62,39 @@ Resolve-DnsName github.com
 Test-NetConnection github.com -Port 443
 ```
 
-不要一開始就重設所有網路設定，先確認是 DNS、路由、防火牆還是服務問題。
+判斷：
 
-## 4. WSL2 問題
+- `Resolve-DnsName` 失敗：可能是 DNS。
+- DNS 成功但 443 失敗：可能是 Firewall、VPN、路由或網路中斷。
+- 所有網站都失敗：先看網卡與數據機。
+
+不要一開始就重設全部網路設定。
+
+## Step 5：WSL2 問題
 
 ```powershell
 wsl --status
 wsl -l -v
-wsl --shutdown
 wsl --update
 ```
 
-若 WSL2 失敗，依序檢查：
+若 WSL 卡住，先確認沒有重要任務，再執行：
 
-- BIOS 虛擬化
-- Virtual Machine Platform
-- Windows Subsystem for Linux
-- Windows Update
-- WSL kernel update
+```powershell
+wsl --shutdown
+```
 
-## 5. Docker 問題
+檢查順序：
+
+1. BIOS 虛擬化
+2. Virtual Machine Platform
+3. Windows Subsystem for Linux
+4. Windows Update
+5. WSL update
+
+不要執行 `wsl --unregister`，除非你已備份且確定要刪除該 distribution。
+
+## Step 6：Docker 問題
 
 ```powershell
 docker version
@@ -77,45 +103,74 @@ docker info
 wsl -l -v
 ```
 
-常見原因：
+先確認：
 
-- Docker Desktop 未啟動
-- WSL2 backend 失敗
-- 磁碟空間不足
-- Docker volume 損壞
-- 公司 VPN 或防火牆干擾
+- Docker Desktop 是否啟動
+- WSL2 是否正常
+- C 槽與 Docker 儲存空間是否足夠
+- VPN 或 Firewall 是否干擾
 
-## 6. GPU 問題
+不要直接 Factory Reset，也不要執行：
+
+```text
+docker system prune --volumes
+```
+
+## Step 7：GPU 問題
 
 ```powershell
 nvidia-smi
 Get-PnpDevice -Class Display
 ```
 
-若遊戲正常但 WSL2 看不到 GPU，不要先重裝整個 Windows；先檢查 Windows GPU driver、WSL 更新與容器 GPU 設定。
+如果遊戲正常但 WSL2 看不到 GPU：
 
-## 7. 變更紀錄
+1. 確認 Windows NVIDIA driver。
+2. 執行 `wsl --update`。
+3. 重新啟動 WSL2。
+4. 再檢查容器 GPU 設定。
 
-每次修復建立紀錄：
+不要先重灌 Windows。
+
+## Step 8：磁碟問題
+
+```powershell
+Get-Disk
+Get-Volume
+manage-bde -status
+```
+
+立即停止條件：
+
+- D 槽變成 RAW
+- Windows 要求格式化
+- BitLocker 顯示 Locked
+- SSD 型號或容量對不上
+
+遇到這些情況，不要初始化、不要格式化、不要 Clean。
+
+## 修復後紀錄
 
 ```text
 症狀：
-發生時間：
-最近變更：
+原因：
 執行指令：
 結果：
 是否恢復：
-是否建立 ADR / Runbook：
+是否需要新增或更新 Runbook：
 ```
 
 ## 禁止事項
 
-- 同時套用多個修復
-- 執行來源不明的 PowerShell
-- 未備份就修改 Registry
-- 因單一服務失敗直接重灌
-- 刪除事件記錄後再排查
+- 同時套用多個修復。
+- 執行來源不明的 PowerShell。
+- 未備份就修改 Registry。
+- 因單一服務失敗直接重灌。
+- 刪除事件記錄後再排查。
+- WSL 出錯就 `wsl --unregister`。
+- Docker 出錯就 Factory Reset。
+- 磁碟出錯就按格式化。
 
 ## 升級條件
 
-若同一問題重複兩次以上，必須建立獨立 Runbook；若涉及架構選擇，建立 ADR。
+同一問題重複兩次以上，才值得建立獨立 Runbook。若只是一次性錯誤，保留簡短紀錄即可，不新增多餘文件。
