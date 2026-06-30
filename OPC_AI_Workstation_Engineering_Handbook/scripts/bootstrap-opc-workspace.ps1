@@ -35,15 +35,15 @@ try {
     $Volume = Get-Volume -DriveLetter $DriveLetter -ErrorAction Stop
 }
 catch {
-    Fail "Drive $DriveLetter: not found. Do not create OPC workspace on the wrong drive."
+    Fail "Drive ${DriveLetter}: not found. Do not create OPC workspace on the wrong drive."
 }
 
 if ($Volume.FileSystem -ne 'NTFS') {
-    Fail "Drive $DriveLetter: must be NTFS. Current filesystem: $($Volume.FileSystem)"
+    Fail "Drive ${DriveLetter}: must be NTFS. Current filesystem: $($Volume.FileSystem)"
 }
 
 if ($Volume.FileSystemLabel -ne $ExpectedVolumeLabel) {
-    Fail "Drive $DriveLetter: label must be $ExpectedVolumeLabel. Current label: $($Volume.FileSystemLabel)"
+    Fail "Drive ${DriveLetter}: label must be $ExpectedVolumeLabel. Current label: $($Volume.FileSystemLabel)"
 }
 
 $MarkerPath = Join-Path $Root '.opc-workspace.json'
