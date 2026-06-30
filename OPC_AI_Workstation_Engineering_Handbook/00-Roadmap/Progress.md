@@ -1,6 +1,6 @@
 # 工程手冊進度
 
-## 整體進度：80%
+## 整體進度：90%
 
 依 10 批次規劃計算。
 
@@ -14,7 +14,7 @@
 | 6 | AI Runtime | 完成 |
 | 7 | Bootstrap | 完成 |
 | 8 | Operations | 完成 |
-| 9 | Security + Recovery | 待施工 |
+| 9 | Security + Recovery | 完成 |
 | 10 | 整合、ADR、Runbook、最終驗收 | 待施工 |
 
 ## 已完成主要內容
@@ -29,22 +29,22 @@
 - Runtime architecture、graph-based workflow、Redis Streams、PostgreSQL
 - Evidence Layer、Capability Registry、MCP、Session Isolation 與 HITL
 - Bootstrap phases、Manifest、idempotency、Doctor、rollback 與端對端驗收
-- Daily operating model、夜間自主執行與早晨驗收
-- Start、Stop、Pause、Resume 與遊戲模式
-- Logs、Metrics、Traces、告警與健康監控
-- 備份營運、更新窗口、成本治理與 Incident Response
+- Daily operating model、夜間自主執行、早晨驗收與事故處理
+- Threat Model、Least Privilege、Secrets 與 Agent Sandbox
+- Network、Supply-chain、Data Classification 與 Privacy
+- Disaster Recovery Tiers、Bare-metal Rebuild 與復原驗收
 
 ## 下一批
 
-Security + Recovery：
+整合、ADR、Runbook、腳本與最終驗收：
 
-- Threat model
-- Identity and least privilege
-- Secrets management
-- Agent sandbox and filesystem policy
-- Network security
-- Supply-chain and dependency security
-- Data classification and privacy
-- Disaster recovery tiers
-- Bare-metal rebuild
-- Security and recovery verification
+- Handbook master index
+- Final target architecture
+- ADR consolidation
+- Essential runbooks
+- Executable bootstrap and operations scripts
+- Manifest and configuration templates
+- Evidence and morning report templates
+- Full-system acceptance checklist
+- Gap audit and consistency review
+- Final completion record
