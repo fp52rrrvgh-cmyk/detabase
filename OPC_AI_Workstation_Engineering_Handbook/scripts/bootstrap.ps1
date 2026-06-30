@@ -3,14 +3,10 @@
 param(
     [ValidateSet('Preflight','Workspace','Tools','WSL','Docker','Verify','All')]
     [string]$Phase = 'All',
-
     [string]$WorkspaceRoot = 'D:\OPC',
-
     [switch]$Resume,
-
     [Alias('DryRun')]
     [switch]$Preview,
-
     [switch]$NonInteractive
 )
 
@@ -38,12 +34,9 @@ $WingetPackages = @(
 
 function Write-Step {
     param([Parameter(Mandatory)][string]$Message)
-
     $line = "[{0}] {1}" -f (Get-Date -Format o), $Message
     Write-Host $line
-    if (Test-Path $LogDirectory) {
-        Add-Content -Path $LogPath -Value $line
-    }
+    if (Test-Path $LogDirectory) { Add-Content -Path $LogPath -Value $line }
 }
 
 function Save-State {
@@ -58,7 +51,7 @@ function Save-State {
         return
     }
 
-    $state = [ordered]@{
+    [ordered]@{
         schema_version = 2
         current_phase = $CurrentPhase
         status = $Status
@@ -69,9 +62,7 @@ function Save-State {
         powershell = $PSVersionTable.PSVersion.ToString()
         preview = $Preview.IsPresent
         non_interactive = $NonInteractive.IsPresent
-    }
-
-    $state | ConvertTo-Json -Depth 4 | Set-Content -Path $StatePath -Encoding UTF8
+    } | ConvertTo-Json -Depth 4 | Set-Content -Path $StatePath -Encoding UTF8
 }
 
 function Assert-Administrator {
@@ -115,11 +106,6 @@ function Test-WingetPackageId {
     }
 
     Write-Step "Validating WinGet package ID: $Id"
-    if ($Preview) {
-        Write-Step "PREVIEW command: winget show --id $Id --exact"
-        return
-    }
-
     & winget show --id $Id --exact --accept-source-agreements *> $null
     if ($LASTEXITCODE -ne 0) {
         throw "WinGet package ID cannot be resolved exactly: $Id. Run 'winget search $Id' and update the handbook before continuing."
@@ -128,7 +114,6 @@ function Test-WingetPackageId {
 
 function Test-WingetPackageInstalled {
     param([Parameter(Mandatory)][string]$Id)
-
     & winget list --id $Id --exact --accept-source-agreements *> $null
     return $LASTEXITCODE -eq 0
 }
@@ -144,9 +129,7 @@ function Install-WingetPackage {
     }
 
     $common = @('--id', $Id, '--exact', '--accept-package-agreements', '--accept-source-agreements')
-    if ($NonInteractive) {
-        $common += '--disable-interactivity'
-    }
+    if ($NonInteractive) { $common += '--disable-interactivity' }
 
     if (Test-WingetPackageInstalled -Id $Id) {
         Write-Step "Package already installed; checking upgrade: $Id"
@@ -169,7 +152,6 @@ function Initialize-Logging {
         Write-Host '[PREVIEW] No state or log files will be written.'
         return
     }
-
     New-Item -ItemType Directory -Path $StateDirectory,$LogDirectory -Force | Out-Null
     Start-Transcript -Path $LogPath -Append | Out-Null
 }
@@ -183,12 +165,7 @@ function Stop-Logging {
 Initialize-Logging
 
 try {
-    $phases = if ($Phase -eq 'All') {
-        @('Preflight','Workspace','Tools','WSL','Docker','Verify')
-    }
-    else {
-        @($Phase)
-    }
+    $phases = if ($Phase -eq 'All') { @('Preflight','Workspace','Tools','WSL','Docker','Verify') } else { @($Phase) }
 
     foreach ($current in $phases) {
         Save-State -CurrentPhase $current -Status 'running' -Message 'Phase started'
@@ -196,105 +173,80 @@ try {
 
         switch ($current) {
             'Preflight' {
-                Assert-Administrator
+                if (-not $Preview) { Assert-Administrator }
 
                 $os = Get-CimInstance Win32_OperatingSystem
-                if ($os.Caption -notmatch 'Windows 11') {
-                    throw "Windows 11 required. Found: $($os.Caption)"
-                }
-
-                if (-not (Confirm-SecureBootUEFI)) {
-                    throw 'Secure Boot is not enabled.'
-                }
+                if ($os.Caption -notmatch 'Windows 11') { throw "Windows 11 required. Found: $($os.Caption)" }
+                if (-not (Confirm-SecureBootUEFI)) { throw 'Secure Boot is not enabled.' }
 
                 $tpm = Get-Tpm
-                if (-not ($tpm.TpmPresent -and $tpm.TpmReady)) {
-                    throw 'TPM is not present and ready.'
-                }
+                if (-not ($tpm.TpmPresent -and $tpm.TpmReady)) { throw 'TPM is not present and ready.' }
 
                 $volume = Get-Volume -DriveLetter D -ErrorAction Stop
-                if ($volume.FileSystem -ne 'NTFS' -or
-                    $volume.FileSystemLabel -ne 'OPC-DATA' -or
-                    $volume.HealthStatus -ne 'Healthy') {
+                if ($volume.FileSystem -ne 'NTFS' -or $volume.FileSystemLabel -ne 'OPC-DATA' -or $volume.HealthStatus -ne 'Healthy') {
                     throw "D: must be Healthy NTFS and labeled OPC-DATA. Found filesystem=$($volume.FileSystem), label=$($volume.FileSystemLabel), health=$($volume.HealthStatus)"
                 }
-
                 Write-Step 'Preflight passed.'
             }
 
             'Workspace' {
                 $workspaceScript = Join-Path $PSScriptRoot 'bootstrap-opc-workspace.ps1'
-                if (-not (Test-Path $workspaceScript)) {
-                    throw "Missing script: $workspaceScript"
-                }
+                if (-not (Test-Path $workspaceScript)) { throw "Missing script: $workspaceScript" }
 
                 $workspaceArguments = @('-Root', $WorkspaceRoot)
                 if ($Preview) { $workspaceArguments += '-WhatIf' }
-
                 & $workspaceScript @workspaceArguments
-                if ($LASTEXITCODE -ne 0) {
-                    throw 'Workspace bootstrap failed.'
-                }
-
+                if ($LASTEXITCODE -ne 0) { throw 'Workspace bootstrap failed.' }
                 Write-Step 'Workspace phase passed.'
             }
 
             'Tools' {
-                Assert-Administrator
-                foreach ($packageId in $WingetPackages) {
-                    Install-WingetPackage -Id $packageId
-                }
+                if (-not $Preview) { Assert-Administrator }
+                foreach ($packageId in $WingetPackages) { Install-WingetPackage -Id $packageId }
                 Write-Step 'Base tools validated. Reopen PowerShell if newly installed commands are not yet on PATH.'
             }
 
             'WSL' {
-                Assert-Administrator
+                if (-not $Preview) { Assert-Administrator }
                 Write-Step 'Checking WSL state.'
 
-                if (Test-CommandExists 'wsl') {
-                    if ($Preview) {
-                        Write-Step 'PREVIEW command: wsl --update'
-                    }
-                    else {
-                        & wsl --status *> $null
-                        if ($LASTEXITCODE -eq 0) {
-                            Invoke-CheckedCommand -FilePath 'wsl' -ArgumentList @('--update') -Description 'Updating existing WSL'
-                        }
-                        else {
-                            Invoke-CheckedCommand -FilePath 'wsl' -ArgumentList @('--install','--no-launch') -Description 'Installing WSL'
-                            Invoke-CheckedCommand -FilePath 'wsl' -ArgumentList @('--update') -Description 'Updating WSL after installation'
-                        }
-                    }
-                }
-                else {
+                if (-not (Test-CommandExists 'wsl')) {
                     throw 'wsl.exe is unavailable. Confirm this is Windows 11 and Windows Update is complete.'
                 }
 
+                if ($Preview) {
+                    Write-Step 'PREVIEW command: wsl --update'
+                }
+                else {
+                    & wsl --status *> $null
+                    if ($LASTEXITCODE -eq 0) {
+                        Invoke-CheckedCommand -FilePath 'wsl' -ArgumentList @('--update') -Description 'Updating existing WSL'
+                    }
+                    else {
+                        Invoke-CheckedCommand -FilePath 'wsl' -ArgumentList @('--install','--no-launch') -Description 'Installing WSL'
+                        Invoke-CheckedCommand -FilePath 'wsl' -ArgumentList @('--update') -Description 'Updating WSL after installation'
+                    }
+                }
                 Write-Step 'WSL phase completed. A reboot and Ubuntu first-run setup may still be required.'
             }
 
             'Docker' {
-                Assert-Administrator
+                if (-not $Preview) { Assert-Administrator }
                 Install-WingetPackage -Id 'Docker.DockerDesktop'
                 Write-Step 'Docker Desktop package is present. First launch, license acceptance, WSL2 backend, and Ubuntu integration remain manual steps.'
             }
 
             'Verify' {
                 $verifyScript = Join-Path $PSScriptRoot 'verify-all.ps1'
-                if (-not (Test-Path $verifyScript)) {
-                    throw "Missing script: $verifyScript"
-                }
+                if (-not (Test-Path $verifyScript)) { throw "Missing script: $verifyScript" }
 
                 if ($Preview) {
                     Write-Step "PREVIEW command: $verifyScript -WorkspaceRoot $WorkspaceRoot"
                 }
                 else {
                     & $verifyScript -WorkspaceRoot $WorkspaceRoot
-                    if ($LASTEXITCODE -ne 0) {
-                        throw 'Verification reported one or more FAIL results.'
-                    }
+                    if ($LASTEXITCODE -ne 0) { throw 'Verification reported one or more FAIL results.' }
                 }
-
                 Write-Step 'Verification phase completed.'
             }
         }

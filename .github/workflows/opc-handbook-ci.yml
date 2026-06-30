@@ -16,9 +16,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: opc-handbook-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   handbook-regression:
     runs-on: windows-latest
+    timeout-minutes: 20
 
     defaults:
       run:
@@ -28,22 +33,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Parse PowerShell scripts
+      - name: Prepare artifact directory
         run: |
-          $errorsFound = $false
+          New-Item -ItemType Directory -Path 'artifacts/verification' -Force | Out-Null
+          New-Item -ItemType File -Path 'artifacts/verification/parser-errors.txt' -Force | Out-Null
+
+      - name: Parse PowerShell scripts
+        continue-on-error: true
+        run: |
+          $errorFile = 'artifacts/verification/parser-errors.txt'
           Get-ChildItem 'OPC_AI_Workstation_Engineering_Handbook/scripts' -Filter '*.ps1' -Recurse | ForEach-Object {
             $tokens = $null
             $errors = $null
             [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors) | Out-Null
-            if ($errors.Count -gt 0) {
-              $errorsFound = $true
-              Write-Host "Syntax errors in $($_.FullName)" -ForegroundColor Red
-              $errors | Format-List
+            foreach ($error in $errors) {
+              $line = '{0}:{1}:{2}: {3}' -f $_.FullName,$error.Extent.StartLineNumber,$error.Extent.StartColumnNumber,$error.Message
+              Add-Content -Path $errorFile -Value $line
+              Write-Host $line -ForegroundColor Red
             }
           }
-          if ($errorsFound) { exit 1 }
 
       - name: Validate WinGet package IDs in dry-run
+        continue-on-error: true
         run: |
           ./OPC_AI_Workstation_Engineering_Handbook/scripts/bootstrap.ps1 `
             -Phase Tools `
@@ -51,6 +62,7 @@ jobs:
             -NonInteractive
 
       - name: Validate Compose YAML
+        continue-on-error: true
         run: |
           python -m pip install --disable-pip-version-check pyyaml
           @'
@@ -65,15 +77,12 @@ jobs:
           print('Compose YAML structure is valid')
           '@ | python -
 
-      - name: Run verification in CI mode
+      - name: Run hosted-runner handbook verification
+        continue-on-error: true
         run: |
           $artifactDirectory = Join-Path $PWD 'artifacts/verification'
-          New-Item -ItemType Directory -Path $artifactDirectory -Force | Out-Null
-
-          ./OPC_AI_Workstation_Engineering_Handbook/scripts/verify-all.ps1 `
-            -Mode Ci `
-            -WorkspaceRoot (Join-Path $PWD 'OPC_AI_Workstation_Engineering_Handbook') `
-            -OutputDirectory $artifactDirectory `
+          ./OPC_AI_Workstation_Engineering_Handbook/scripts/verify-ci.ps1 `
+            -HandbookRoot (Join-Path $PWD 'OPC_AI_Workstation_Engineering_Handbook') `
             -OutputJson (Join-Path $artifactDirectory 'verification.json') `
             -OutputMarkdown (Join-Path $artifactDirectory 'verification.md')
 
@@ -84,3 +93,31 @@ jobs:
           name: opc-handbook-verification-${{ github.run_id }}-${{ github.sha }}
           path: artifacts/verification/*
           retention-days: 14
+
+      - name: Final CI gate
+        if: always()
+        run: |
+          $failures = [System.Collections.Generic.List[string]]::new()
+
+          $parserErrors = Get-Content 'artifacts/verification/parser-errors.txt' -Raw
+          if (-not [string]::IsNullOrWhiteSpace($parserErrors)) {
+            $failures.Add("PowerShell parser errors were found:`n$parserErrors")
+          }
+
+          if (-not (Test-Path 'artifacts/verification/verification.json')) {
+            $failures.Add('verification.json was not produced.')
+          }
+          else {
+            $verification = Get-Content 'artifacts/verification/verification.json' -Raw | ConvertFrom-Json
+            if ($verification.summary.overall -ne 'PASS') {
+              $failures.Add("Handbook verification overall result: $($verification.summary.overall)")
+            }
+          }
+
+          if (-not (Test-Path 'artifacts/verification/verification.md')) {
+            $failures.Add('verification.md was not produced.')
+          }
+
+          if ($failures.Count -gt 0) {
+            throw ($failures -join "`n`n")
+          }
