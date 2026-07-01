@@ -1,204 +1,215 @@
-# 11-Final / 03 Full-System Acceptance
+# Phase 1 最終驗收
 
-## 使用方式
+## 這份表的用途
 
-這是 **Phase 1：OPC AI Workstation** 的實機驗收表。
+這不是企業稽核表。
 
-本文件只判斷工作站、儲存、開發工具、WSL2、Docker、Runtime Foundation 與 Recovery 是否可用；不把尚未施工的 Phase 2 Autonomous Runtime 當成 Phase 1 的失敗條件。
+它只用來確認：
 
-每一項必須有實際結果，不能靠「應該可以」勾選。
+> 這台電腦是否已經準備好，可以開始建立真正的多 Agent OPC。
 
-判定只有三種：
+結果分成三種：
 
-- **PASS**：Phase 1 全部必要項目已實測通過。
-- **CONDITIONAL**：Phase 1 可使用，但存在已記錄、已接受且不阻礙施工的 WARN / SKIP。
-- **FAIL**：有關鍵項目失敗，不得投入正式工作。
+- **PASS**：必要功能正常。
+- **CONDITIONAL**：可以使用，但有已知提醒。
+- **FAIL**：必要功能沒有正常工作。
 
 ---
 
-## 1. Windows Host
+## 1. Windows
 
-- [ ] Windows 11 已完成更新，沒有等待重新啟動。
-- [ ] Secure Boot 為 True。
-- [ ] TPM Present / Ready 為 True。
-- [ ] GPU、網路、音訊與藍牙正常。
-- [ ] Defender 與 Firewall 啟用。
-- [ ] 主要遊戲與反作弊正常。
-- [ ] `03-Windows/07-Windows-Verification.md` 全部通過。
+- [ ] Windows 11 可以正常開機與使用。
+- [ ] 網路、音訊與顯示卡正常。
+- [ ] Windows Update 已完成主要更新。
 
-## 2. Storage
+以下不再是必要通過條件：
 
-- [ ] C: 與 D: 為獨立 SSD。
-- [ ] 500GB SSD 為 C: 系統碟；2TB SSD 為 D: OPC-DATA，除非實機硬體紀錄另有明確決策。
-- [ ] SSD 型號、序號末碼與容量已有紀錄。
-- [ ] D: 為 NTFS、標籤 OPC-DATA。
-- [ ] `D:\OPC` 標準目錄完整。
-- [ ] 沒有 RAID 0、Dynamic Disk 或 Spanned Volume。
-- [ ] BitLocker recovery key 可在外部位置取得。
-- [ ] 外部備份已完成抽樣還原。
-- [ ] `04-Storage/09-Storage-Verification.md` 全部通過。
+- Secure Boot。
+- TPM。
+- BitLocker。
+- Defender 特定狀態。
+- 遊戲與反作弊測試。
 
-## 3. Development
+---
 
-- [ ] Git 身分與 main 分支設定正確。
-- [ ] GitHub CLI 登入正確帳號。
-- [ ] VS Code 可開啟 `D:\OPC\projects`。
-- [ ] Python / uv 環境可刪除 `.venv` 後重建。
-- [ ] Node / pnpm 可刪除 `node_modules` 後重建。
-- [ ] Repository 不含 `.env`、token、password 或 recovery key。
-- [ ] `05-Development/07-Development-Verification.md` 全部通過。
+## 2. 資料碟與工作區
 
-## 4. WSL2 與 Docker
+- [ ] D: 是預定的資料碟。
+- [ ] D: 使用 NTFS。
+- [ ] `D:\OPC` 可以讀寫。
+- [ ] `projects`、`runtime`、`data`、`backups`、`artifacts` 等主要資料夾存在。
 
-- [ ] Ubuntu 使用 WSL2 VERSION 2。
-- [ ] systemd 可用。
-- [ ] `/mnt/d/OPC` 可讀寫。
-- [ ] `.wslconfig` 符合硬體並保留 Windows 資源。
-- [ ] Docker Desktop 使用 WSL2 backend。
-- [ ] WSL 內沒有第二套獨立 Docker daemon 同時執行。
-- [ ] `docker run --rm hello-world` 成功。
-- [ ] Compose 測試 stack healthy。
-- [ ] Container 重建後資料仍存在。
-- [ ] 必要 port 只綁定 localhost 或明確允許的介面。
-- [ ] 有 NVIDIA 時，Windows 與 WSL2 的 `nvidia-smi` 成功。
-- [ ] `06-WSL2-Docker/09-Verification.md` 全部通過。
+以下屬於可選進階管理：
 
-## 5. Bootstrap
+- 固定磁碟標籤。
+- Volume UniqueId。
+- 硬體序號紀錄。
+- BitLocker recovery key。
+- 外部備份抽樣還原。
 
-- [ ] `bootstrap.ps1 -Phase Preflight -DryRun` 不寫入系統。
-- [ ] `bootstrap.ps1 -Phase Preflight` 通過。
-- [ ] Workspace phase 不會刪除既有資料。
-- [ ] Tools phase 可安全重跑。
-- [ ] WinGet package ID 可精確解析。
-- [ ] WSL phase 不會 unregister production distribution。
-- [ ] Docker phase 不會 Factory Reset。
-- [ ] 失敗時會留下 state.json 與 log。
-- [ ] 人工步驟已完成：GitHub login、Ubuntu user、Docker Desktop 首次設定、secrets handoff。
+---
 
-## 6. Runtime Foundation
+## 3. 開發工具
 
-- [ ] `templates/opc-core-compose.yaml` 已複製到 `D:\OPC\runtime\opc-core\compose.yaml`。
-- [ ] `.env` 已建立且未進 Git。
-- [ ] PostgreSQL healthy。
-- [ ] Redis PING 回傳 PONG。
-- [ ] Redis Stream 可寫入與讀取。
-- [ ] PostgreSQL table 可建立與查詢。
-- [ ] Container 重建後 PostgreSQL 與 Redis 資料仍存在。
-- [ ] PostgreSQL dump 已建立並還原到測試資料庫。
-- [ ] `opc-control.ps1` 的 Start / Stop / Status 可用。
+執行：
 
-通過本節代表：
-
-```text
-RUNTIME FOUNDATION READY
+```powershell
+git --version
+gh --version
+code --version
+pwsh --version
+python --version
+uv --version
+node --version
+pnpm --version
 ```
 
-不代表 Phase 2 Agent Runtime 已完成。
+- [ ] 需要的工具都有版本輸出。
+- [ ] VS Code 可以開啟 OPC 專案。
+- [ ] GitHub CLI 可以登入正確帳號。
 
-## 7. Recovery
+不要求第一次驗收就完成 `.venv`、`node_modules` 的刪除重建演練。
 
-- [ ] Recovery Package 位於外部位置。
-- [ ] Handbook repository URL 與 commit SHA 已記錄。
-- [ ] Git repository 可重新 clone。
-- [ ] PostgreSQL dump checksum 正確。
-- [ ] PostgreSQL dump 已測試還原。
-- [ ] WSL distribution 可 export 並以測試名稱 import。
-- [ ] BitLocker Key ID 與 recovery key 對應正確。
-- [ ] `10-Security-Recovery/09-Bare-Metal-Rebuild.md` 已人工走讀。
+---
 
-## 8. 執行總驗收腳本
+## 4. WSL2
+
+```powershell
+wsl --version
+wsl -l -v
+```
+
+- [ ] Ubuntu 可以啟動。
+- [ ] Ubuntu 顯示 VERSION 2。
+- [ ] `/mnt/d/OPC` 可以讀取。
+
+以下屬於進階選項：
+
+- systemd 深入檢查。
+- `.wslconfig` 資源調校。
+- WSL export / import。
+- NVIDIA GPU 測試。
+
+---
+
+## 5. Docker
+
+```powershell
+docker version
+docker run --rm hello-world
+docker compose version
+```
+
+- [ ] Docker Desktop 可以開啟。
+- [ ] `hello-world` 成功。
+- [ ] Windows 與 Ubuntu 都可以使用 Docker。
+
+不要求第一次驗收就完成複雜網路、Port 限制或 Docker Context 管理。
+
+---
+
+## 6. PostgreSQL 與 Redis
+
+```powershell
+Set-Location D:\OPC\runtime\opc-core
+docker compose -p opc-core up -d
+docker compose -p opc-core ps
+```
+
+PostgreSQL：
+
+```powershell
+docker compose -p opc-core exec -T postgres `
+  psql -U opc -d opc -c "SELECT now();"
+```
+
+Redis：
+
+```powershell
+docker compose -p opc-core exec -T redis redis-cli ping
+```
+
+- [ ] PostgreSQL 可以查詢。
+- [ ] Redis 回傳 `PONG`。
+- [ ] `.env` 沒有提交到 Git。
+
+以下屬於進階測試：
+
+- Redis Stream。
+- PostgreSQL dump / restore。
+- 完整資料持久化測試。
+- `opc-control.ps1` 所有操作。
+
+---
+
+## 7. 執行 verify-all
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\scripts\verify-all.ps1
+.\OPC_AI_Workstation_Engineering_Handbook\scripts\verify-all.ps1
 ```
 
-必須保存：
+判斷方式：
+
+- 必要項目沒有 FAIL：可以通過。
+- WARN 已理解且不影響使用：可以列為 CONDITIONAL。
+- 可選項目 SKIP：不阻止 PASS。
+
+JSON 與 Markdown 報告可用於排錯，但一般使用者不必每次都保存完整稽核資料。
+
+---
+
+## 8. Phase 1 最低通過標準
 
 ```text
-D:\OPC\artifacts\verification\verification-日期時間.json
-D:\OPC\artifacts\verification\verification-日期時間.md
+Windows 正常
++ D:\OPC 可使用
++ 開發工具可執行
++ WSL2 正常
++ Docker hello-world 成功
++ PostgreSQL 可查詢
++ Redis 回傳 PONG
++ verify-all 無必要項目 FAIL
+= PHASE 1 READY
 ```
 
-規則：
+這代表：
 
-- 任一 FAIL：最終結果 FAIL。
-- WARN：必須寫清楚原因與是否接受。
-- SKIP：只能用於明確不適用，例如沒有 NVIDIA GPU。
+> 工作站地基已準備好，可以開始 Phase 2。
 
-## 9. 最終安全測試
+---
 
-人工執行：
+## 9. Phase 2 才要完成的內容
 
-```text
-讀取指定 repository README
-→ 產生摘要與風險清單
-→ 保存到 D:\OPC\artifacts
-→ 建立 SHA-256
-→ 確認 repository 沒有被修改
-```
+以下不屬於 Phase 1：
 
-這只驗證工作站與工具鏈，不宣稱 Agent Runtime 已存在。
+- Objective intake。
+- 自動任務拆解。
+- 多 Agent 協作。
+- Research Worker。
+- Coding Worker。
+- QA / Reviewer Worker。
+- Queue、retry、checkpoint。
+- MCP 或 Tool Gateway。
+- Morning Report。
+- 自動驗收流程。
 
-## 10. Phase 2 邊界確認
+Phase 1 不應因為這些功能尚未存在而判定失敗。
 
-下列項目屬於未來 **Phase 2：OPC Agent Runtime**，本文件不得勾選，也不得用來阻止 Phase 1 PASS：
+---
 
-- Objective intake / reframe
-- Workflow checkpoint / resume
-- Queue / retry / deduplication
-- Capability Registry
-- Tool / MCP Gateway
-- Agent workspace 與 credential isolation
-- Evidence Reviewer
-- HITL approval
-- Morning Report
-- Feedback loop
-
-Phase 2 只能在 Phase 1 實機 PASS 後開始規劃。
-
-另請注意：repository root 的 `spec-phase2.md` 是財務系統功能規格，不是 OPC Agent Runtime 規格，不得引用為 OPC Phase 2 藍圖。
-
-下一步只讀：
-
-```text
-11-Final/05-Phase-1-Release-and-Phase-2-Handoff.md
-```
-
-## 最終簽核
+## 10. 簡單驗收紀錄
 
 ```text
 驗收日期：
-Windows build：
-Handbook branch / commit：
-Bootstrap state：
-Verification report：
-Evidence directory：
-Backup restore evidence：
+Windows 是否正常：
+WSL2 是否正常：
+Docker 是否正常：
+PostgreSQL 是否正常：
+Redis 是否正常：
+verify-all 結果：
 Phase 1 結果：PASS / CONDITIONAL / FAIL
-Phase 2 狀態：NOT PLANNED / PLANNING BLOCKED / READY TO PLAN
-驗收人：
-未通過項目：
-已接受 WARN / SKIP：
+需要修正的項目：
 ```
 
-## Phase 1 判定標準
-
-```text
-Windows
-+ Storage
-+ Development
-+ WSL2
-+ Docker
-+ Bootstrap
-+ Runtime Foundation
-+ Recovery rehearsal
-+ verify-all 無 FAIL
-= PASS / OPC AI WORKSTATION PHASE 1 READY
-```
-
-只有 Phase 1 PASS 後，才能把 Phase 2 狀態設為：
-
-```text
-READY TO PLAN
-```
+不需要填寫企業級簽核、RTO、RPO、Evidence directory 或完整 Recovery 報告，除非日後真的有需要。
