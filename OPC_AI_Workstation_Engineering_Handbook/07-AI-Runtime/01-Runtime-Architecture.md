@@ -1,52 +1,63 @@
-# 07-AI-Runtime / 01 Runtime Architecture
+# OPC 基礎服務與未來多 Agent 架構
 
-## 目標
+## 這一章在做什麼
 
-建立可驗證的 OPC 執行層：目標進入、任務分解、Agent 執行、證據保存、人工驗收。
+這一步先建立 OPC 未來會使用的兩個基礎服務：
 
-這一章分成兩層：
+- PostgreSQL：保存正式資料。
+- Redis：保存工作佇列、暫時狀態與快速資料。
 
-1. **現在可以施工的基礎層**：PostgreSQL、Redis、目錄、控制腳本、證據位置。
-2. **後續應用層**：Workflow Runtime、Capability Registry、Tool Gateway、Agent workers。
+這不是完整的多 Agent OPC。
 
-不要把「基礎服務已啟動」誤稱為「OPC 自主公司已完成」。
+它只是先把地基準備好。
 
-## 核心資料流
+---
 
-```text
-Objective
-  ↓
-Planner
-  ↓
-Workflow Runtime
-  ↓
-Task Queue
-  ↓
-Specialized Worker
-  ↓
-Tool / MCP / Repository / Database
-  ↓
-Evidence Store
-  ↓
-Reviewer
-  ↓
-Morning Report / Human Decision
-```
-
-## Phase 1：先建立 Runtime 基礎服務
-
-使用範本：
+## 未來完整 OPC 的工作方式
 
 ```text
-templates/opc-core-compose.yaml
+你下達目標
+→ Planner 拆解工作
+→ Research Worker 找資料
+→ Coding / Action Worker 施工
+→ QA / Reviewer 驗證
+→ Reporter 整理結果
+→ Morning Report
+→ 你驗收
 ```
 
-建立目錄：
+Hermes、Codex、OpenHands 或其他 Agent 都只是 Worker 候選，不是 OPC 本身。
+
+---
+
+## Phase 1 只做這些事
+
+```text
+建立 PostgreSQL
++ 建立 Redis
++ 確認兩個服務可以啟動
++ 確認資料不會因為容器重建而消失
+```
+
+不需要在本章完成：
+
+- 多 Agent 協作。
+- Capability Registry。
+- Tool Gateway。
+- Human Approval 系統。
+- Morning Report。
+- 完整 Workflow Runtime。
+
+這些都屬於 Phase 2。
+
+---
+
+## 建立服務資料夾
 
 ```powershell
 $Runtime = 'D:\OPC\runtime\opc-core'
 New-Item -ItemType Directory -Path $Runtime -Force | Out-Null
-Copy-Item .\templates\opc-core-compose.yaml (Join-Path $Runtime 'compose.yaml')
+Copy-Item .\OPC_AI_Workstation_Engineering_Handbook\templates\opc-core-compose.yaml (Join-Path $Runtime 'compose.yaml')
 Set-Location $Runtime
 ```
 
@@ -56,58 +67,43 @@ Set-Location $Runtime
 @'
 POSTGRES_DB=opc
 POSTGRES_USER=opc
-POSTGRES_PASSWORD=REPLACE_WITH_A_LONG_RANDOM_PASSWORD
+POSTGRES_PASSWORD=請換成你自己的密碼
 POSTGRES_PORT=55432
 REDIS_PORT=56379
 '@ | Set-Content .env
 ```
 
-把 password 換成長且隨機的正式值。`.env` 不進 Git。
+`.env` 不要提交到 Git。
 
-驗證設定：
+---
+
+## 先檢查設定
 
 ```powershell
 docker compose config
 ```
 
-啟動：
+如果沒有錯誤，再啟動：
 
 ```powershell
 docker compose -p opc-core up -d
 docker compose -p opc-core ps
 ```
 
-## Phase 2：驗證 PostgreSQL
+---
+
+## 確認 PostgreSQL
 
 ```powershell
 docker compose -p opc-core exec -T postgres `
   psql -U opc -d opc -c "SELECT current_database(), current_user, now();"
 ```
 
-建立最小 schema：
+看到資料庫名稱、使用者與目前時間，就代表 PostgreSQL 正常。
 
-```powershell
-docker compose -p opc-core exec -T postgres psql -U opc -d opc -c "
-CREATE TABLE IF NOT EXISTS objectives (
-  id uuid PRIMARY KEY,
-  title text NOT NULL,
-  status text NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
-);
-CREATE TABLE IF NOT EXISTS evidence (
-  id uuid PRIMARY KEY,
-  objective_id uuid REFERENCES objectives(id),
-  kind text NOT NULL,
-  location text NOT NULL,
-  checksum text,
-  created_at timestamptz NOT NULL DEFAULT now()
-);"
-```
+---
 
-這只是最小驗證 schema，不代表完整 production schema。
-
-## Phase 3：驗證 Redis
+## 確認 Redis
 
 ```powershell
 docker compose -p opc-core exec -T redis redis-cli ping
@@ -119,16 +115,11 @@ docker compose -p opc-core exec -T redis redis-cli ping
 PONG
 ```
 
-測試 Stream：
+---
 
-```powershell
-docker compose -p opc-core exec -T redis redis-cli XADD opc:test '*' type verification value ok
-docker compose -p opc-core exec -T redis redis-cli XRANGE opc:test - +
-```
+## 確認重建後資料仍存在
 
-## Phase 4：驗證資料持久化
-
-停止並重建 container：
+先停止並重建容器：
 
 ```powershell
 docker compose -p opc-core down
@@ -137,79 +128,49 @@ docker compose -p opc-core up -d
 
 不要加 `-v`。
 
-重新檢查 PostgreSQL table 與 Redis Stream 仍存在。
+`-v` 可能連資料 Volume 一起刪除。
 
-## Phase 5：使用控制腳本
+---
+
+## 平常會用到的指令
 
 ```powershell
-.\scripts\opc-control.ps1 -Action Status -RuntimePath 'D:\OPC\runtime\opc-core'
-.\scripts\opc-control.ps1 -Action Start -RuntimePath 'D:\OPC\runtime\opc-core'
-.\scripts\opc-control.ps1 -Action Pause -RuntimePath 'D:\OPC\runtime\opc-core'
-.\scripts\opc-control.ps1 -Action Resume -RuntimePath 'D:\OPC\runtime\opc-core'
+docker compose -p opc-core ps
+docker compose -p opc-core stop
+docker compose -p opc-core start
+docker compose -p opc-core logs
 ```
 
-`Pause` 目前建立 dispatch marker；真正的 worker 必須實作「看到 marker 就不領新任務」。
+| 指令 | 用途 |
+|---|---|
+| `ps` | 看服務是否正常 |
+| `stop` | 暫停服務 |
+| `start` | 重新啟動服務 |
+| `logs` | 查看錯誤訊息 |
 
-## 核心元件白話說明
+---
 
-- **Objective Store**：保存老闆交代的目標與驗收條件。
-- **Workflow Runtime**：記住任務做到哪裡，可暫停與恢復。
-- **Queue**：排隊分派工作，避免同一任務重複做。
-- **Capability Registry**：記錄每個 Agent 被允許做什麼。
-- **Session Isolation**：每個任務有自己的工作區、權限與 log。
-- **Evidence Layer**：保存 commit、測試、截圖、查詢與失敗紀錄。
-- **Reviewer**：依驗收條件判定通過或退回。
+## 完成標準
 
-## Hermes、Codex、OpenHands 的位置
+- PostgreSQL 顯示 healthy。
+- Redis 顯示 healthy。
+- PostgreSQL 查詢成功。
+- Redis 回傳 `PONG`。
+- `docker compose down` 再 `up -d` 後服務仍正常。
+- `.env` 沒有提交到 Git。
 
-這些是可替換的互動入口或 worker，不是 OPC 的資料真實來源，也不是安全邊界。
+---
 
-- Hermes：可作為訊息入口或一般 Agent worker。
-- Codex：適合受控的程式碼修改與測試工作。
-- OpenHands：可作為隔離的工程 worker 候選。
-- ChatGPT：外部研究、架構與審查協作者，不是本機常駐 runtime。
+## Phase 2 才要決定的事情
 
-任何產品接入前都要先定義：
+Phase 2 才研究：
 
-- 允許讀寫哪些路徑
-- 允許使用哪些工具
-- Credential scope
-- Timeout
-- 成本上限
-- Evidence 格式
-- 需要人工批准的動作
+- 多個 Worker 如何互相協作。
+- 誰負責拆解任務。
+- 誰負責找資料。
+- 誰負責施工。
+- 誰負責驗證。
+- 如何產生 Morning Report。
+- Hermes、Codex、OpenHands、MCP 或其他工具放在哪一層。
 
-## 第一個安全測試 Objective
-
-```text
-讀取指定 repository 的 README，產生摘要與風險清單，
-將輸出保存到 D:\OPC\artifacts，建立 SHA-256，
-不得修改 repository，不得網路發布，不得使用 secrets。
-```
-
-在完整 workflow application 尚未實作前，可人工執行此測試來驗證目錄、權限與 evidence 流程；不得把它誤稱為自主 runtime 已完成。
-
-## 通過條件
-
-### 基礎層 PASS
-
-- [ ] PostgreSQL healthy。
-- [ ] Redis PING 成功。
-- [ ] Redis Stream 可寫入與讀取。
-- [ ] Container 重建後資料仍存在。
-- [ ] `.env` 未進 Git。
-- [ ] `opc-control.ps1` 可 Start / Stop / Status。
-
-### 完整 Runtime PASS
-
-只有未來 workflow application 實際完成以下能力，才可宣告：
-
-- [ ] 任務可 checkpoint / resume。
-- [ ] 重複投遞不會造成無限制重複執行。
-- [ ] 每次工具呼叫可追蹤到 objective 與 task。
-- [ ] Agent session 權限隔離。
-- [ ] 未註冊能力 default-deny。
-- [ ] 高風險操作經人工批准。
-- [ ] Morning Report 由真實 evidence 產生。
-
-在這些條件未通過前，手冊只能宣告「Runtime foundation ready」，不能宣告「OPC autonomous runtime ready」。
+目前不要因為這些名詞還沒決定，就認為 Phase 1 沒完成。

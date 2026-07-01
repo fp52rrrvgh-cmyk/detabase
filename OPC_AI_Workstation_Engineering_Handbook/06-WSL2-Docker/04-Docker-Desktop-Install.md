@@ -1,110 +1,160 @@
-# 06-WSL2-Docker / 04 Docker Desktop 安裝與基線
+# 安裝 Docker Desktop
 
-## 目標
+## Docker 是什麼
 
-在 Windows 11 上使用 Docker Desktop 的 WSL2 backend，提供可重建的 container runtime。
+Docker 讓不同服務在彼此分開的空間中執行。
 
-## 安裝前條件
+可以把它想成：
 
-- BIOS 虛擬化已開啟。
+> 每個服務都有自己的工作箱，壞掉時可以重建，不需要把整台 Windows 重裝。
+
+對 OPC 來說，Docker 主要用來承載：
+
+- PostgreSQL
+- Redis
+- 未來的 Agent Runtime
+- 其他需要獨立環境的服務
+
+---
+
+## 安裝前確認
+
 - Windows Update 已完成。
-- WSL2 正常，Ubuntu 顯示 VERSION 2。
-- `.wslconfig` 已採保守值，沒有會讓 Docker 異常的 experimental 設定。
-- D 槽與 C 槽都有足夠空間。
-- 已讀過 Docker Desktop 授權條款，確認符合個人使用情境。
+- WSL2 可以正常使用。
+- Ubuntu 顯示 VERSION 2。
+- 磁碟還有足夠空間。
+
+不需要先設定 Kubernetes，也不需要先研究複雜的 Docker 網路。
+
+---
 
 ## 安裝
+
+在 PowerShell 執行：
 
 ```powershell
 winget install --id Docker.DockerDesktop -e
 ```
 
-安裝後重新登入或重新開機，再啟動 Docker Desktop。
+安裝完成後重新開機或重新登入，再開啟 Docker Desktop。
 
-## 建議設定
+第一次開啟時：
 
-- 使用 WSL2 based engine。
-- 只啟用主要 Ubuntu distribution 的 integration。
-- 不啟用不需要的 Kubernetes。
-- 不讓 Docker Desktop 自動啟動高負載 stack。
-- 資源限制由 `.wslconfig`、Compose 與 worker 層共同控制。
+1. 接受授權條款。
+2. 使用 WSL2 based engine。
+3. 啟用主要 Ubuntu 的 WSL integration。
+4. 等待 Docker Engine Ready。
 
-## 驗證
+---
+
+## 確認是否成功
+
+在 PowerShell 執行：
 
 ```powershell
 docker version
 docker info
-docker context ls
 docker run --rm hello-world
+docker compose version
 ```
 
-在 Ubuntu 內：
+在 Ubuntu 執行：
 
 ```bash
 docker version
 ```
 
-## WSL2 Integration
+完成標準：
 
-在 Docker Desktop 設定中，只對實際使用的 Ubuntu distribution 啟用 integration，避免多個 distribution 同時共享 runtime。
+- Docker Desktop 可以開啟。
+- `hello-world` 成功。
+- Windows 與 Ubuntu 都能使用 `docker` 指令。
 
-## 資料與 Volume 安全
+---
 
-Docker Desktop Reset、Uninstall、Factory reset、Prune 都可能造成 container、image、volume 或設定遺失。
+## 你現在只需要理解四個詞
 
-在任何重設或移除 Docker Desktop 前，必須先執行：
+| 名稱 | 簡單意思 |
+|---|---|
+| Image | 建立服務時使用的範本 |
+| Container | 真正執行中的服務 |
+| Volume | 保存服務資料的位置 |
+| Compose | 一次啟動多個服務的設定檔 |
+
+第一次使用時，不需要理解更深的 namespace、overlay network 或 cgroup。
+
+---
+
+## 平常怎麼看 Docker 是否正常
 
 ```powershell
-docker ps -a
-docker volume ls
-docker system df
-```
-
-若已有資料庫或 Redis volume，先備份：
-
-```powershell
-cd D:\OPC\runtime\opc-core
+docker ps
 docker compose ps
 ```
 
-對 PostgreSQL 應優先使用資料庫 dump，不要只複製 volume 檔案。
+- `docker ps`：查看目前正在執行的容器。
+- `docker compose ps`：查看目前這一組服務的狀態。
 
-## 更新策略
+---
 
-- 不在重要任務中途更新 Docker Desktop。
-- 更新前 Pause workers。
-- 更新前停止 Compose stack 或確認可 checkpoint。
-- 更新前備份資料庫。
-- 更新後執行 `docker run --rm hello-world`、Compose health check 與 Doctor。
+## 暫時不要使用的功能
 
-## 禁止事項
+- Kubernetes
+- Docker Swarm
+- 多個 Docker context
+- 自訂複雜網路
+- 在 Ubuntu 裡再安裝第二套 Docker Engine
 
-- 同時安裝 Docker Desktop 與另一套未知 Windows Docker daemon。
-- 在 WSL2 內額外啟動獨立 Docker daemon，卻沒有明確架構需求。
-- 對正式資料執行未審查的 prune 指令。
-- 未備份 database volume 就重設 Docker Desktop。
-- 直接執行 `docker system prune --volumes`。
-- Docker 正在寫入資料庫時執行 `wsl --shutdown`。
+這些都不是 Phase 1 必要內容。
 
-## 故障時的最小處理順序
+---
+
+## 看不懂時不要執行的指令
 
 ```text
-確認 Docker Desktop 是否啟動
-→ docker context ls
-→ wsl -l -v
-→ wsl --shutdown 後重開 Docker Desktop
-→ 查看 Docker Desktop 診斷
-→ 備份資料
-→ 才考慮 reset
+docker system prune --volumes
+docker compose down -v
+Docker Desktop Factory Reset
+wsl --unregister
 ```
 
-Reset 是最後手段，不是一般修復步驟。
+這些操作可能刪除容器或資料。
 
-## 驗收
+一般重新啟動服務通常只需要：
 
-- Docker Desktop 正常啟動。
-- `docker run --rm hello-world` 成功。
-- Ubuntu 可使用 `docker` 指令。
-- Windows 與 WSL2 看到同一個預期 Docker context。
-- Docker volume 清單已記錄。
-- 重建 container 後測試資料仍存在。
+```powershell
+docker compose stop
+docker compose start
+```
+
+---
+
+## Docker 無法使用時
+
+依序檢查：
+
+```text
+Docker Desktop 是否開啟
+→ wsl -l -v 是否正常
+→ docker version 是否有回應
+→ 關閉 Docker Desktop
+→ 執行 wsl --shutdown
+→ 重新開啟 Docker Desktop
+```
+
+Factory Reset 是最後手段，不是一般修復方式。
+
+---
+
+## 可選進階項目
+
+以下有需要再學：
+
+- Volume 備份與還原
+- Docker context
+- 資源限制
+- 自訂 network
+- 更新前的服務停機流程
+- Docker Desktop 診斷工具
+
+它們不再是第一次安裝的必要門檻。
